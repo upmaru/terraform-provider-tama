@@ -32,12 +32,12 @@ type Resource struct {
 
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id         types.String `tfsdk:"id"`
-	SpaceId    types.String `tfsdk:"space_id"`
-	Name       types.String `tfsdk:"name"`
-	Type       types.String `tfsdk:"type"`
-	Endpoint   types.String `tfsdk:"endpoint"`
-	ApiKey     types.String `tfsdk:"api_key"`
+	Id       types.String `tfsdk:"id"`
+	SpaceId  types.String `tfsdk:"space_id"`
+	Name     types.String `tfsdk:"name"`
+	Type     types.String `tfsdk:"type"`
+	Endpoint types.String `tfsdk:"endpoint"`
+	ApiKey   types.String `tfsdk:"api_key"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
