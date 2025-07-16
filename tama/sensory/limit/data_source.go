@@ -32,7 +32,7 @@ type DataSourceModel struct {
 	SourceId   types.String `tfsdk:"source_id"`
 	ScaleUnit  types.String `tfsdk:"scale_unit"`
 	ScaleCount types.Int64  `tfsdk:"scale_count"`
-	Limit      types.Int64  `tfsdk:"limit"`
+	Value      types.Int64  `tfsdk:"value"`
 }
 
 func (d *DataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -60,8 +60,8 @@ func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, r
 				MarkdownDescription: "Number of scale units for the limit period",
 				Computed:            true,
 			},
-			"limit": schema.Int64Attribute{
-				MarkdownDescription: "The limit value for the specified period",
+			"value": schema.Int64Attribute{
+				MarkdownDescription: "The maximum number of requests allowed in the specified time period",
 				Computed:            true,
 			},
 		},
@@ -114,7 +114,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	data.SourceId = types.StringValue(limitResponse.SourceID)
 	data.ScaleUnit = types.StringValue(limitResponse.ScaleUnit)
 	data.ScaleCount = types.Int64Value(int64(limitResponse.ScaleCount))
-	data.Limit = types.Int64Value(int64(limitResponse.Count))
+	data.Value = types.Int64Value(int64(limitResponse.Count))
 
 	// Write logs using the tflog package
 	tflog.Trace(ctx, "read a limit data source")

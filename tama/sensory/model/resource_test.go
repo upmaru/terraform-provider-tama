@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -268,11 +269,12 @@ func TestAccModelResource_DisappearResource(t *testing.T) {
 }
 
 func testAccModelResourceConfig(identifier, path string) string {
+	timestamp := time.Now().UnixNano()
 	return acceptance.ProviderConfig + fmt.Sprintf(`
 resource "tama_space" "test_space" {
-  name = "test-space-for-model"
+  name = "test-space-for-model-%d"
   type = "root"
-}
+}`, timestamp) + fmt.Sprintf(`
 
 resource "tama_source" "test_source" {
   space_id = tama_space.test_space.id
@@ -291,11 +293,12 @@ resource "tama_model" "test" {
 }
 
 func testAccModelResourceConfigMultiple() string {
-	return acceptance.ProviderConfig + `
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
 resource "tama_space" "test_space" {
-  name = "test-space-for-multiple-models"
+  name = "test-space-for-multiple-models-%d"
   type = "root"
-}
+}`, timestamp) + `
 
 resource "tama_source" "test_source" {
   space_id = tama_space.test_space.id
@@ -320,11 +323,12 @@ resource "tama_model" "test2" {
 }
 
 func testAccModelResourceConfigDifferentSources() string {
-	return acceptance.ProviderConfig + `
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
 resource "tama_space" "test_space" {
-  name = "test-space-for-different-sources"
+  name = "test-space-for-different-sources-%d"
   type = "root"
-}
+}`, timestamp) + `
 
 resource "tama_source" "openai" {
   space_id = tama_space.test_space.id

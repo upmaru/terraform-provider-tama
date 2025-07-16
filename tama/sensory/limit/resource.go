@@ -36,7 +36,7 @@ type ResourceModel struct {
 	SourceId   types.String `tfsdk:"source_id"`
 	ScaleUnit  types.String `tfsdk:"scale_unit"`
 	ScaleCount types.Int64  `tfsdk:"scale_count"`
-	Limit      types.Int64  `tfsdk:"limit"`
+	Value      types.Int64  `tfsdk:"value"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -70,8 +70,8 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 				MarkdownDescription: "Number of scale units for the limit period",
 				Required:            true,
 			},
-			"limit": schema.Int64Attribute{
-				MarkdownDescription: "The limit value for the specified period",
+			"value": schema.Int64Attribute{
+				MarkdownDescription: "The maximum number of requests allowed in the specified time period",
 				Required:            true,
 			},
 		},
@@ -113,7 +113,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		Limit: sensory.LimitRequestData{
 			ScaleUnit:  data.ScaleUnit.ValueString(),
 			ScaleCount: int(data.ScaleCount.ValueInt64()),
-			Count:      int(data.Limit.ValueInt64()),
+			Count:      int(data.Value.ValueInt64()),
 		},
 	}
 
@@ -121,7 +121,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		"source_id":   data.SourceId.ValueString(),
 		"scale_unit":  data.ScaleUnit.ValueString(),
 		"scale_count": data.ScaleCount.ValueInt64(),
-		"count":       data.Limit.ValueInt64(),
+		"count":       data.Value.ValueInt64(),
 	})
 
 	limitResponse, err := r.client.Sensory.CreateLimit(data.SourceId.ValueString(), createRequest)
@@ -135,7 +135,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	data.SourceId = types.StringValue(limitResponse.SourceID)
 	data.ScaleUnit = types.StringValue(limitResponse.ScaleUnit)
 	data.ScaleCount = types.Int64Value(int64(limitResponse.ScaleCount))
-	data.Limit = types.Int64Value(int64(limitResponse.Count))
+	data.Value = types.Int64Value(int64(limitResponse.Count))
 
 	// Write logs using the tflog package
 	tflog.Trace(ctx, "created a limit resource")
@@ -165,7 +165,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 	data.SourceId = types.StringValue(limitResponse.SourceID)
 	data.ScaleUnit = types.StringValue(limitResponse.ScaleUnit)
 	data.ScaleCount = types.Int64Value(int64(limitResponse.ScaleCount))
-	data.Limit = types.Int64Value(int64(limitResponse.Count))
+	data.Value = types.Int64Value(int64(limitResponse.Count))
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -186,7 +186,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		Limit: sensory.UpdateLimitData{
 			ScaleUnit:  data.ScaleUnit.ValueString(),
 			ScaleCount: int(data.ScaleCount.ValueInt64()),
-			Count:      int(data.Limit.ValueInt64()),
+			Count:      int(data.Value.ValueInt64()),
 		},
 	}
 
@@ -194,7 +194,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		"id":          data.Id.ValueString(),
 		"scale_unit":  data.ScaleUnit.ValueString(),
 		"scale_count": data.ScaleCount.ValueInt64(),
-		"count":       data.Limit.ValueInt64(),
+		"count":       data.Value.ValueInt64(),
 	})
 
 	limitResponse, err := r.client.Sensory.UpdateLimit(data.Id.ValueString(), updateRequest)
@@ -207,7 +207,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	data.SourceId = types.StringValue(limitResponse.SourceID)
 	data.ScaleUnit = types.StringValue(limitResponse.ScaleUnit)
 	data.ScaleCount = types.Int64Value(int64(limitResponse.ScaleCount))
-	data.Limit = types.Int64Value(int64(limitResponse.Count))
+	data.Value = types.Int64Value(int64(limitResponse.Count))
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -249,7 +249,7 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 		SourceId:   types.StringValue(limitResponse.SourceID),
 		ScaleUnit:  types.StringValue(limitResponse.ScaleUnit),
 		ScaleCount: types.Int64Value(int64(limitResponse.ScaleCount)),
-		Limit:      types.Int64Value(int64(limitResponse.Count)),
+		Value:      types.Int64Value(int64(limitResponse.Count)),
 	}
 
 	// Save imported data into Terraform state

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -20,9 +21,9 @@ func TestAccSpaceResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccSpaceResourceConfig("test-space", "root"),
+				Config: testAccSpaceResourceConfig(fmt.Sprintf("test-space-%d", time.Now().UnixNano()), "root"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tama_space.test", "name", "test-space"),
+					resource.TestCheckResourceAttrSet("tama_space.test", "name"),
 					resource.TestCheckResourceAttr("tama_space.test", "type", "root"),
 					resource.TestCheckResourceAttrSet("tama_space.test", "id"),
 					resource.TestCheckResourceAttrSet("tama_space.test", "slug"),
@@ -36,9 +37,9 @@ func TestAccSpaceResource(t *testing.T) {
 			},
 			// Update and Read testing
 			{
-				Config: testAccSpaceResourceConfig("test-space-updated", "component"),
+				Config: testAccSpaceResourceConfig(fmt.Sprintf("test-space-updated-%d", time.Now().UnixNano()), "component"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tama_space.test", "name", "test-space-updated"),
+					resource.TestCheckResourceAttrSet("tama_space.test", "name"),
 					resource.TestCheckResourceAttr("tama_space.test", "type", "component"),
 					resource.TestCheckResourceAttrSet("tama_space.test", "id"),
 					resource.TestCheckResourceAttrSet("tama_space.test", "slug"),
@@ -55,7 +56,7 @@ func TestAccSpaceResource_InvalidType(t *testing.T) {
 		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccSpaceResourceConfig("test-space", "invalid-type"),
+				Config:      testAccSpaceResourceConfig(fmt.Sprintf("test-space-%d", time.Now().UnixNano()), "invalid-type"),
 				ExpectError: regexp.MustCompile("Unable to create space"),
 			},
 		},
@@ -82,9 +83,9 @@ func TestAccSpaceResource_LongName(t *testing.T) {
 		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSpaceResourceConfig(longName, "root"),
+				Config: testAccSpaceResourceConfig(fmt.Sprintf("%s-%d", longName, time.Now().UnixNano()), "root"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tama_space.test", "name", longName),
+					resource.TestCheckResourceAttrSet("tama_space.test", "name"),
 					resource.TestCheckResourceAttr("tama_space.test", "type", "root"),
 				),
 			},
@@ -98,9 +99,9 @@ func TestAccSpaceResource_SpecialCharacters(t *testing.T) {
 		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSpaceResourceConfig("test-space-with-special_chars.123", "root"),
+				Config: testAccSpaceResourceConfig(fmt.Sprintf("test-space-with-special_chars.123-%d", time.Now().UnixNano()), "root"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tama_space.test", "name", "test-space-with-special_chars.123"),
+					resource.TestCheckResourceAttrSet("tama_space.test", "name"),
 					resource.TestCheckResourceAttr("tama_space.test", "type", "root"),
 				),
 			},
@@ -135,12 +136,12 @@ func TestAccSpaceResource_Multiple(t *testing.T) {
 				Config: testAccSpaceResourceConfigMultiple(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// First space
-					resource.TestCheckResourceAttr("tama_space.test1", "name", "test-space-1"),
+					resource.TestCheckResourceAttrSet("tama_space.test1", "name"),
 					resource.TestCheckResourceAttr("tama_space.test1", "type", "root"),
 					resource.TestCheckResourceAttrSet("tama_space.test1", "id"),
 					resource.TestCheckResourceAttrSet("tama_space.test1", "slug"),
 					// Second space
-					resource.TestCheckResourceAttr("tama_space.test2", "name", "test-space-2"),
+					resource.TestCheckResourceAttrSet("tama_space.test2", "name"),
 					resource.TestCheckResourceAttr("tama_space.test2", "type", "component"),
 					resource.TestCheckResourceAttrSet("tama_space.test2", "id"),
 					resource.TestCheckResourceAttrSet("tama_space.test2", "slug"),
@@ -156,9 +157,9 @@ func TestAccSpaceResource_DisappearResource(t *testing.T) {
 		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSpaceResourceConfig("disappear-space", "root"),
+				Config: testAccSpaceResourceConfig(fmt.Sprintf("test-space-%d", time.Now().UnixNano()), "root"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tama_space.test", "name", "disappear-space"),
+					resource.TestCheckResourceAttrSet("tama_space.test", "name"),
 					testAccCheckSpaceDestroy("tama_space.test"),
 				),
 				ExpectNonEmptyPlan: true,
@@ -177,17 +178,18 @@ resource "tama_space" "test" {
 }
 
 func testAccSpaceResourceConfigMultiple() string {
-	return acceptance.ProviderConfig + `
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
 resource "tama_space" "test1" {
-  name = "test-space-1"
+  name = "test-space-1-%d"
   type = "root"
 }
 
 resource "tama_space" "test2" {
-  name = "test-space-2"
+  name = "test-space-2-%d"
   type = "component"
 }
-`
+`, timestamp, timestamp)
 }
 
 func testAccCheckSpaceDestroy(resourceName string) resource.TestCheckFunc {

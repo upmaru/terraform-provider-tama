@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -28,6 +29,7 @@ func TestAccSourceResource(t *testing.T) {
 					resource.TestCheckResourceAttr("tama_source.test", "api_key", "test-api-key"),
 					resource.TestCheckResourceAttrSet("tama_source.test", "id"),
 					resource.TestCheckResourceAttrSet("tama_source.test", "space_id"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "current_state"),
 				),
 			},
 			// ImportState testing
@@ -35,7 +37,7 @@ func TestAccSourceResource(t *testing.T) {
 				ResourceName:            "tama_source.test",
 				ImportState:             true,
 				ImportStateVerify:       false, // SpaceId, Type, Endpoint, and ApiKey cannot be retrieved from API
-				ImportStateVerifyIgnore: []string{"space_id", "type", "endpoint", "api_key"},
+				ImportStateVerifyIgnore: []string{"space_id", "type", "api_key"},
 			},
 			// Update and Read testing
 			{
@@ -46,6 +48,7 @@ func TestAccSourceResource(t *testing.T) {
 					resource.TestCheckResourceAttr("tama_source.test", "endpoint", "https://api.updated.com"),
 					resource.TestCheckResourceAttr("tama_source.test", "api_key", "updated-api-key"),
 					resource.TestCheckResourceAttrSet("tama_source.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "current_state"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -115,6 +118,7 @@ func TestAccSourceResource_DifferentTypes(t *testing.T) {
 							resource.TestCheckResourceAttr("tama_source.test", "type", tc.sourceType),
 							resource.TestCheckResourceAttr("tama_source.test", "endpoint", "https://api.example.com"),
 							resource.TestCheckResourceAttrSet("tama_source.test", "id"),
+							resource.TestCheckResourceAttrSet("tama_source.test", "current_state"),
 						),
 					},
 				},
@@ -134,6 +138,7 @@ func TestAccSourceResource_LongName(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tama_source.test", "name", longName),
 					resource.TestCheckResourceAttr("tama_source.test", "type", "model"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "current_state"),
 				),
 			},
 		},
@@ -150,6 +155,7 @@ func TestAccSourceResource_SpecialCharacters(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tama_source.test", "name", "test-source-with-special_chars.123"),
 					resource.TestCheckResourceAttr("tama_source.test", "type", "model"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "current_state"),
 				),
 			},
 		},
@@ -169,11 +175,13 @@ func TestAccSourceResource_Multiple(t *testing.T) {
 					resource.TestCheckResourceAttr("tama_source.test1", "type", "model"),
 					resource.TestCheckResourceAttr("tama_source.test1", "endpoint", "https://api1.example.com"),
 					resource.TestCheckResourceAttrSet("tama_source.test1", "id"),
+					resource.TestCheckResourceAttrSet("tama_source.test1", "current_state"),
 					// Second source
 					resource.TestCheckResourceAttr("tama_source.test2", "name", "test-source-2"),
 					resource.TestCheckResourceAttr("tama_source.test2", "type", "api"),
 					resource.TestCheckResourceAttr("tama_source.test2", "endpoint", "https://api2.example.com"),
 					resource.TestCheckResourceAttrSet("tama_source.test2", "id"),
+					resource.TestCheckResourceAttrSet("tama_source.test2", "current_state"),
 				),
 			},
 		},
@@ -216,11 +224,12 @@ func TestAccSourceResource_DisappearResource(t *testing.T) {
 }
 
 func testAccSourceResourceConfig(name, sourceType, endpoint, apiKey string) string {
+	timestamp := time.Now().UnixNano()
 	return acceptance.ProviderConfig + fmt.Sprintf(`
 resource "tama_space" "test_space" {
-  name = "test-space-for-source"
+  name = "test-space-for-source-%d"
   type = "root"
-}
+}`, timestamp) + fmt.Sprintf(`
 
 resource "tama_source" "test" {
   space_id = tama_space.test_space.id
@@ -233,11 +242,12 @@ resource "tama_source" "test" {
 }
 
 func testAccSourceResourceConfigMultiple() string {
-	return acceptance.ProviderConfig + `
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
 resource "tama_space" "test_space" {
-  name = "test-space-for-multiple-sources"
+  name = "test-space-for-multiple-sources-%d"
   type = "root"
-}
+}`, timestamp) + `
 
 resource "tama_source" "test1" {
   space_id = tama_space.test_space.id
@@ -255,6 +265,27 @@ resource "tama_source" "test2" {
   api_key  = "test-api-key-2"
 }
 `
+}
+
+func TestAccSourceResource_CurrentState(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceResourceConfig("test-source-state", "model", "https://api.example.com", "test-api-key"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_source.test", "name", "test-source-state"),
+					resource.TestCheckResourceAttr("tama_source.test", "type", "model"),
+					resource.TestCheckResourceAttr("tama_source.test", "endpoint", "https://api.example.com"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "current_state"),
+					// Verify that current_state is not empty
+					resource.TestMatchResourceAttr("tama_source.test", "current_state", regexp.MustCompile(".+")),
+				),
+			},
+		},
+	})
 }
 
 func testAccCheckSourceDestroy(resourceName string) resource.TestCheckFunc {

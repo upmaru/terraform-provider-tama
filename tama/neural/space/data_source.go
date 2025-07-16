@@ -28,10 +28,11 @@ type DataSource struct {
 
 // DataSourceModel describes the data source data model.
 type DataSourceModel struct {
-	Id   types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
-	Type types.String `tfsdk:"type"`
-	Slug types.String `tfsdk:"slug"`
+	Id           types.String `tfsdk:"id"`
+	Name         types.String `tfsdk:"name"`
+	Type         types.String `tfsdk:"type"`
+	Slug         types.String `tfsdk:"slug"`
+	CurrentState types.String `tfsdk:"current_state"`
 }
 
 func (d *DataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -57,6 +58,10 @@ func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, r
 			},
 			"slug": schema.StringAttribute{
 				MarkdownDescription: "Slug identifier for the space",
+				Computed:            true,
+			},
+			"current_state": schema.StringAttribute{
+				MarkdownDescription: "Current state of the space",
 				Computed:            true,
 			},
 		},
@@ -107,8 +112,9 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	// Map response to data source schema
 	data.Id = types.StringValue(spaceResponse.ID)
 	data.Name = types.StringValue(spaceResponse.Name)
+	data.Type = types.StringValue(spaceResponse.Type)
 	data.Slug = types.StringValue(spaceResponse.Slug)
-	// Note: Type is not available in API response
+	data.CurrentState = types.StringValue(spaceResponse.CurrentState)
 
 	// Write logs using the tflog package
 	tflog.Trace(ctx, "read a space data source")
