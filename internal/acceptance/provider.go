@@ -23,11 +23,8 @@ var TestAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServe
 // ProviderConfig is a shared configuration to combine with the actual
 // test configuration so the Tama client is properly configured.
 const ProviderConfig = `
-provider "tama" {
-  base_url = "http://localhost:4000"
-  api_key  = "dummy"
-}
-`
+	provider "tama" {}
+	`
 
 // TestAccPreCheck validates that all the required environment variables
 // are set before running acceptance tests.
