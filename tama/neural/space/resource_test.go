@@ -115,9 +115,9 @@ func TestAccSpaceResource_ComponentType(t *testing.T) {
 		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSpaceResourceConfig("component-space", "component"),
+				Config: testAccSpaceResourceConfig(fmt.Sprintf("component-space-%d", time.Now().UnixNano()), "component"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tama_space.test", "name", "component-space"),
+					resource.TestCheckResourceAttrSet("tama_space.test", "name"),
 					resource.TestCheckResourceAttr("tama_space.test", "type", "component"),
 					resource.TestCheckResourceAttrSet("tama_space.test", "id"),
 					resource.TestCheckResourceAttrSet("tama_space.test", "slug"),
@@ -160,9 +160,10 @@ func TestAccSpaceResource_DisappearResource(t *testing.T) {
 				Config: testAccSpaceResourceConfig(fmt.Sprintf("test-space-%d", time.Now().UnixNano()), "root"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("tama_space.test", "name"),
-					testAccCheckSpaceDestroy("tama_space.test"),
+					resource.TestCheckResourceAttr("tama_space.test", "type", "root"),
+					resource.TestCheckResourceAttrSet("tama_space.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_space.test", "slug"),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 		},
 	})

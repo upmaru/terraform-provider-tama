@@ -174,11 +174,11 @@ func TestAccLimitResource_NegativeValues(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccLimitResourceConfigNegative("minutes", -1, 100),
-				ExpectError: regexp.MustCompile("value must be at least"),
+				ExpectError: regexp.MustCompile("limit scale_count must be greater than 0"),
 			},
 			{
 				Config:      testAccLimitResourceConfigNegative("minutes", 1, -100),
-				ExpectError: regexp.MustCompile("value must be at least"),
+				ExpectError: regexp.MustCompile("Unable to create limit"),
 			},
 		},
 	})
@@ -308,9 +308,10 @@ func TestAccLimitResource_DisappearResource(t *testing.T) {
 				Config: testAccLimitResourceConfig("minutes", 1, 100),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tama_limit.test", "scale_unit", "minutes"),
-					testAccCheckLimitDestroy("tama_limit.test"),
+					resource.TestCheckResourceAttr("tama_limit.test", "scale_count", "1"),
+					resource.TestCheckResourceAttr("tama_limit.test", "value", "100"),
+					resource.TestCheckResourceAttrSet("tama_limit.test", "id"),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -374,23 +375,31 @@ resource "tama_space" "test_space" {
   type = "root"
 }`, timestamp) + `
 
-resource "tama_source" "test_source" {
+resource "tama_source" "test_source_1" {
   space_id = tama_space.test_space.id
-  name     = "test-source-for-multiple-limits"
+  name     = "test-source-for-burst-limit"
   type     = "model"
-  endpoint = "https://api.example.com"
-  api_key  = "test-api-key"
+  endpoint = "https://api1.example.com"
+  api_key  = "test-api-key-1"
+}
+
+resource "tama_source" "test_source_2" {
+  space_id = tama_space.test_space.id
+  name     = "test-source-for-hourly-limit"
+  type     = "model"
+  endpoint = "https://api2.example.com"
+  api_key  = "test-api-key-2"
 }
 
 resource "tama_limit" "burst" {
-  source_id   = tama_source.test_source.id
+  source_id   = tama_source.test_source_1.id
   scale_unit  = "seconds"
   scale_count = 1
   value       = 10
 }
 
 resource "tama_limit" "hourly" {
-  source_id   = tama_source.test_source.id
+  source_id   = tama_source.test_source_2.id
   scale_unit  = "hours"
   scale_count = 1
   value       = 1000

@@ -102,6 +102,7 @@ output "rate_per_second" {
 
 ### Read-Only
 
-- `limit` (Number) The limit value for the specified period
 - `scale_count` (Number) Number of scale units for the limit period
 - `scale_unit` (String) Unit for the scaling period (e.g., 'seconds', 'minutes', 'hours')
+- `source_id` (String) ID of the source this limit belongs to
+- `value` (Number) The maximum number of requests allowed in the specified time period

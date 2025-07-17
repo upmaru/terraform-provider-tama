@@ -57,5 +57,6 @@ output "component_space_id" {
 
 ### Read-Only
 
+- `current_state` (String) Current state of the space
 - `id` (String) Space identifier
 - `slug` (String) Slug identifier for the space
