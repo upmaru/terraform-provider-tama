@@ -58,6 +58,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      packages: read
     strategy:
       fail-fast: false
       matrix:
@@ -85,9 +87,6 @@ jobs:
 
       tama:
         image: ghcr.io/upmaru/tama:latest
-        credentials:
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
         env:
           DATABASE_URL: postgres://postgres:postgres@postgres:5432/tama_test
         ports:
