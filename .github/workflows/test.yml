@@ -91,6 +91,7 @@ jobs:
           DATABASE_URL: postgres://postgres:postgres@postgres:5432/tama_test
           TAMA_MAX_VECTOR_DIMENSIONS: 1024
           TAMA_VAULT_KEY: MJOdb4sy3/xXzdYPDRZE3Jcj0gHx3utVsyCpCuTrRWM=
+          SECRET_KEY_BASE: mmgb4Aoa2PphESQICdr31vVXHhvufcrXS7hDPK+mx8CWnNfWEDtthx6zD49L4Cqv
         ports:
           - 4000:4000
         options: --link postgres:postgres
