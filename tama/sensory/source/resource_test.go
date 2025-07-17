@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/upmaru/terraform-provider-tama/internal/acceptance"
 )
 
@@ -281,13 +280,4 @@ func TestAccSourceResource_CurrentState(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckSourceDestroy(resourceName string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		// This function simulates the source being destroyed outside of Terraform
-		// In a real test, you would make an API call to delete the resource
-		// For now, we'll just return nil to simulate successful destruction
-		return nil
-	}
 }
