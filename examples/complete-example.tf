@@ -329,10 +329,10 @@ output "limits_summary" {
 output "data_source_examples" {
   description = "Examples of data source outputs"
   value = {
-    space_name     = data.tama_space.ai_services_data.name
-    source_name    = data.tama_source.mistral_data.name
-    model_id       = data.tama_model.mistral_large_data.identifier
-    limit_per_sec  = data.tama_limit.mistral_per_second_data.limit
+    space_name    = data.tama_space.ai_services_data.name
+    source_name   = data.tama_source.mistral_data.name
+    model_id      = data.tama_model.mistral_large_data.identifier
+    limit_per_sec = data.tama_limit.mistral_per_second_data.limit
   }
 }
 
@@ -351,10 +351,10 @@ resource "local_file" "ai_config" {
     }
     limits = {
       mistral = {
-        source_id   = tama_source.mistral_prod.id
-        per_second  = tama_limit.mistral_per_second.limit
-        per_minute  = tama_limit.mistral_per_minute.limit
-        per_hour    = tama_limit.mistral_per_hour.limit
+        source_id  = tama_source.mistral_prod.id
+        per_second = tama_limit.mistral_per_second.limit
+        per_minute = tama_limit.mistral_per_minute.limit
+        per_hour   = tama_limit.mistral_per_hour.limit
       }
       openai = {
         source_id  = tama_source.openai_prod.id

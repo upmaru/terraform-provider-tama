@@ -23,21 +23,23 @@ locals {
   }
 
   # Calculate total seconds for the limit period
-  period_seconds = data.tama_limit.example.scale_unit == "seconds" ? data.tama_limit.example.scale_count :
-                   data.tama_limit.example.scale_unit == "minutes" ? data.tama_limit.example.scale_count * 60 :
-                   data.tama_limit.example.scale_unit == "hours" ? data.tama_limit.example.scale_count * 3600 :
-                   data.tama_limit.example.scale_count
+  period_seconds = (
+    data.tama_limit.example.scale_unit == "seconds" ? data.tama_limit.example.scale_count :
+    data.tama_limit.example.scale_unit == "minutes" ? data.tama_limit.example.scale_count * 60 :
+    data.tama_limit.example.scale_unit == "hours" ? data.tama_limit.example.scale_count * 3600 :
+    data.tama_limit.example.scale_count
+  )
 }
 
 # Example of using limit data in monitoring configuration
 resource "local_file" "limit_config" {
   content = jsonencode({
     limit = {
-      id           = data.tama_limit.example.id
-      scale_unit   = data.tama_limit.example.scale_unit
-      scale_count  = data.tama_limit.example.scale_count
-      limit_value  = data.tama_limit.example.limit
-      period_seconds = local.period_seconds
+      id              = data.tama_limit.example.id
+      scale_unit      = data.tama_limit.example.scale_unit
+      scale_count     = data.tama_limit.example.scale_count
+      limit_value     = data.tama_limit.example.limit
+      period_seconds  = local.period_seconds
       rate_per_second = data.tama_limit.example.limit / local.period_seconds
     }
   })

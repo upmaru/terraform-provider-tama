@@ -32,10 +32,11 @@ type Resource struct {
 
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id   types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
-	Type types.String `tfsdk:"type"`
-	Slug types.String `tfsdk:"slug"`
+	Id           types.String `tfsdk:"id"`
+	Name         types.String `tfsdk:"name"`
+	Type         types.String `tfsdk:"type"`
+	Slug         types.String `tfsdk:"slug"`
+	CurrentState types.String `tfsdk:"current_state"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -64,6 +65,10 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			},
 			"slug": schema.StringAttribute{
 				MarkdownDescription: "Slug identifier for the space",
+				Computed:            true,
+			},
+			"current_state": schema.StringAttribute{
+				MarkdownDescription: "Current state of the space",
 				Computed:            true,
 			},
 		},
@@ -122,8 +127,9 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	// Map response body to schema and populate Computed attribute values
 	data.Id = types.StringValue(spaceResponse.ID)
 	data.Name = types.StringValue(spaceResponse.Name)
+	data.Type = types.StringValue(spaceResponse.Type)
 	data.Slug = types.StringValue(spaceResponse.Slug)
-	// Note: Type is not returned in the API response, keep the configured value
+	data.CurrentState = types.StringValue(spaceResponse.CurrentState)
 
 	// Write logs using the tflog package
 	tflog.Trace(ctx, "created a space resource")
@@ -151,8 +157,9 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 
 	// Update the model with the latest data
 	data.Name = types.StringValue(spaceResponse.Name)
+	data.Type = types.StringValue(spaceResponse.Type)
 	data.Slug = types.StringValue(spaceResponse.Slug)
-	// Note: Type is not returned in the API response, keep the existing value
+	data.CurrentState = types.StringValue(spaceResponse.CurrentState)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -190,8 +197,9 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 
 	// Update the model with the response data
 	data.Name = types.StringValue(spaceResponse.Name)
+	data.Type = types.StringValue(spaceResponse.Type)
 	data.Slug = types.StringValue(spaceResponse.Slug)
-	// Note: Type is not returned in the API response, keep the existing value
+	data.CurrentState = types.StringValue(spaceResponse.CurrentState)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -229,12 +237,11 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 
 	// Create model from API response
 	data := ResourceModel{
-		Id:   types.StringValue(spaceResponse.ID),
-		Name: types.StringValue(spaceResponse.Name),
-		Slug: types.StringValue(spaceResponse.Slug),
-		// Type cannot be retrieved from API response
-		// This will need to be manually set after import
-		Type: types.StringValue(""),
+		Id:           types.StringValue(spaceResponse.ID),
+		Name:         types.StringValue(spaceResponse.Name),
+		Type:         types.StringValue(spaceResponse.Type),
+		Slug:         types.StringValue(spaceResponse.Slug),
+		CurrentState: types.StringValue(spaceResponse.CurrentState),
 	}
 
 	// Save imported data into Terraform state
