@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	tama "github.com/upmaru/tama-go"
 
+	"github.com/upmaru/terraform-provider-tama/tama/memory/prompt"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/space"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/limit"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/model"
@@ -156,6 +157,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		source.NewResource,
 		model.NewResource,
 		limit.NewResource,
+		prompt.NewResource,
 	}
 }
 
@@ -169,6 +171,7 @@ func (p *TamaProvider) DataSources(ctx context.Context) []func() datasource.Data
 		source.NewDataSource,
 		model.NewDataSource,
 		limit.NewDataSource,
+		prompt.NewDataSource,
 	}
 }
 
