@@ -117,6 +117,10 @@ output "gpt_3_5_turbo_model_id" {
 - `path` (String) API path for the model (e.g., '/chat/completions')
 - `source_id` (String) ID of the source this model belongs to
 
+### Optional
+
+- `parameters` (String) Model parameters as JSON string (e.g., '{"temperature": 0.8, "max_tokens": 1500}')
+
 ### Read-Only
 
 - `id` (String) Model identifier

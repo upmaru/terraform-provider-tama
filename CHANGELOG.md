@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Model Parameters Support**: Added `parameters` attribute to `tama_model` resource and data source
+  - Supports flexible model configuration through JSON parameters
+  - Compatible with tama-go client library v0.1.12+
+  - Enables configuration of temperature, reasoning effort, max tokens, and other model-specific settings
+  - Supports complex nested JSON structures including objects, arrays, and all JSON data types
+  - Backward compatible - existing configurations continue to work unchanged
+  - Optional field with comprehensive error handling and validation
+
+### Enhanced
+- **Model Resource**: Enhanced with parameter support for advanced model configuration
+- **Model Data Source**: Enhanced to return model parameters from API responses
+- **Import Functionality**: Model imports now include parameter configuration when available
+- **Documentation**: Added comprehensive parameter usage guide and examples
+
+### Technical
+- JSON parameter serialization/deserialization with proper error handling
+- Support for any valid JSON structure via `map[string]any`
+- Graceful handling of null/empty parameters
+- Enhanced test coverage with 13+ new test cases covering all parameter scenarios
+
 ## [0.1.0] - 2024-01-XX
 
 ### Added

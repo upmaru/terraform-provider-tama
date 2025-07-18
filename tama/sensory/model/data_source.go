@@ -5,6 +5,7 @@ package model
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -31,6 +32,7 @@ type DataSourceModel struct {
 	Id         types.String `tfsdk:"id"`
 	Identifier types.String `tfsdk:"identifier"`
 	Path       types.String `tfsdk:"path"`
+	Parameters types.String `tfsdk:"parameters"`
 }
 
 func (d *DataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -52,6 +54,10 @@ func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, r
 			},
 			"path": schema.StringAttribute{
 				MarkdownDescription: "API path for the model (e.g., '/chat/completions')",
+				Computed:            true,
+			},
+			"parameters": schema.StringAttribute{
+				MarkdownDescription: "Model parameters as JSON string",
 				Computed:            true,
 			},
 		},
@@ -103,6 +109,18 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	data.Id = types.StringValue(modelResponse.ID)
 	data.Identifier = types.StringValue(modelResponse.Identifier)
 	// Note: Path is not available in API response
+
+	// Handle parameters from response
+	if len(modelResponse.Parameters) > 0 {
+		parametersJSON, err := json.Marshal(modelResponse.Parameters)
+		if err != nil {
+			resp.Diagnostics.AddError("Parameters Serialization Error", fmt.Sprintf("Unable to serialize parameters: %s", err))
+			return
+		}
+		data.Parameters = types.StringValue(string(parametersJSON))
+	} else {
+		data.Parameters = types.StringValue("")
+	}
 
 	// Write logs using the tflog package
 	tflog.Trace(ctx, "read a model data source")
