@@ -300,6 +300,203 @@ func TestAccModelResource_DisappearResource(t *testing.T) {
 	})
 }
 
+func TestAccModelResource_WithParameters(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing with simple parameters
+			{
+				Config: testAccModelResourceConfigWithParameters("grok-3-mini", "/chat/completions", `{"reasoning_effort": "low", "temperature": 0.8}`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_model.test", "identifier", "grok-3-mini"),
+					resource.TestCheckResourceAttr("tama_model.test", "path", "/chat/completions"),
+					resource.TestCheckResourceAttr("tama_model.test", "parameters", `{"reasoning_effort": "low", "temperature": 0.8}`),
+					resource.TestCheckResourceAttrSet("tama_model.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_model.test", "source_id"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:            "tama_model.test",
+				ImportState:             true,
+				ImportStateVerify:       false, // SourceId and Path cannot be retrieved from API
+				ImportStateVerifyIgnore: []string{"source_id", "path"},
+			},
+			// Update parameters
+			{
+				Config: testAccModelResourceConfigWithParameters("grok-3-mini", "/chat/completions", `{"reasoning_effort": "medium", "temperature": 0.9, "max_tokens": 2000}`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_model.test", "identifier", "grok-3-mini"),
+					resource.TestCheckResourceAttr("tama_model.test", "path", "/chat/completions"),
+					resource.TestCheckResourceAttr("tama_model.test", "parameters", `{"reasoning_effort": "medium", "temperature": 0.9, "max_tokens": 2000}`),
+				),
+			},
+		},
+	})
+}
+
+func TestAccModelResource_ComplexParameters(t *testing.T) {
+	complexParams := `{
+		"temperature": 0.7,
+		"max_tokens": 2000,
+		"top_p": 0.9,
+		"frequency_penalty": 0.1,
+		"presence_penalty": 0.1,
+		"stream": true,
+		"stop": ["\n", "###", "END"],
+		"response_format": {
+			"type": "json_object"
+		},
+		"tools": [
+			{
+				"type": "function",
+				"function": {
+					"name": "get_weather",
+					"description": "Get current weather information"
+				}
+			}
+		]
+	}`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccModelResourceConfigWithParameters("gpt-4-turbo", "/chat/completions", complexParams),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_model.test", "identifier", "gpt-4-turbo"),
+					resource.TestCheckResourceAttr("tama_model.test", "path", "/chat/completions"),
+					resource.TestCheckResourceAttrSet("tama_model.test", "parameters"),
+					resource.TestCheckResourceAttrSet("tama_model.test", "id"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccModelResource_ParameterTypes(t *testing.T) {
+	testCases := []struct {
+		name       string
+		parameters string
+	}{
+		{
+			"String parameters",
+			`{"reasoning_effort": "low", "model_version": "latest"}`,
+		},
+		{
+			"Numeric parameters",
+			`{"temperature": 0.8, "max_tokens": 1500, "frequency_penalty": 0.1}`,
+		},
+		{
+			"Boolean parameters",
+			`{"stream": true, "echo": false, "logit_bias": true}`,
+		},
+		{
+			"Array parameters",
+			`{"stop": ["\n", "###", "END"], "logit_bias": [1, 2, 3]}`,
+		},
+		{
+			"Object parameters",
+			`{"response_format": {"type": "json_object"}, "config": {"timeout": 30, "enable_cache": true}}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resource.Test(t, resource.TestCase{
+				PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+				ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config: testAccModelResourceConfigWithParameters("test-model", "/chat/completions", tc.parameters),
+						Check: resource.ComposeAggregateTestCheckFunc(
+							resource.TestCheckResourceAttr("tama_model.test", "identifier", "test-model"),
+							resource.TestCheckResourceAttr("tama_model.test", "path", "/chat/completions"),
+							resource.TestCheckResourceAttr("tama_model.test", "parameters", tc.parameters),
+							resource.TestCheckResourceAttrSet("tama_model.test", "id"),
+						),
+					},
+				},
+			})
+		})
+	}
+}
+
+func TestAccModelResource_EmptyParameters(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccModelResourceConfigWithParameters("simple-model", "/chat/completions", ""),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_model.test", "identifier", "simple-model"),
+					resource.TestCheckResourceAttr("tama_model.test", "path", "/chat/completions"),
+					resource.TestCheckResourceAttr("tama_model.test", "parameters", ""),
+					resource.TestCheckResourceAttrSet("tama_model.test", "id"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccModelResource_NoParameters(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccModelResourceConfig("simple-model", "/chat/completions"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_model.test", "identifier", "simple-model"),
+					resource.TestCheckResourceAttr("tama_model.test", "path", "/chat/completions"),
+					resource.TestCheckResourceAttrSet("tama_model.test", "id"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccModelResource_InvalidParameters(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccModelResourceConfigWithParameters("test-model", "/chat/completions", `{"invalid": json}`),
+				ExpectError: regexp.MustCompile("Invalid Parameters"),
+			},
+		},
+	})
+}
+
+func TestAccModelResource_EmbeddingParameters(t *testing.T) {
+	embeddingParams := `{
+		"dimensions": 1536,
+		"encoding_format": "float",
+		"batch_size": 100,
+		"timeout": 30
+	}`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccModelResourceConfigWithParameters("text-embedding-3-large", "/embeddings", embeddingParams),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_model.test", "identifier", "text-embedding-3-large"),
+					resource.TestCheckResourceAttr("tama_model.test", "path", "/embeddings"),
+					resource.TestCheckResourceAttr("tama_model.test", "parameters", embeddingParams),
+					resource.TestCheckResourceAttrSet("tama_model.test", "id"),
+				),
+			},
+		},
+	})
+}
+
 func testAccModelResourceConfig(identifier, path string) string {
 	timestamp := time.Now().UnixNano()
 	return acceptance.ProviderConfig + fmt.Sprintf(`
@@ -390,4 +587,36 @@ resource "tama_model" "anthropic" {
   path       = "/chat/completions"
 }
 `
+}
+
+func testAccModelResourceConfigWithParameters(identifier, path, parameters string) string {
+	timestamp := time.Now().UnixNano()
+	config := acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test_space" {
+  name = "test-space-for-model-%d"
+  type = "root"
+}`, timestamp) + fmt.Sprintf(`
+
+resource "tama_source" "test_source" {
+  space_id = tama_space.test_space.id
+  name     = "test-source-for-model"
+  type     = "model"
+  endpoint = "https://api.example.com"
+  api_key  = "test-api-key"
+}
+
+resource "tama_model" "test" {
+  source_id  = tama_source.test_source.id
+  identifier = %[1]q
+  path       = %[2]q`, identifier, path)
+
+	if parameters != "" {
+		config += fmt.Sprintf(`
+  parameters = %[1]q`, parameters)
+	}
+
+	config += `
+}`
+
+	return config
 }

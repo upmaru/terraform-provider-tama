@@ -81,4 +81,5 @@ output "model_info" {
 ### Read-Only
 
 - `identifier` (String) Model identifier (e.g., 'mistral-small-latest')
+- `parameters` (String) Model parameters as JSON string
 - `path` (String) API path for the model (e.g., '/chat/completions')
