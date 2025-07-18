@@ -18,7 +18,7 @@ import (
 	"github.com/upmaru/tama-go/sensory"
 )
 
-// normalizeJSON normalizes JSON strings for consistent comparison
+// normalizeJSON normalizes JSON strings for consistent comparison.
 func normalizeJSON(jsonStr string) (string, error) {
 	if jsonStr == "" {
 		return "", nil
@@ -37,7 +37,7 @@ func normalizeJSON(jsonStr string) (string, error) {
 	return string(normalized), nil
 }
 
-// areJSONEqual compares two JSON strings semantically
+// areJSONEqual compares two JSON strings semantically.
 func areJSONEqual(json1, json2 string) bool {
 	if json1 == json2 {
 		return true
