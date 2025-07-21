@@ -194,7 +194,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	data.CurrentState = types.StringValue(processorResponse.CurrentState)
 
 	// Update configuration blocks based on the type and API response
-	d.updateConfigurationFromResponse(ctx, processorResponse, &data)
+	d.updateConfigurationFromResponse(processorResponse, &data)
 
 	// Write logs using the tflog package
 	tflog.Trace(ctx, "read a processor data source")
@@ -204,7 +204,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 }
 
 // updateConfigurationFromResponse updates the configuration blocks in the model based on the API response.
-func (d *DataSource) updateConfigurationFromResponse(ctx context.Context, processor *neural.Processor, data *DataSourceModel) {
+func (d *DataSource) updateConfigurationFromResponse(processor *neural.Processor, data *DataSourceModel) {
 	switch processor.Type {
 	case "completion":
 		if processor.Configuration != nil {
@@ -236,10 +236,14 @@ func (d *DataSource) updateConfigurationFromResponse(ctx context.Context, proces
 					var roleMappingModels []RoleMappingModel
 					for _, mapping := range mappings {
 						if mappingMap, ok := mapping.(map[string]any); ok {
-							roleMappingModels = append(roleMappingModels, RoleMappingModel{
-								From: types.StringValue(mappingMap["from"].(string)),
-								To:   types.StringValue(mappingMap["to"].(string)),
-							})
+							if from, ok := mappingMap["from"].(string); ok {
+								if to, ok := mappingMap["to"].(string); ok {
+									roleMappingModels = append(roleMappingModels, RoleMappingModel{
+										From: types.StringValue(from),
+										To:   types.StringValue(to),
+									})
+								}
+							}
 						}
 					}
 					config.RoleMappings = roleMappingModels
@@ -267,10 +271,14 @@ func (d *DataSource) updateConfigurationFromResponse(ctx context.Context, proces
 					var templateModels []TemplateModel
 					for _, template := range tmplList {
 						if templateMap, ok := template.(map[string]any); ok {
-							templateModels = append(templateModels, TemplateModel{
-								Type:    types.StringValue(templateMap["type"].(string)),
-								Content: types.StringValue(templateMap["content"].(string)),
-							})
+							if tmplType, ok := templateMap["type"].(string); ok {
+								if content, ok := templateMap["content"].(string); ok {
+									templateModels = append(templateModels, TemplateModel{
+										Type:    types.StringValue(tmplType),
+										Content: types.StringValue(content),
+									})
+								}
+							}
 						}
 					}
 					config.Templates = templateModels

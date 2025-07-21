@@ -581,10 +581,14 @@ func (r *Resource) updateConfigurationFromResponse(processor *neural.Processor, 
 					var roleMappingModels []RoleMappingModel
 					for _, mapping := range mappings {
 						if mappingMap, ok := mapping.(map[string]any); ok {
-							roleMappingModels = append(roleMappingModels, RoleMappingModel{
-								From: types.StringValue(mappingMap["from"].(string)),
-								To:   types.StringValue(mappingMap["to"].(string)),
-							})
+							if from, ok := mappingMap["from"].(string); ok {
+								if to, ok := mappingMap["to"].(string); ok {
+									roleMappingModels = append(roleMappingModels, RoleMappingModel{
+										From: types.StringValue(from),
+										To:   types.StringValue(to),
+									})
+								}
+							}
 						}
 					}
 					config.RoleMappings = roleMappingModels
@@ -616,10 +620,14 @@ func (r *Resource) updateConfigurationFromResponse(processor *neural.Processor, 
 					var templateModels []TemplateModel
 					for _, template := range tmplList {
 						if templateMap, ok := template.(map[string]any); ok {
-							templateModels = append(templateModels, TemplateModel{
-								Type:    types.StringValue(templateMap["type"].(string)),
-								Content: types.StringValue(templateMap["content"].(string)),
-							})
+							if tmplType, ok := templateMap["type"].(string); ok {
+								if content, ok := templateMap["content"].(string); ok {
+									templateModels = append(templateModels, TemplateModel{
+										Type:    types.StringValue(tmplType),
+										Content: types.StringValue(content),
+									})
+								}
+							}
 						}
 					}
 					config.Templates = templateModels
