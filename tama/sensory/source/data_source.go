@@ -94,7 +94,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	}
 
 	// Get source from API
-	tflog.Debug(ctx, "Reading source", map[string]interface{}{
+	tflog.Debug(ctx, "Reading source", map[string]any{
 		"id": data.Id.ValueString(),
 	})
 

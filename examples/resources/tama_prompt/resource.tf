@@ -70,44 +70,7 @@ resource "tama_prompt" "user_help_request" {
   role     = "user"
 }
 
-# Data source to fetch system assistant prompt
-data "tama_prompt" "system_assistant_data" {
-  id = tama_prompt.system_assistant.id
-}
-
-# Data source to fetch code assistant prompt
-data "tama_prompt" "code_assistant_data" {
-  id = tama_prompt.code_assistant.id
-}
-
-# Data source to fetch user question template
-data "tama_prompt" "user_template_data" {
-  id = tama_prompt.user_question_template.id
-}
-
-# Outputs to show prompt information
-output "system_assistant_info" {
-  description = "Information about the system assistant prompt"
-  value = {
-    id            = data.tama_prompt.system_assistant_data.id
-    name          = data.tama_prompt.system_assistant_data.name
-    slug          = data.tama_prompt.system_assistant_data.slug
-    role          = data.tama_prompt.system_assistant_data.role
-    current_state = data.tama_prompt.system_assistant_data.current_state
-  }
-}
-
-output "code_assistant_info" {
-  description = "Information about the code assistant prompt"
-  value = {
-    id            = data.tama_prompt.code_assistant_data.id
-    name          = data.tama_prompt.code_assistant_data.name
-    slug          = data.tama_prompt.code_assistant_data.slug
-    role          = data.tama_prompt.code_assistant_data.role
-    current_state = data.tama_prompt.code_assistant_data.current_state
-  }
-}
-
+# Outputs
 output "workspace_prompts" {
   description = "Summary of all prompts in the workspace"
   value = {

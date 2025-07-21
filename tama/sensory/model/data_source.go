@@ -95,7 +95,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	}
 
 	// Get model from API
-	tflog.Debug(ctx, "Reading model", map[string]interface{}{
+	tflog.Debug(ctx, "Reading model", map[string]any{
 		"id": data.Id.ValueString(),
 	})
 

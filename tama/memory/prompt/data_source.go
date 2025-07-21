@@ -109,7 +109,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	}
 
 	// Get prompt from API
-	tflog.Debug(ctx, "Reading prompt", map[string]interface{}{
+	tflog.Debug(ctx, "Reading prompt", map[string]any{
 		"id": data.Id.ValueString(),
 	})
 
