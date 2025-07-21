@@ -117,7 +117,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		},
 	}
 
-	tflog.Debug(ctx, "Creating limit", map[string]interface{}{
+	tflog.Debug(ctx, "Creating limit", map[string]any{
 		"source_id":   data.SourceId.ValueString(),
 		"scale_unit":  data.ScaleUnit.ValueString(),
 		"scale_count": data.ScaleCount.ValueInt64(),
@@ -190,7 +190,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		},
 	}
 
-	tflog.Debug(ctx, "Updating limit", map[string]interface{}{
+	tflog.Debug(ctx, "Updating limit", map[string]any{
 		"id":          data.Id.ValueString(),
 		"scale_unit":  data.ScaleUnit.ValueString(),
 		"scale_count": data.ScaleCount.ValueInt64(),
@@ -224,7 +224,7 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	}
 
 	// Delete limit using the Tama client
-	tflog.Debug(ctx, "Deleting limit", map[string]interface{}{
+	tflog.Debug(ctx, "Deleting limit", map[string]any{
 		"id": data.Id.ValueString(),
 	})
 

@@ -8,6 +8,7 @@ This provider supports managing the following Tama resources:
 
 - **Neural Resources:**
   - `tama_space` - Neural spaces for organizing AI services
+  - `tama_space_processor` - Processors within neural spaces for AI model operations
 
 - **Sensory Resources:**
   - `tama_source` - AI service sources (e.g., OpenAI, Mistral, Anthropic)
@@ -109,6 +110,91 @@ resource "tama_space" "example" {
 - `id` - Unique identifier for the space
 - `slug` - URL-friendly identifier
 
+### tama_space_processor
+
+Manages processors within neural spaces for AI model operations. Processors are configured with different types and corresponding configurations based on their intended use.
+
+```hcl
+# Completion Processor
+resource "tama_space_processor" "completion" {
+  space_id = tama_space.example.id
+  model_id = tama_model.gpt4.id
+  type     = "completion"
+  
+  completion_config {
+    temperature = 0.7
+    tool_choice = "auto"
+    role_mappings = jsonencode([
+      {
+        from = "user"
+        to   = "human"
+      },
+      {
+        from = "assistant"
+        to   = "ai"
+      }
+    ])
+  }
+}
+
+# Embedding Processor
+resource "tama_space_processor" "embedding" {
+  space_id = tama_space.example.id
+  model_id = tama_model.embedding.id
+  type     = "embedding"
+  
+  embedding_config {
+    max_tokens = 512
+    templates = jsonencode([
+      {
+        type    = "query"
+        content = "Query: {text}"
+      },
+      {
+        type    = "document"
+        content = "Document: {text}"
+      }
+    ])
+  }
+}
+
+# Reranking Processor
+resource "tama_space_processor" "reranking" {
+  space_id = tama_space.example.id
+  model_id = tama_model.reranker.id
+  type     = "reranking"
+  
+  reranking_config {
+    top_n = 5
+  }
+}
+```
+
+**Arguments:**
+- `space_id` (Required, Forces new resource) - ID of the space this processor belongs to
+- `model_id` (Required) - ID of the model this processor uses
+- `type` (Required) - Type of processor: "completion", "embedding", or "reranking"
+
+**Configuration Blocks (exactly one required based on type):**
+
+#### `completion_config`
+Used when `type = "completion"`.
+- `temperature` (Optional) - Sampling temperature (default: 0.8)
+- `tool_choice` (Optional) - Tool choice strategy: "required", "auto", or "any" (default: "required")
+- `role_mappings` (Optional) - Role mappings as JSON string
+
+#### `embedding_config`
+Used when `type = "embedding"`.
+- `max_tokens` (Optional) - Maximum number of tokens (default: 512)
+- `templates` (Optional) - Templates as JSON string
+
+#### `reranking_config`
+Used when `type = "reranking"`.
+- `top_n` (Optional) - Number of top results to return (default: 3)
+
+**Attributes:**
+- `id` - Unique identifier for the processor
+
 ### tama_source
 
 Manages AI service sources within a space.
@@ -184,6 +270,10 @@ data "tama_space" "example" {
   id = "space-123"
 }
 
+data "tama_space_processor" "example" {
+  id = "processor-123"
+}
+
 data "tama_source" "example" {
   id = "source-456"
 }
@@ -212,12 +302,14 @@ The Tama provider resources follow this hierarchy:
 
 ```
 Space (Neural)
+├── Processor (Neural)
 └── Source (Sensory)
     ├── Model (Sensory)
     └── Limit (Sensory)
 ```
 
 - **Spaces** are top-level containers for organizing AI services
+- **Processors** define AI processing capabilities within a space using specific models
 - **Sources** represent external AI providers/APIs and belong to a space
 - **Models** define specific AI models available from a source
 - **Limits** define rate limiting rules for a source
@@ -228,6 +320,7 @@ Resources can be imported using their IDs:
 
 ```bash
 terraform import tama_space.example space-123
+terraform import tama_space_processor.example space-123/model-456
 terraform import tama_source.example source-456
 terraform import tama_model.example model-789
 terraform import tama_limit.example limit-101

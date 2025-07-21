@@ -131,7 +131,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		},
 	}
 
-	tflog.Debug(ctx, "Creating source", map[string]interface{}{
+	tflog.Debug(ctx, "Creating source", map[string]any{
 		"space_id": data.SpaceId.ValueString(),
 		"name":     data.Name.ValueString(),
 		"type":     data.Type.ValueString(),
@@ -207,7 +207,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		},
 	}
 
-	tflog.Debug(ctx, "Updating source", map[string]interface{}{
+	tflog.Debug(ctx, "Updating source", map[string]any{
 		"id":       data.Id.ValueString(),
 		"name":     data.Name.ValueString(),
 		"type":     data.Type.ValueString(),
@@ -241,7 +241,7 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	}
 
 	// Delete source using the Tama client
-	tflog.Debug(ctx, "Deleting source", map[string]interface{}{
+	tflog.Debug(ctx, "Deleting source", map[string]any{
 		"id": data.Id.ValueString(),
 	})
 

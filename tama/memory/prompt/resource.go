@@ -130,7 +130,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		},
 	}
 
-	tflog.Debug(ctx, "Creating prompt", map[string]interface{}{
+	tflog.Debug(ctx, "Creating prompt", map[string]any{
 		"space_id": data.SpaceId.ValueString(),
 		"name":     data.Name.ValueString(),
 		"content":  data.Content.ValueString(),
@@ -205,7 +205,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		},
 	}
 
-	tflog.Debug(ctx, "Updating prompt", map[string]interface{}{
+	tflog.Debug(ctx, "Updating prompt", map[string]any{
 		"id":      data.Id.ValueString(),
 		"name":    data.Name.ValueString(),
 		"content": data.Content.ValueString(),
@@ -240,7 +240,7 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	}
 
 	// Delete prompt using the Tama client
-	tflog.Debug(ctx, "Deleting prompt", map[string]interface{}{
+	tflog.Debug(ctx, "Deleting prompt", map[string]any{
 		"id": data.Id.ValueString(),
 	})
 
