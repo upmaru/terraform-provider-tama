@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	tama "github.com/upmaru/tama-go"
 	"github.com/upmaru/tama-go/neural"
+	internalplanmodifier "github.com/upmaru/terraform-provider-tama/internal/planmodifier"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -79,6 +80,9 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			"schema_json": schema.StringAttribute{
 				MarkdownDescription: "JSON schema as a string. Mutually exclusive with schema block.",
 				Optional:            true,
+				PlanModifiers: []planmodifier.String{
+					internalplanmodifier.JSONNormalize(),
+				},
 			},
 			"current_state": schema.StringAttribute{
 				MarkdownDescription: "Current state of the class",
@@ -112,6 +116,9 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 						"properties": schema.StringAttribute{
 							MarkdownDescription: "JSON string defining the properties of the schema",
 							Optional:            true,
+							PlanModifiers: []planmodifier.String{
+								internalplanmodifier.JSONNormalize(),
+							},
 						},
 						"required": schema.ListAttribute{
 							MarkdownDescription: "List of required properties",

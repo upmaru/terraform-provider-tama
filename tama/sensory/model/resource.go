@@ -16,46 +16,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	tama "github.com/upmaru/tama-go"
 	"github.com/upmaru/tama-go/sensory"
+	internalplanmodifier "github.com/upmaru/terraform-provider-tama/internal/planmodifier"
 )
-
-// normalizeJSON normalizes JSON strings for consistent comparison.
-func normalizeJSON(jsonStr string) (string, error) {
-	if jsonStr == "" {
-		return "", nil
-	}
-
-	var data map[string]any
-	if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
-		return "", err
-	}
-
-	normalized, err := json.Marshal(data)
-	if err != nil {
-		return "", err
-	}
-
-	return string(normalized), nil
-}
-
-// areJSONEqual compares two JSON strings semantically.
-func areJSONEqual(json1, json2 string) bool {
-	if json1 == json2 {
-		return true
-	}
-
-	if (json1 == "" && json2 == "{}") || (json1 == "{}" && json2 == "") {
-		return true
-	}
-
-	norm1, err1 := normalizeJSON(json1)
-	norm2, err2 := normalizeJSON(json2)
-
-	if err1 != nil || err2 != nil {
-		return false
-	}
-
-	return norm1 == norm2
-}
 
 // Ensure provider defined types fully satisfy framework interfaces.
 var _ resource.Resource = &Resource{}
@@ -114,6 +76,9 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 				MarkdownDescription: "Model parameters as JSON string (e.g., '{\"temperature\": 0.8, \"max_tokens\": 1500}')",
 				Optional:            true,
 				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					internalplanmodifier.JSONNormalize(),
+				},
 			},
 		},
 	}
@@ -185,28 +150,15 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	data.Identifier = types.StringValue(modelResponse.Identifier)
 	// Note: Path is not returned in response, keep the original value
 
-	// Handle parameters from response - only update if they're different or if none were provided
+	// Handle parameters from response
 	if len(modelResponse.Parameters) > 0 {
 		parametersJSON, err := json.Marshal(modelResponse.Parameters)
 		if err != nil {
 			resp.Diagnostics.AddError("Parameters Serialization Error", fmt.Sprintf("Unable to serialize parameters: %s", err))
 			return
 		}
-		apiParametersStr := string(parametersJSON)
-
-		// If user provided parameters, keep their format if semantically equal
-		if !data.Parameters.IsNull() && !data.Parameters.IsUnknown() && data.Parameters.ValueString() != "" {
-			if areJSONEqual(data.Parameters.ValueString(), apiParametersStr) {
-				// Keep user's formatting
-			} else {
-				// Use API response if different
-				data.Parameters = types.StringValue(apiParametersStr)
-			}
-		} else {
-			// No user input, use API response
-			data.Parameters = types.StringValue(apiParametersStr)
-		}
-	} else if data.Parameters.IsNull() || data.Parameters.IsUnknown() {
+		data.Parameters = types.StringValue(string(parametersJSON))
+	} else {
 		data.Parameters = types.StringValue("")
 	}
 
@@ -238,25 +190,15 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 	data.Identifier = types.StringValue(modelResponse.Identifier)
 	// Note: Path is not returned in response, keep the existing value
 
-	// Handle parameters from response - preserve existing state value if semantically equal
+	// Handle parameters from response
 	if len(modelResponse.Parameters) > 0 {
 		parametersJSON, err := json.Marshal(modelResponse.Parameters)
 		if err != nil {
 			resp.Diagnostics.AddError("Parameters Serialization Error", fmt.Sprintf("Unable to serialize parameters: %s", err))
 			return
 		}
-		apiParametersStr := string(parametersJSON)
-
-		// Keep existing value if semantically equal to avoid formatting changes
-		if !data.Parameters.IsNull() && !data.Parameters.IsUnknown() {
-			if !areJSONEqual(data.Parameters.ValueString(), apiParametersStr) {
-				data.Parameters = types.StringValue(apiParametersStr)
-			}
-			// Otherwise keep existing value
-		} else {
-			data.Parameters = types.StringValue(apiParametersStr)
-		}
-	} else if data.Parameters.IsNull() || data.Parameters.IsUnknown() {
+		data.Parameters = types.StringValue(string(parametersJSON))
+	} else {
 		data.Parameters = types.StringValue("")
 	}
 
@@ -309,28 +251,15 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	data.Identifier = types.StringValue(modelResponse.Identifier)
 	// Note: Path is not returned in response, keep the existing value
 
-	// Handle parameters from response - preserve user formatting if semantically equal
+	// Handle parameters from response
 	if len(modelResponse.Parameters) > 0 {
 		parametersJSON, err := json.Marshal(modelResponse.Parameters)
 		if err != nil {
 			resp.Diagnostics.AddError("Parameters Serialization Error", fmt.Sprintf("Unable to serialize parameters: %s", err))
 			return
 		}
-		apiParametersStr := string(parametersJSON)
-
-		// Keep user's input format if semantically equal
-		if !data.Parameters.IsNull() && !data.Parameters.IsUnknown() && data.Parameters.ValueString() != "" {
-			if areJSONEqual(data.Parameters.ValueString(), apiParametersStr) {
-				// Keep user's formatting
-			} else {
-				// Use API response if different
-				data.Parameters = types.StringValue(apiParametersStr)
-			}
-		} else {
-			// No user input, use API response
-			data.Parameters = types.StringValue(apiParametersStr)
-		}
-	} else if data.Parameters.IsNull() || data.Parameters.IsUnknown() {
+		data.Parameters = types.StringValue(string(parametersJSON))
+	} else {
 		data.Parameters = types.StringValue("")
 	}
 
