@@ -115,10 +115,12 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 						"temperature": schema.Float64Attribute{
 							MarkdownDescription: "Sampling temperature (default: 0.8)",
 							Optional:            true,
+							Computed:            true,
 						},
 						"tool_choice": schema.StringAttribute{
 							MarkdownDescription: "Tool choice strategy: required, auto, or any (default: required)",
 							Optional:            true,
+							Computed:            true,
 							Validators: []validator.String{
 								stringvalidator.OneOf("required", "auto", "any"),
 							},
@@ -149,6 +151,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 						"max_tokens": schema.Int64Attribute{
 							MarkdownDescription: "Maximum number of tokens (default: 512)",
 							Optional:            true,
+							Computed:            true,
 						},
 						"templates": schema.ListNestedAttribute{
 							MarkdownDescription: "Templates for embedding processing",
@@ -176,6 +179,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 						"top_n": schema.Int64Attribute{
 							MarkdownDescription: "Number of top results to return (default: 3)",
 							Optional:            true,
+							Computed:            true,
 						},
 					},
 				},
@@ -237,10 +241,10 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		if len(data.CompletionConfig) > 0 {
 			completionConfig := data.CompletionConfig[0]
 			config = map[string]any{}
-			if !completionConfig.Temperature.IsNull() {
+			if !completionConfig.Temperature.IsNull() && !completionConfig.Temperature.IsUnknown() {
 				config["temperature"] = completionConfig.Temperature.ValueFloat64()
 			}
-			if !completionConfig.ToolChoice.IsNull() {
+			if !completionConfig.ToolChoice.IsNull() && !completionConfig.ToolChoice.IsUnknown() {
 				config["tool_choice"] = completionConfig.ToolChoice.ValueString()
 			}
 			if len(completionConfig.RoleMappings) > 0 {
@@ -258,7 +262,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		if len(data.EmbeddingConfig) > 0 {
 			embeddingConfig := data.EmbeddingConfig[0]
 			config = map[string]any{}
-			if !embeddingConfig.MaxTokens.IsNull() {
+			if !embeddingConfig.MaxTokens.IsNull() && !embeddingConfig.MaxTokens.IsUnknown() {
 				config["max_tokens"] = embeddingConfig.MaxTokens.ValueInt64()
 			}
 			if len(embeddingConfig.Templates) > 0 {
@@ -276,7 +280,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		if len(data.RerankingConfig) > 0 {
 			rerankingConfig := data.RerankingConfig[0]
 			config = map[string]any{}
-			if !rerankingConfig.TopN.IsNull() {
+			if !rerankingConfig.TopN.IsNull() && !rerankingConfig.TopN.IsUnknown() {
 				config["top_n"] = rerankingConfig.TopN.ValueInt64()
 			}
 		}
@@ -307,6 +311,9 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	data.Id = types.StringValue(processorResponse.ID)
 	data.ModelId = types.StringValue(processorResponse.ModelID)
 	data.Type = types.StringValue(processorResponse.Type)
+
+	// Update configuration blocks based on the type and API response
+	r.updateConfigurationFromResponse(processorResponse, &data)
 
 	// Write logs using the tflog package
 	tflog.Trace(ctx, "created a processor resource")
@@ -582,16 +589,12 @@ func (r *Resource) updateConfigurationFromResponse(processor *neural.Processor, 
 						config.Temperature = types.Float64Value(floatVal)
 					}
 				}
-			} else if config.Temperature.IsNull() {
-				config.Temperature = types.Float64Null()
 			}
 
 			if toolChoice, ok := processor.Configuration["tool_choice"]; ok {
 				if val, ok := toolChoice.(string); ok {
 					config.ToolChoice = types.StringValue(val)
 				}
-			} else if config.ToolChoice.IsNull() {
-				config.ToolChoice = types.StringNull()
 			}
 
 			if roleMappings, ok := processor.Configuration["role_mappings"]; ok {
@@ -612,6 +615,7 @@ func (r *Resource) updateConfigurationFromResponse(processor *neural.Processor, 
 					config.RoleMappings = roleMappingModels
 				}
 			}
+
 			data.CompletionConfig = []CompletionConfigModel{config}
 		}
 		data.EmbeddingConfig = []EmbeddingConfigModel{}
@@ -628,9 +632,11 @@ func (r *Resource) updateConfigurationFromResponse(processor *neural.Processor, 
 			if maxTokens, ok := processor.Configuration["max_tokens"]; ok {
 				if val, ok := maxTokens.(float64); ok {
 					config.MaxTokens = types.Int64Value(int64(val))
+				} else if intVal, ok := maxTokens.(int64); ok {
+					config.MaxTokens = types.Int64Value(intVal)
+				} else if intVal, ok := maxTokens.(int); ok {
+					config.MaxTokens = types.Int64Value(int64(intVal))
 				}
-			} else if config.MaxTokens.IsNull() {
-				config.MaxTokens = types.Int64Null()
 			}
 
 			if templates, ok := processor.Configuration["templates"]; ok {
@@ -667,9 +673,11 @@ func (r *Resource) updateConfigurationFromResponse(processor *neural.Processor, 
 			if topN, ok := processor.Configuration["top_n"]; ok {
 				if val, ok := topN.(float64); ok {
 					config.TopN = types.Int64Value(int64(val))
+				} else if intVal, ok := topN.(int64); ok {
+					config.TopN = types.Int64Value(intVal)
+				} else if intVal, ok := topN.(int); ok {
+					config.TopN = types.Int64Value(int64(intVal))
 				}
-			} else if config.TopN.IsNull() {
-				config.TopN = types.Int64Null()
 			}
 			data.RerankingConfig = []RerankingConfigModel{config}
 		}

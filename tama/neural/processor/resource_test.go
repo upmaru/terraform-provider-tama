@@ -201,6 +201,52 @@ func TestAccSpaceProcessorResource_Completion(t *testing.T) {
 	})
 }
 
+func TestAccSpaceProcessorResource_CompletionWithDefaults(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing - verify server defaults are synced
+			{
+				Config: testAccSpaceProcessorResourceConfig_CompletionWithDefaults(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("tama_space_processor.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_space_processor.test", "space_id"),
+					resource.TestCheckResourceAttrSet("tama_space_processor.test", "model_id"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "completion"),
+					// Verify server default for tool_choice is reflected in state
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.tool_choice", "required"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSpaceProcessorResource_EmbeddingWithDefaults(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing - verify server defaults are synced
+			{
+				Config: testAccSpaceProcessorResourceConfig_EmbeddingWithDefaults(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("tama_space_processor.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_space_processor.test", "space_id"),
+					resource.TestCheckResourceAttrSet("tama_space_processor.test", "model_id"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "embedding"),
+					// Verify server default for max_tokens is reflected in state
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.max_tokens", "512"),
+					// Check that templates are included
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.#", "1"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.0.type", "query"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.0.content", "Query: {text}"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSpaceProcessorResource_Embedding(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
@@ -426,6 +472,80 @@ resource "tama_space_processor" "test" {
       {
         from = "assistant"
         to   = "ai"
+      }
+    ]
+  }
+}
+`, timestamp, timestamp)
+}
+
+func testAccSpaceProcessorResourceConfig_CompletionWithDefaults() string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "test-space-%d"
+  type = "root"
+}
+
+resource "tama_source" "test" {
+  space_id = tama_space.test.id
+  name     = "test-source-%d"
+  type     = "model"
+  endpoint = "https://api.openai.com/v1"
+  api_key  = "test-key"
+}
+
+resource "tama_model" "test" {
+  source_id  = tama_source.test.id
+  identifier = "gpt-4"
+  path       = "/chat/completions"
+}
+
+resource "tama_space_processor" "test" {
+  space_id = tama_space.test.id
+  model_id = tama_model.test.id
+
+  completion_config {
+    temperature = 0.8
+    # tool_choice intentionally omitted to test server default
+  }
+}
+`, timestamp, timestamp)
+}
+
+func testAccSpaceProcessorResourceConfig_EmbeddingWithDefaults() string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "test-space-%d"
+  type = "root"
+}
+
+resource "tama_source" "test" {
+  space_id = tama_space.test.id
+  name     = "test-source-%d"
+  type     = "model"
+  endpoint = "https://api.openai.com/v1"
+  api_key  = "test-key"
+}
+
+resource "tama_model" "test" {
+  source_id  = tama_source.test.id
+  identifier = "text-embedding-ada-002"
+  path       = "/embeddings"
+}
+
+resource "tama_space_processor" "test" {
+  space_id = tama_space.test.id
+  model_id = tama_model.test.id
+
+  embedding_config {
+    # max_tokens intentionally omitted to test server default
+    # Add minimal templates to ensure valid config
+    templates = [
+      {
+        type    = "query"
+        content = "Query: {text}"
       }
     ]
   }
