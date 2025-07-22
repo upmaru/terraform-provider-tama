@@ -132,7 +132,7 @@ func TestOriginalIssueResolution(t *testing.T) {
 	})
 }
 
-// TestComplexJSONScenarios tests various complex JSON scenarios that users might encounter
+// TestComplexJSONScenarios tests various complex JSON scenarios that users might encounter.
 func TestComplexJSONScenarios(t *testing.T) {
 	t.Parallel()
 
@@ -212,7 +212,7 @@ func TestComplexJSONScenarios(t *testing.T) {
 }
 
 // TestResourceFieldsUsingJSONNormalization verifies that all the JSON fields in our
-// resources are properly configured with the JSON normalization plan modifier
+// resources are properly configured with the JSON normalization plan modifier.
 func TestResourceFieldsUsingJSONNormalization(t *testing.T) {
 	t.Parallel()
 
