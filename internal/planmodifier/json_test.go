@@ -290,3 +290,45 @@ func TestJSONNormalize_OriginalIssue(t *testing.T) {
 		t.Error("Plan value should have been modified from original")
 	}
 }
+
+func TestNormalizeJSON_KeyOrdering(t *testing.T) {
+	t.Parallel()
+
+	// Test that keys are consistently ordered alphabetically
+	input := `{"zebra": "last", "alpha": "first", "middle": "second"}`
+	normalized, err := NormalizeJSON(input)
+	if err != nil {
+		t.Fatalf("NormalizeJSON failed: %v", err)
+	}
+
+	expected := `{"alpha":"first","middle":"second","zebra":"last"}`
+	if normalized != expected {
+		t.Errorf("Keys should be ordered alphabetically")
+		t.Errorf("Expected: %s", expected)
+		t.Errorf("Got:      %s", normalized)
+	}
+
+	// Test nested object key ordering
+	nestedInput := `{
+		"z_outer": {
+			"z_inner": "value1",
+			"a_inner": "value2"
+		},
+		"a_outer": {
+			"z_nested": "value3",
+			"a_nested": "value4"
+		}
+	}`
+
+	normalizedNested, err := NormalizeJSON(nestedInput)
+	if err != nil {
+		t.Fatalf("NormalizeJSON failed for nested object: %v", err)
+	}
+
+	expectedNested := `{"a_outer":{"a_nested":"value4","z_nested":"value3"},"z_outer":{"a_inner":"value2","z_inner":"value1"}}`
+	if normalizedNested != expectedNested {
+		t.Errorf("Nested keys should be ordered alphabetically")
+		t.Errorf("Expected: %s", expectedNested)
+		t.Errorf("Got:      %s", normalizedNested)
+	}
+}
