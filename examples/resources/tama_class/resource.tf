@@ -173,7 +173,7 @@ resource "tama_class" "action_from_variable" {
 # Example using schema from a local JSON file
 resource "tama_class" "user_from_file" {
   space_id    = tama_space.example.id
-  schema_json = file("${path.module}/schemas/user-schema.json")
+  schema_json = jsonencode(jsondecode(file("${path.module}/schemas/user-schema.json")))
 }
 
 # Output the class IDs
