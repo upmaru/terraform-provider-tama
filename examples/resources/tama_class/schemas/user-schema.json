@@ -1,0 +1,110 @@
+{
+  "title": "user-profile",
+  "description": "A user profile schema for storing user information and preferences.",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "Unique identifier for the user"
+    },
+    "username": {
+      "type": "string",
+      "description": "The user's chosen username"
+    },
+    "email": {
+      "type": "string",
+      "description": "The user's email address",
+      "format": "email"
+    },
+    "profile": {
+      "type": "object",
+      "description": "User profile information",
+      "properties": {
+        "first_name": {
+          "type": "string",
+          "description": "User's first name"
+        },
+        "last_name": {
+          "type": "string",
+          "description": "User's last name"
+        },
+        "bio": {
+          "type": ["string", "null"],
+          "description": "User's biography or description"
+        },
+        "avatar_url": {
+          "type": ["string", "null"],
+          "description": "URL to user's avatar image",
+          "format": "uri"
+        },
+        "birth_date": {
+          "type": ["string", "null"],
+          "description": "User's birth date",
+          "format": "date"
+        }
+      },
+      "required": ["first_name", "last_name"]
+    },
+    "preferences": {
+      "type": "object",
+      "description": "User preferences and settings",
+      "properties": {
+        "theme": {
+          "type": "string",
+          "description": "User's preferred theme",
+          "enum": ["light", "dark", "auto"]
+        },
+        "language": {
+          "type": "string",
+          "description": "User's preferred language code"
+        },
+        "notifications": {
+          "type": "object",
+          "description": "Notification preferences",
+          "properties": {
+            "email_notifications": {
+              "type": "boolean",
+              "description": "Whether to send email notifications"
+            },
+            "push_notifications": {
+              "type": "boolean",
+              "description": "Whether to send push notifications"
+            }
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "System metadata for the user",
+      "properties": {
+        "created_at": {
+          "type": "integer",
+          "description": "Unix timestamp when the user was created"
+        },
+        "updated_at": {
+          "type": "integer",
+          "description": "Unix timestamp when the user was last updated"
+        },
+        "last_login": {
+          "type": ["integer", "null"],
+          "description": "Unix timestamp of user's last login"
+        },
+        "status": {
+          "type": "string",
+          "description": "User account status",
+          "enum": ["active", "inactive", "suspended", "pending"]
+        }
+      },
+      "required": ["created_at", "updated_at", "status"]
+    },
+    "roles": {
+      "type": "array",
+      "description": "Array of user roles",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["user_id", "username", "email", "profile", "metadata"]
+}
