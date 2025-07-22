@@ -51,8 +51,8 @@ func (m jsonNormalizePlanModifier) PlanModifyString(ctx context.Context, req pla
 	}
 
 	// Normalize both JSON strings for comparison
-	planJSON, planErr := normalizeJSON(planString)
-	stateJSON, stateErr := normalizeJSON(stateString)
+	planJSON, planErr := NormalizeJSON(planString)
+	stateJSON, stateErr := NormalizeJSON(stateString)
 
 	// If normalization succeeds and they're semantically equal, keep the state value
 	if planErr == nil && stateErr == nil && planJSON == stateJSON {
@@ -65,9 +65,9 @@ func (m jsonNormalizePlanModifier) PlanModifyString(ctx context.Context, req pla
 	// Otherwise, proceed with the planned value
 }
 
-// normalizeJSON normalizes a JSON string by parsing and re-marshaling it.
+// NormalizeJSON normalizes a JSON string by parsing and re-marshaling it.
 // This ensures consistent formatting regardless of input formatting.
-func normalizeJSON(jsonStr string) (string, error) {
+func NormalizeJSON(jsonStr string) (string, error) {
 	if jsonStr == "" {
 		return "", nil
 	}
