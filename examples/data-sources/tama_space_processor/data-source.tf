@@ -14,19 +14,24 @@ provider "tama" {
 # Data source to fetch an existing space processor
 data "tama_space_processor" "example" {
   space_id = "space-123"
-  model_id = "model-456"
+  type     = "completion"
 }
 
 # Data source to fetch another processor
 data "tama_space_processor" "completion_processor" {
   space_id = "space-abc"
-  model_id = "model-def"
+  type     = "embedding"
 }
 
 # Outputs to display the fetched processor information
 output "processor_id" {
   description = "The ID of the processor"
   value       = data.tama_space_processor.example.id
+}
+
+output "processor_model_id" {
+  description = "The model ID of the processor"
+  value       = data.tama_space_processor.example.model_id
 }
 
 output "processor_type" {

@@ -226,7 +226,7 @@ resource "tama_space_processor" "test" {
 
 data "tama_space_processor" "test" {
   space_id = tama_space_processor.test.space_id
-  model_id = tama_space_processor.test.model_id
+  type     = tama_space_processor.test.type
 }
 `, timestamp, timestamp, processorType)
 }
@@ -276,7 +276,7 @@ resource "tama_space_processor" "test" {
 
 data "tama_space_processor" "test" {
   space_id = tama_space_processor.test.space_id
-  model_id = tama_space_processor.test.model_id
+  type     = tama_space_processor.test.type
 }
 `, timestamp)
 }
@@ -325,7 +325,7 @@ resource "tama_space_processor" "test" {
 
 data "tama_space_processor" "test" {
   space_id = tama_space_processor.test.space_id
-  model_id = tama_space_processor.test.model_id
+  type     = tama_space_processor.test.type
 }
 `, timestamp)
 }
@@ -364,7 +364,7 @@ resource "tama_space_processor" "test" {
 
 data "tama_space_processor" "test" {
   space_id = tama_space_processor.test.space_id
-  model_id = tama_space_processor.test.model_id
+  type     = tama_space_processor.test.type
 }
 `, timestamp)
 }
