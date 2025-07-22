@@ -4,13 +4,17 @@
 package class_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"testing"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/upmaru/terraform-provider-tama/internal/acceptance"
+	"github.com/upmaru/terraform-provider-tama/internal/planmodifier"
+	"github.com/upmaru/terraform-provider-tama/tama/neural/class"
 )
 
 func TestAccClassResource(t *testing.T) {
@@ -526,4 +530,289 @@ resource "tama_class" "test" {
   space_id = tama_space.test.id
 }
 `, spaceName)
+}
+
+func TestJSONNormalizationConsistency(t *testing.T) {
+	tests := []struct {
+		name         string
+		inputJSON    string
+		expectedJSON string
+		description  string
+	}{
+		{
+			name: "pretty formatted to minified consistency",
+			inputJSON: `{
+  "title": "action-call",
+  "description": "An action call is a request to execute an action.",
+  "properties": {
+    "code": {
+      "description": "The status of the action call",
+      "type": "integer"
+    },
+    "tool_id": {
+      "description": "The ID of the tool to execute",
+      "type": "string"
+    }
+  },
+  "required": ["tool_id", "code"],
+  "type": "object"
+}`,
+			expectedJSON: `{"description":"An action call is a request to execute an action.","properties":{"code":{"description":"The status of the action call","type":"integer"},"tool_id":{"description":"The ID of the tool to execute","type":"string"}},"required":["tool_id","code"],"title":"action-call","type":"object"}`,
+			description:  "should normalize pretty formatted JSON to consistent minified format",
+		},
+		{
+			name: "different key ordering consistency",
+			inputJSON: `{
+  "title": "dynamic",
+  "description": "A dynamic schema",
+  "type": "object",
+  "properties": {
+    "entity": {
+      "description": "The record",
+      "type": "object"
+    }
+  }
+}`,
+			expectedJSON: `{"description":"A dynamic schema","properties":{"entity":{"description":"The record","type":"object"}},"title":"dynamic","type":"object"}`,
+			description:  "should normalize JSON with different key ordering to consistent format",
+		},
+		{
+			name:         "empty object",
+			inputJSON:    `{}`,
+			expectedJSON: `{}`,
+			description:  "should handle empty objects correctly",
+		},
+		{
+			name: "complex nested structure",
+			inputJSON: `{
+  "title": "complex",
+  "description": "A complex schema",
+  "type": "object",
+  "properties": {
+    "nested": {
+      "type": "object",
+      "properties": {
+        "deep": {
+          "type": "string",
+          "description": "Deep nested field"
+        }
+      },
+      "required": ["deep"]
+    },
+    "array_field": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["nested"]
+}`,
+			expectedJSON: `{"description":"A complex schema","properties":{"array_field":{"items":{"type":"string"},"type":"array"},"nested":{"properties":{"deep":{"description":"Deep nested field","type":"string"}},"required":["deep"],"type":"object"}},"required":["nested"],"title":"complex","type":"object"}`,
+			description:  "should handle complex nested structures correctly",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Test that our normalization function produces consistent output
+			normalized, err := planmodifier.NormalizeJSON(tt.inputJSON)
+			if err != nil {
+				t.Fatalf("NormalizeJSON failed: %v", err)
+			}
+
+			if normalized != tt.expectedJSON {
+				t.Errorf("NormalizeJSON output mismatch")
+				t.Errorf("Expected: %s", tt.expectedJSON)
+				t.Errorf("Got:      %s", normalized)
+			}
+
+			// Test that normalizing the expected output again produces the same result
+			// (idempotency test)
+			normalizedAgain, err := planmodifier.NormalizeJSON(tt.expectedJSON)
+			if err != nil {
+				t.Fatalf("Second NormalizeJSON failed: %v", err)
+			}
+
+			if normalizedAgain != tt.expectedJSON {
+				t.Errorf("NormalizeJSON is not idempotent")
+				t.Errorf("Expected: %s", tt.expectedJSON)
+				t.Errorf("Got:      %s", normalizedAgain)
+			}
+		})
+	}
+}
+
+func TestResourceJSONConsistency(t *testing.T) {
+	// Test that simulates the original error scenario
+	// This tests that when we marshal a schema response and then normalize it,
+	// we get consistent results regardless of input formatting
+
+	// Simulate a schema response from the API (this would be classResponse.Schema)
+	apiResponse := map[string]any{
+		"title":       "action-call",
+		"description": "An action call is a request to execute an action.",
+		"properties": map[string]any{
+			"code": map[string]any{
+				"description": "The status of the action call",
+				"type":        "integer",
+			},
+			"tool_id": map[string]any{
+				"description": "The ID of the tool to execute",
+				"type":        "string",
+			},
+			"parameters": map[string]any{
+				"description": "The parameters to pass to the action",
+				"type":        "object",
+			},
+			"content_type": map[string]any{
+				"description": "The content type of the response",
+				"type":        "string",
+			},
+			"content": map[string]any{
+				"description": "The response from the action",
+				"type":        "object",
+			},
+		},
+		"required": []string{"tool_id", "parameters", "code", "content_type", "content"},
+		"type":     "object",
+	}
+
+	// Marshal the API response (this is what happens in the resource)
+	schemaJSON, err := json.Marshal(apiResponse)
+	if err != nil {
+		t.Fatalf("Failed to marshal API response: %v", err)
+	}
+
+	// Normalize the marshaled JSON (this is our fix)
+	normalizedJSON, err := planmodifier.NormalizeJSON(string(schemaJSON))
+	if err != nil {
+		t.Fatalf("Failed to normalize JSON: %v", err)
+	}
+
+	// Create a ResourceModel and set the normalized JSON
+	data := class.ResourceModel{
+		SchemaJSON: types.StringValue(normalizedJSON),
+	}
+
+	// Verify that the SchemaJSON field contains valid, normalized JSON
+	if data.SchemaJSON.IsNull() || data.SchemaJSON.IsUnknown() {
+		t.Error("SchemaJSON should not be null or unknown")
+	}
+
+	jsonValue := data.SchemaJSON.ValueString()
+	if jsonValue == "" {
+		t.Error("SchemaJSON should not be empty")
+	}
+
+	// Verify that the JSON is valid
+	var testObj map[string]any
+	if err := json.Unmarshal([]byte(jsonValue), &testObj); err != nil {
+		t.Errorf("SchemaJSON should contain valid JSON: %v", err)
+	}
+
+	// Verify that normalizing again produces the same result (idempotency)
+	normalizedAgain, err := planmodifier.NormalizeJSON(jsonValue)
+	if err != nil {
+		t.Fatalf("Second normalization failed: %v", err)
+	}
+
+	if normalizedAgain != jsonValue {
+		t.Error("JSON normalization should be idempotent")
+		t.Errorf("Original:  %s", jsonValue)
+		t.Errorf("Normalized: %s", normalizedAgain)
+	}
+}
+
+func TestOriginalErrorScenario(t *testing.T) {
+	// This test reproduces the exact scenario from the original error message
+
+	// The user's pretty-formatted input (what would be in the plan)
+	userInput := `{
+  "title": "action-call",
+  "description": "An action call is a request to execute an action.",
+  "properties": {
+    "code": {
+      "description": "The status of the action call",
+      "type": "integer"
+    },
+    "tool_id": {
+      "description": "The ID of the tool to execute",
+      "type": "string"
+    },
+    "parameters": {
+      "description": "The parameters to pass to the action",
+      "type": "object"
+    },
+    "content_type": {
+      "description": "The content type of the response",
+      "type": "string"
+    },
+    "content": {
+      "description": "The response from the action",
+      "type": "object"
+    }
+  },
+  "required": ["tool_id", "parameters", "code", "content_type", "content"],
+  "type": "object"
+}`
+
+	// What the server would return (same content, but potentially different ordering)
+	// After json.Marshal, Go might reorder keys alphabetically
+	serverResponseData := map[string]any{
+		"description": "An action call is a request to execute an action.",
+		"properties": map[string]any{
+			"code": map[string]any{
+				"description": "The status of the action call",
+				"type":        "integer",
+			},
+			"content": map[string]any{
+				"description": "The response from the action",
+				"type":        "object",
+			},
+			"content_type": map[string]any{
+				"description": "The content type of the response",
+				"type":        "string",
+			},
+			"parameters": map[string]any{
+				"description": "The parameters to pass to the action",
+				"type":        "object",
+			},
+			"tool_id": map[string]any{
+				"description": "The ID of the tool to execute",
+				"type":        "string",
+			},
+		},
+		"required": []string{"tool_id", "parameters", "code", "content_type", "content"},
+		"title":    "action-call",
+		"type":     "object",
+	}
+
+	// Marshal the server response (simulating what happens in the resource)
+	serverJSON, err := json.Marshal(serverResponseData)
+	if err != nil {
+		t.Fatalf("Failed to marshal server response: %v", err)
+	}
+
+	// Normalize both the user input and server response
+	normalizedUser, err := planmodifier.NormalizeJSON(userInput)
+	if err != nil {
+		t.Fatalf("Failed to normalize user input: %v", err)
+	}
+
+	normalizedServer, err := planmodifier.NormalizeJSON(string(serverJSON))
+	if err != nil {
+		t.Fatalf("Failed to normalize server response: %v", err)
+	}
+
+	// They should be identical after normalization
+	if normalizedUser != normalizedServer {
+		t.Error("Normalized user input and server response should be identical")
+		t.Errorf("User:   %s", normalizedUser)
+		t.Errorf("Server: %s", normalizedServer)
+	}
+
+	// This test verifies that our fix prevents the "Provider produced inconsistent result" error
+	// by ensuring that both the planned value (user input) and the applied value (server response)
+	// normalize to the same string representation.
 }

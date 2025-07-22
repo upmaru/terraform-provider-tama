@@ -211,7 +211,7 @@ func TestNormalizeJSON(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			result, err := normalizeJSON(tt.input)
+			result, err := NormalizeJSON(tt.input)
 
 			if tt.hasError && err == nil {
 				t.Errorf("expected error but got none")

@@ -273,13 +273,20 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 			return
 		}
 	} else {
-		// Update schema_json with response
+		// Update schema_json with response, but normalize to match plan modifier behavior
 		schemaJSON, err := json.Marshal(classResponse.Schema)
 		if err != nil {
 			resp.Diagnostics.AddError("Schema Error", fmt.Sprintf("Unable to marshal schema to JSON: %s", err))
 			return
 		}
-		data.SchemaJSON = types.StringValue(string(schemaJSON))
+
+		// Normalize the marshaled JSON to ensure consistent formatting
+		normalizedJSON, err := internalplanmodifier.NormalizeJSON(string(schemaJSON))
+		if err != nil {
+			resp.Diagnostics.AddError("Schema Error", fmt.Sprintf("Unable to normalize schema JSON: %s", err))
+			return
+		}
+		data.SchemaJSON = types.StringValue(normalizedJSON)
 	}
 
 	// Write logs using the tflog package
@@ -323,13 +330,20 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 			return
 		}
 	} else if hasSchemaJSON {
-		// Update schema_json with response
+		// Update schema_json with response, but normalize to match plan modifier behavior
 		schemaJSON, err := json.Marshal(classResponse.Schema)
 		if err != nil {
 			resp.Diagnostics.AddError("Schema Error", fmt.Sprintf("Unable to marshal schema to JSON: %s", err))
 			return
 		}
-		data.SchemaJSON = types.StringValue(string(schemaJSON))
+
+		// Normalize the marshaled JSON to ensure consistent formatting
+		normalizedJSON, err := internalplanmodifier.NormalizeJSON(string(schemaJSON))
+		if err != nil {
+			resp.Diagnostics.AddError("Schema Error", fmt.Sprintf("Unable to normalize schema JSON: %s", err))
+			return
+		}
+		data.SchemaJSON = types.StringValue(normalizedJSON)
 	}
 
 	// Save updated data into Terraform state
@@ -452,13 +466,20 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 			return
 		}
 	} else {
-		// Update schema_json with response
+		// Update schema_json with response, but normalize to match plan modifier behavior
 		schemaJSON, err := json.Marshal(classResponse.Schema)
 		if err != nil {
 			resp.Diagnostics.AddError("Schema Error", fmt.Sprintf("Unable to marshal schema to JSON: %s", err))
 			return
 		}
-		data.SchemaJSON = types.StringValue(string(schemaJSON))
+
+		// Normalize the marshaled JSON to ensure consistent formatting
+		normalizedJSON, err := internalplanmodifier.NormalizeJSON(string(schemaJSON))
+		if err != nil {
+			resp.Diagnostics.AddError("Schema Error", fmt.Sprintf("Unable to normalize schema JSON: %s", err))
+			return
+		}
+		data.SchemaJSON = types.StringValue(normalizedJSON)
 	}
 
 	// Save updated data into Terraform state
