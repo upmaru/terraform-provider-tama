@@ -19,6 +19,7 @@ import (
 	tama "github.com/upmaru/tama-go"
 
 	"github.com/upmaru/terraform-provider-tama/tama/memory/prompt"
+	"github.com/upmaru/terraform-provider-tama/tama/neural/class"
 	space_processor "github.com/upmaru/terraform-provider-tama/tama/neural/processor"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/space"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/limit"
@@ -155,6 +156,7 @@ func (p *TamaProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		space.NewResource,
+		class.NewResource,
 		space_processor.NewResource,
 		source.NewResource,
 		model.NewResource,
@@ -170,6 +172,7 @@ func (p *TamaProvider) EphemeralResources(ctx context.Context) []func() ephemera
 func (p *TamaProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		space.NewDataSource,
+		class.NewDataSource,
 		space_processor.NewDataSource,
 		source.NewDataSource,
 		model.NewDataSource,
