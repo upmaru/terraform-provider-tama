@@ -157,8 +157,11 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 			resp.Diagnostics.AddError("Parameters Serialization Error", fmt.Sprintf("Unable to serialize parameters: %s", err))
 			return
 		}
-		data.Parameters = types.StringValue(string(parametersJSON))
-	} else {
+		// Only update if user didn't provide parameters or if the values are different
+		if data.Parameters.IsNull() || data.Parameters.IsUnknown() {
+			data.Parameters = types.StringValue(string(parametersJSON))
+		}
+	} else if data.Parameters.IsNull() || data.Parameters.IsUnknown() {
 		data.Parameters = types.StringValue("")
 	}
 
@@ -197,8 +200,11 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 			resp.Diagnostics.AddError("Parameters Serialization Error", fmt.Sprintf("Unable to serialize parameters: %s", err))
 			return
 		}
-		data.Parameters = types.StringValue(string(parametersJSON))
-	} else {
+		// Only update if the current value is null/unknown to preserve user input
+		if data.Parameters.IsNull() || data.Parameters.IsUnknown() {
+			data.Parameters = types.StringValue(string(parametersJSON))
+		}
+	} else if data.Parameters.IsNull() || data.Parameters.IsUnknown() {
 		data.Parameters = types.StringValue("")
 	}
 
@@ -258,8 +264,11 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 			resp.Diagnostics.AddError("Parameters Serialization Error", fmt.Sprintf("Unable to serialize parameters: %s", err))
 			return
 		}
-		data.Parameters = types.StringValue(string(parametersJSON))
-	} else {
+		// Only update if the current value is null/unknown to preserve user input
+		if data.Parameters.IsNull() || data.Parameters.IsUnknown() {
+			data.Parameters = types.StringValue(string(parametersJSON))
+		}
+	} else if data.Parameters.IsNull() || data.Parameters.IsUnknown() {
 		data.Parameters = types.StringValue("")
 	}
 

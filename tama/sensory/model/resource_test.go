@@ -4,14 +4,49 @@
 package model_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"testing"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/upmaru/terraform-provider-tama/internal/acceptance"
 )
+
+// testCheckJSONEqual creates a test function that checks if two JSON strings are semantically equal
+func testCheckJSONEqual(name, expected string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[name]
+		if !ok {
+			return fmt.Errorf("Not found: %s", name)
+		}
+
+		actual := rs.Primary.Attributes["parameters"]
+
+		// Normalize both JSON strings for comparison
+		var expectedObj, actualObj interface{}
+
+		if err := json.Unmarshal([]byte(expected), &expectedObj); err != nil {
+			return fmt.Errorf("Expected value is not valid JSON: %v", err)
+		}
+
+		if err := json.Unmarshal([]byte(actual), &actualObj); err != nil {
+			return fmt.Errorf("Actual value is not valid JSON: %v", err)
+		}
+
+		// Compare the parsed objects
+		expectedNorm, _ := json.Marshal(expectedObj)
+		actualNorm, _ := json.Marshal(actualObj)
+
+		if string(expectedNorm) != string(actualNorm) {
+			return fmt.Errorf("JSON values are not equal.\nExpected: %s\nActual: %s", expected, actual)
+		}
+
+		return nil
+	}
+}
 
 func TestAccModelResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -311,7 +346,7 @@ func TestAccModelResource_WithParameters(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tama_model.test", "identifier", "grok-3-mini"),
 					resource.TestCheckResourceAttr("tama_model.test", "path", "/chat/completions"),
-					resource.TestCheckResourceAttr("tama_model.test", "parameters", `{"reasoning_effort": "low", "temperature": 0.8}`),
+					testCheckJSONEqual("tama_model.test", `{"reasoning_effort": "low", "temperature": 0.8}`),
 					resource.TestCheckResourceAttrSet("tama_model.test", "id"),
 					resource.TestCheckResourceAttrSet("tama_model.test", "source_id"),
 				),
@@ -329,7 +364,7 @@ func TestAccModelResource_WithParameters(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tama_model.test", "identifier", "grok-3-mini"),
 					resource.TestCheckResourceAttr("tama_model.test", "path", "/chat/completions"),
-					resource.TestCheckResourceAttr("tama_model.test", "parameters", `{"reasoning_effort": "medium", "temperature": 0.9, "max_tokens": 2000}`),
+					testCheckJSONEqual("tama_model.test", `{"reasoning_effort": "medium", "temperature": 0.9, "max_tokens": 2000}`),
 				),
 			},
 		},
@@ -414,7 +449,7 @@ func TestAccModelResource_ParameterTypes(t *testing.T) {
 						Check: resource.ComposeAggregateTestCheckFunc(
 							resource.TestCheckResourceAttr("tama_model.test", "identifier", "test-model"),
 							resource.TestCheckResourceAttr("tama_model.test", "path", "/chat/completions"),
-							resource.TestCheckResourceAttr("tama_model.test", "parameters", tc.parameters),
+							testCheckJSONEqual("tama_model.test", tc.parameters),
 							resource.TestCheckResourceAttrSet("tama_model.test", "id"),
 						),
 					},
@@ -489,7 +524,7 @@ func TestAccModelResource_EmbeddingParameters(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tama_model.test", "identifier", "text-embedding-3-large"),
 					resource.TestCheckResourceAttr("tama_model.test", "path", "/embeddings"),
-					resource.TestCheckResourceAttr("tama_model.test", "parameters", embeddingParams),
+					testCheckJSONEqual("tama_model.test", embeddingParams),
 					resource.TestCheckResourceAttrSet("tama_model.test", "id"),
 				),
 			},
