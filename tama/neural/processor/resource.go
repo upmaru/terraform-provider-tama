@@ -285,7 +285,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	// Create processor using the Tama client
 	createRequest := neural.CreateProcessorRequest{
 		Processor: neural.ProcessorRequestData{
-			Type:          processorType,
+			ModelID:       data.ModelId.ValueString(),
 			Configuration: config,
 		},
 	}
@@ -297,7 +297,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		"config":   config,
 	})
 
-	processorResponse, err := r.client.Neural.CreateProcessor(data.SpaceId.ValueString(), data.ModelId.ValueString(), createRequest)
+	processorResponse, err := r.client.Neural.CreateProcessor(data.SpaceId.ValueString(), processorType, createRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create processor, got error: %s", err))
 		return
@@ -326,7 +326,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 	}
 
 	// Get processor from API
-	processorResponse, err := r.client.Neural.GetProcessor(data.SpaceId.ValueString(), data.ModelId.ValueString())
+	processorResponse, err := r.client.Neural.GetProcessor(data.SpaceId.ValueString(), data.Type.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read processor, got error: %s", err))
 		return
@@ -424,7 +424,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	// Update processor using the Tama client
 	updateRequest := neural.UpdateProcessorRequest{
 		Processor: neural.UpdateProcessorData{
-			Type:          processorType,
+			ModelID:       data.ModelId.ValueString(),
 			Configuration: config,
 		},
 	}
@@ -436,7 +436,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		"config":   config,
 	})
 
-	processorResponse, err := r.client.Neural.UpdateProcessor(data.SpaceId.ValueString(), data.ModelId.ValueString(), updateRequest)
+	processorResponse, err := r.client.Neural.UpdateProcessor(data.SpaceId.ValueString(), processorType, updateRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update processor, got error: %s", err))
 		return
@@ -468,7 +468,7 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 		"id": data.Id.ValueString(),
 	})
 
-	err := r.client.Neural.DeleteProcessor(data.SpaceId.ValueString(), data.ModelId.ValueString())
+	err := r.client.Neural.DeleteProcessor(data.SpaceId.ValueString(), data.Type.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete processor, got error: %s", err))
 		return
@@ -476,22 +476,40 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 }
 
 func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	// Parse the compound ID to extract space_id and model_id
-	// The import ID should be in the format "space_id/model_id"
+	// Parse the compound ID to extract space_id and type
+	// The import ID should be in the format "space_id/type"
 	parts := strings.Split(req.ID, "/")
 	if len(parts) != 2 {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
-			"Import ID must be in the format 'space_id/model_id'",
+			"Import ID must be in the format 'space_id/type'",
 		)
 		return
 	}
 
 	spaceID := parts[0]
-	modelID := parts[1]
+	processorType := parts[1]
+
+	// Validate processor type
+	validTypes := []string{"completion", "embedding", "reranking"}
+	isValidType := false
+	for _, validType := range validTypes {
+		if processorType == validType {
+			isValidType = true
+			break
+		}
+	}
+
+	if !isValidType {
+		resp.Diagnostics.AddError(
+			"Invalid Processor Type",
+			fmt.Sprintf("Processor type must be one of: %v", validTypes),
+		)
+		return
+	}
 
 	// Get processor from API to populate state
-	processorResponse, err := r.client.Neural.GetProcessor(spaceID, modelID)
+	processorResponse, err := r.client.Neural.GetProcessor(spaceID, processorType)
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to import processor, got error: %s", err))
 		return
@@ -501,7 +519,7 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 	data := ResourceModel{
 		Id:      types.StringValue(processorResponse.ID),
 		SpaceId: types.StringValue(spaceID),
-		ModelId: types.StringValue(modelID),
+		ModelId: types.StringValue(processorResponse.ModelID),
 		Type:    types.StringValue(processorResponse.Type),
 	}
 

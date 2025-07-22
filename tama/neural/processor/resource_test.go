@@ -383,9 +383,9 @@ func testAccSpaceProcessorImportStateIdFunc(s *terraform.State) (string, error) 
 	}
 
 	spaceId := rs.Primary.Attributes["space_id"]
-	modelId := rs.Primary.Attributes["model_id"]
+	processorType := rs.Primary.Attributes["type"]
 
-	return fmt.Sprintf("%s/%s", spaceId, modelId), nil
+	return fmt.Sprintf("%s/%s", spaceId, processorType), nil
 }
 
 // Test configuration functions.

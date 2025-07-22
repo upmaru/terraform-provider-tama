@@ -29,19 +29,24 @@ provider "tama" {
 # Data source to fetch an existing space processor
 data "tama_space_processor" "example" {
   space_id = "space-123"
-  model_id = "model-456"
+  type     = "completion"
 }
 
 # Data source to fetch another processor
 data "tama_space_processor" "completion_processor" {
   space_id = "space-abc"
-  model_id = "model-def"
+  type     = "embedding"
 }
 
 # Outputs to display the fetched processor information
 output "processor_id" {
   description = "The ID of the processor"
   value       = data.tama_space_processor.example.id
+}
+
+output "processor_model_id" {
+  description = "The model ID of the processor"
+  value       = data.tama_space_processor.example.model_id
 }
 
 output "processor_type" {
@@ -75,8 +80,8 @@ output "reranking_config" {
 
 ### Required
 
-- `model_id` (String) ID of the model this processor uses
 - `space_id` (String) ID of the space this processor belongs to
+- `type` (String) Type of processor: completion, embedding, or reranking
 
 ### Read-Only
 
@@ -84,8 +89,8 @@ output "reranking_config" {
 - `current_state` (String) Current state of the processor
 - `embedding_config` (Block List) Configuration for embedding type processors (see [below for nested schema](#nestedblock--embedding_config))
 - `id` (String) Processor identifier
+- `model_id` (String) ID of the model this processor uses
 - `reranking_config` (Block List) Configuration for reranking type processors (see [below for nested schema](#nestedblock--reranking_config))
-- `type` (String) Type of processor: completion, embedding, or reranking
 
 <a id="nestedblock--completion_config"></a>
 ### Nested Schema for `completion_config`

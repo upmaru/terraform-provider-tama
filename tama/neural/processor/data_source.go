@@ -59,11 +59,11 @@ func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, r
 			},
 			"model_id": schema.StringAttribute{
 				MarkdownDescription: "ID of the model this processor uses",
-				Required:            true,
+				Computed:            true,
 			},
 			"type": schema.StringAttribute{
 				MarkdownDescription: "Type of processor: completion, embedding, or reranking",
-				Computed:            true,
+				Required:            true,
 			},
 			"current_state": schema.StringAttribute{
 				MarkdownDescription: "Current state of the processor",
@@ -177,10 +177,10 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	// Get processor from API
 	tflog.Debug(ctx, "Reading processor", map[string]any{
 		"space_id": data.SpaceId.ValueString(),
-		"model_id": data.ModelId.ValueString(),
+		"type":     data.Type.ValueString(),
 	})
 
-	processorResponse, err := d.client.Neural.GetProcessor(data.SpaceId.ValueString(), data.ModelId.ValueString())
+	processorResponse, err := d.client.Neural.GetProcessor(data.SpaceId.ValueString(), data.Type.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read processor, got error: %s", err))
 		return

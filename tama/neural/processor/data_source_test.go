@@ -127,32 +127,32 @@ func TestAccSpaceProcessorDataSource_MultipleConfigurations(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Test completion processor
 			{
-				Config: testAccSpaceProcessorDataSourceConfig("completion"),
+				Config: testAccSpaceProcessorDataSourceConfigMultiple("completion"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "type", "completion"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion_config.#", "1"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding_config.#", "0"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "reranking_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_completion", "type", "completion"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_completion", "completion_config.#", "1"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_completion", "embedding_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_completion", "reranking_config.#", "0"),
 				),
 			},
 			// Test embedding processor
 			{
-				Config: testAccSpaceProcessorDataSourceConfig("embedding"),
+				Config: testAccSpaceProcessorDataSourceConfigMultiple("embedding"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "type", "embedding"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion_config.#", "0"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding_config.#", "1"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "reranking_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_embedding", "type", "embedding"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_embedding", "completion_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_embedding", "embedding_config.#", "1"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_embedding", "reranking_config.#", "0"),
 				),
 			},
 			// Test reranking processor
 			{
-				Config: testAccSpaceProcessorDataSourceConfig("reranking"),
+				Config: testAccSpaceProcessorDataSourceConfigMultiple("reranking"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "type", "reranking"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion_config.#", "0"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding_config.#", "0"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "reranking_config.#", "1"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_reranking", "type", "reranking"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_reranking", "completion_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_reranking", "embedding_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_reranking", "reranking_config.#", "1"),
 				),
 			},
 		},
@@ -226,7 +226,7 @@ resource "tama_space_processor" "test" {
 
 data "tama_space_processor" "test" {
   space_id = tama_space_processor.test.space_id
-  model_id = tama_space_processor.test.model_id
+  type     = tama_space_processor.test.type
 }
 `, timestamp, timestamp, processorType)
 }
@@ -276,7 +276,7 @@ resource "tama_space_processor" "test" {
 
 data "tama_space_processor" "test" {
   space_id = tama_space_processor.test.space_id
-  model_id = tama_space_processor.test.model_id
+  type     = tama_space_processor.test.type
 }
 `, timestamp)
 }
@@ -325,7 +325,7 @@ resource "tama_space_processor" "test" {
 
 data "tama_space_processor" "test" {
   space_id = tama_space_processor.test.space_id
-  model_id = tama_space_processor.test.model_id
+  type     = tama_space_processor.test.type
 }
 `, timestamp)
 }
@@ -364,7 +364,98 @@ resource "tama_space_processor" "test" {
 
 data "tama_space_processor" "test" {
   space_id = tama_space_processor.test.space_id
-  model_id = tama_space_processor.test.model_id
+  type     = tama_space_processor.test.type
 }
 `, timestamp)
+}
+
+type testConfigParams struct {
+	ProcessorType   string
+	Timestamp       int64
+	ModelIdentifier string
+	ModelPath       string
+}
+
+func testAccSpaceProcessorDataSourceConfigMultiple(processorType string) string {
+	params := testConfigParams{
+		ProcessorType:   processorType,
+		Timestamp:       time.Now().UnixNano(),
+		ModelIdentifier: getModelIdentifier(processorType),
+		ModelPath:       getModelPath(processorType),
+	}
+
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test_space_%[1]s" {
+  name = "test-space-for-processor-ds-%[1]s-%[2]d"
+  type = "root"
+}
+
+resource "tama_source" "test_source_%[1]s" {
+  space_id = tama_space.test_space_%[1]s.id
+  name     = "test-source-for-processor-ds-%[1]s"
+  type     = "model"
+  endpoint = "https://api.openai.com"
+  api_key  = "test-api-key"
+}
+
+resource "tama_model" "test_model_%[1]s" {
+  source_id  = tama_source.test_source_%[1]s.id
+  identifier = "%[3]s"
+  path       = "%[4]s"
+}
+
+resource "tama_space_processor" "test_%[1]s" {
+  space_id = tama_space.test_space_%[1]s.id
+  model_id = tama_model.test_model_%[1]s.id
+
+  dynamic "completion_config" {
+    for_each = "%[1]s" == "completion" ? [1] : []
+    content {
+      temperature = 0.8
+      tool_choice = "required"
+    }
+  }
+
+  dynamic "embedding_config" {
+    for_each = "%[1]s" == "embedding" ? [1] : []
+    content {
+      max_tokens = 512
+    }
+  }
+
+  dynamic "reranking_config" {
+    for_each = "%[1]s" == "reranking" ? [1] : []
+    content {
+      top_n = 3
+    }
+  }
+}
+
+data "tama_space_processor" "test_%[1]s" {
+  space_id = tama_space_processor.test_%[1]s.space_id
+  type     = tama_space_processor.test_%[1]s.type
+}
+`, params.ProcessorType, params.Timestamp, params.ModelIdentifier, params.ModelPath)
+}
+
+func getModelIdentifier(processorType string) string {
+	switch processorType {
+	case "embedding":
+		return "text-embedding-ada-002"
+	case "reranking":
+		return "rerank-english-v2.0"
+	default:
+		return "gpt-4"
+	}
+}
+
+func getModelPath(processorType string) string {
+	switch processorType {
+	case "embedding":
+		return "/embeddings"
+	case "reranking":
+		return "/rerank"
+	default:
+		return "/chat/completions"
+	}
 }
