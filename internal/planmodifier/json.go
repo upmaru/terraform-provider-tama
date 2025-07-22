@@ -4,8 +4,10 @@
 package planmodifier
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"sort"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 )
@@ -65,22 +67,67 @@ func (m jsonNormalizePlanModifier) PlanModifyString(ctx context.Context, req pla
 	// Otherwise, proceed with the planned value
 }
 
-// NormalizeJSON normalizes a JSON string by parsing and re-marshaling it.
-// This ensures consistent formatting regardless of input formatting.
+// NormalizeJSON normalizes JSON by sorting keys recursively.
 func NormalizeJSON(jsonStr string) (string, error) {
 	if jsonStr == "" {
 		return "", nil
 	}
 
-	var obj interface{}
+	var obj any
 	if err := json.Unmarshal([]byte(jsonStr), &obj); err != nil {
 		return "", err
 	}
 
-	normalized, err := json.Marshal(obj)
-	if err != nil {
+	normalized := normalizeValue(obj)
+
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false) // Optional: prevents escaping of <, >, &
+	encoder.SetIndent("", "")    // No indentation for compact output
+
+	if err := encoder.Encode(normalized); err != nil {
 		return "", err
 	}
 
-	return string(normalized), nil
+	// Remove the trailing newline that json.Encoder adds
+	result := buf.String()
+	if len(result) > 0 && result[len(result)-1] == '\n' {
+		result = result[:len(result)-1]
+	}
+
+	return result, nil
+}
+
+// normalizeValue recursively processes values to ensure consistent ordering.
+func normalizeValue(v any) any {
+	switch val := v.(type) {
+	case map[string]any:
+		// Create a new map and process keys in sorted order
+		normalized := make(map[string]any)
+
+		// Get all keys and sort them
+		keys := make([]string, 0, len(val))
+		for k := range val {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		// Process each key-value pair recursively
+		for _, k := range keys {
+			normalized[k] = normalizeValue(val[k])
+		}
+		return normalized
+
+	case []any:
+		// Process array elements recursively
+		normalized := make([]any, len(val))
+		for i, elem := range val {
+			normalized[i] = normalizeValue(elem)
+		}
+		return normalized
+
+	default:
+		// For primitive types (string, number, bool, null), return as-is
+		return val
+	}
 }
