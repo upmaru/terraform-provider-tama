@@ -67,7 +67,7 @@ func (m jsonNormalizePlanModifier) PlanModifyString(ctx context.Context, req pla
 	// Otherwise, proceed with the planned value
 }
 
-// NormalizeJSON normalizes JSON by sorting keys recursively
+// NormalizeJSON normalizes JSON by sorting keys recursively.
 func NormalizeJSON(jsonStr string) (string, error) {
 	if jsonStr == "" {
 		return "", nil
@@ -98,7 +98,7 @@ func NormalizeJSON(jsonStr string) (string, error) {
 	return result, nil
 }
 
-// normalizeValue recursively processes values to ensure consistent ordering
+// normalizeValue recursively processes values to ensure consistent ordering.
 func normalizeValue(v any) any {
 	switch val := v.(type) {
 	case map[string]any:
