@@ -59,6 +59,27 @@ resource "tama_space" "ai_testing" {
   type = "component"
 }
 
+# Create perception chains for AI processing workflows
+resource "tama_chain" "identity_validation" {
+  space_id = tama_space.ai_services.id
+  name     = "Identity Validation Chain"
+}
+
+resource "tama_chain" "content_analysis" {
+  space_id = tama_space.ai_services.id
+  name     = "Content Analysis Pipeline"
+}
+
+resource "tama_chain" "data_processing" {
+  space_id = tama_space.ai_services.id
+  name     = "Data Processing Chain"
+}
+
+resource "tama_chain" "sentiment_analysis" {
+  space_id = tama_space.ai_testing.id
+  name     = "Sentiment Analysis Test Chain"
+}
+
 # Create sources for different AI providers in production
 resource "tama_source" "mistral_prod" {
   space_id = tama_space.ai_services.id
@@ -248,6 +269,10 @@ data "tama_limit" "mistral_per_second_data" {
   id = tama_limit.mistral_per_second.id
 }
 
+data "tama_chain" "identity_validation_data" {
+  id = tama_chain.identity_validation.id
+}
+
 # Local values for organizing outputs
 locals {
   production_sources = {
@@ -272,6 +297,13 @@ locals {
     claude_3_haiku  = tama_model.claude_3_haiku.id
     claude_3_sonnet = tama_model.claude_3_sonnet.id
     claude_3_opus   = tama_model.claude_3_opus.id
+  }
+
+  chains = {
+    identity_validation = tama_chain.identity_validation.id
+    content_analysis    = tama_chain.content_analysis.id
+    data_processing     = tama_chain.data_processing.id
+    sentiment_analysis  = tama_chain.sentiment_analysis.id
   }
 }
 
@@ -306,6 +338,36 @@ output "models" {
   }
 }
 
+output "chains" {
+  description = "Created perception chains"
+  value = {
+    production = {
+      identity_validation = {
+        id   = tama_chain.identity_validation.id
+        name = tama_chain.identity_validation.name
+        slug = tama_chain.identity_validation.slug
+      }
+      content_analysis = {
+        id   = tama_chain.content_analysis.id
+        name = tama_chain.content_analysis.name
+        slug = tama_chain.content_analysis.slug
+      }
+      data_processing = {
+        id   = tama_chain.data_processing.id
+        name = tama_chain.data_processing.name
+        slug = tama_chain.data_processing.slug
+      }
+    }
+    testing = {
+      sentiment_analysis = {
+        id   = tama_chain.sentiment_analysis.id
+        name = tama_chain.sentiment_analysis.name
+        slug = tama_chain.sentiment_analysis.slug
+      }
+    }
+  }
+}
+
 output "limits_summary" {
   description = "Summary of rate limits by provider"
   value = {
@@ -333,6 +395,8 @@ output "data_source_examples" {
     source_name   = data.tama_source.mistral_data.name
     model_id      = data.tama_model.mistral_large_data.identifier
     limit_per_sec = data.tama_limit.mistral_per_second_data.limit
+    chain_name    = data.tama_chain.identity_validation_data.name
+    chain_slug    = data.tama_chain.identity_validation_data.slug
   }
 }
 
@@ -343,6 +407,7 @@ resource "local_file" "ai_config" {
       production = tama_space.ai_services.id
       testing    = tama_space.ai_testing.id
     }
+    chains  = local.chains
     sources = local.production_sources
     models = {
       mistral   = local.mistral_models
