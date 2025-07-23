@@ -13,6 +13,7 @@ The examples are organized according to Terraform documentation conventions:
 ### Resources
 
 - **[resources/tama_space/](resources/tama_space/)** - Neural Space resource examples
+- **[resources/tama_chain/](resources/tama_chain/)** - Perception Chain resource examples
 - **[resources/tama_source/](resources/tama_source/)** - Sensory Source resource examples  
 - **[resources/tama_model/](resources/tama_model/)** - Sensory Model resource examples
 - **[resources/tama_limit/](resources/tama_limit/)** - Sensory Limit resource examples
@@ -20,6 +21,7 @@ The examples are organized according to Terraform documentation conventions:
 ### Data Sources
 
 - **[data-sources/tama_space/](data-sources/tama_space/)** - Space data source examples
+- **[data-sources/tama_chain/](data-sources/tama_chain/)** - Chain data source examples
 - **[data-sources/tama_source/](data-sources/tama_source/)** - Source data source examples
 - **[data-sources/tama_model/](data-sources/tama_model/)** - Model data source examples
 - **[data-sources/tama_limit/](data-sources/tama_limit/)** - Limit data source examples
@@ -48,7 +50,16 @@ resource "tama_space" "example" {
 }
 ```
 
-3. **Create a source** (sensory resource):
+3. **Create a chain** (perception resource):
+
+```hcl
+resource "tama_chain" "example" {
+  space_id = tama_space.example.id
+  name     = "Identity Validation"
+}
+```
+
+4. **Create a source** (sensory resource):
 
 ```hcl
 resource "tama_source" "mistral" {
@@ -60,7 +71,7 @@ resource "tama_source" "mistral" {
 }
 ```
 
-4. **Add models and limits**:
+5. **Add models and limits**:
 
 ```hcl
 resource "tama_model" "mistral_small" {
@@ -83,12 +94,14 @@ The Tama provider resources have the following hierarchy:
 
 ```
 Space (Neural)
+├── Chain (Perception)
 └── Source (Sensory)
     ├── Model (Sensory)
     └── Limit (Sensory)
 ```
 
 - **Spaces** are top-level containers for organizing AI services
+- **Chains** represent AI processing pipelines and belong to a space
 - **Sources** represent external AI providers/APIs and belong to a space
 - **Models** define specific AI models available from a source
 - **Limits** define rate limiting rules for a source
