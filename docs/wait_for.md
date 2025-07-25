@@ -42,7 +42,7 @@ The `field` block defines a condition that must be satisfied. You can specify mu
 
 ### Simple State Waiting
 
-Wait for a specification to reach the "active" state:
+Wait for a specification to reach the "completed" state:
 
 ```hcl
 resource "tama_specification" "example" {
@@ -51,7 +51,7 @@ resource "tama_specification" "example" {
   wait_for {
     field {
       key   = "current_state"
-      value = "active"
+      value = "completed"
     }
   }
 }
@@ -68,12 +68,12 @@ resource "tama_specification" "example" {
   wait_for {
     field {
       key   = "current_state"
-      value = "active"
+      value = "completed"
     }
 
     field {
       key   = "provision_state"
-      value = "completed"
+      value = "active"
     }
   }
 }
@@ -90,7 +90,7 @@ resource "tama_specification" "example" {
   wait_for {
     field {
       key        = "provision_state"
-      value      = "^(completed|ready|deployed)$"
+      value      = "^(active|inactive)$"
       value_type = "regex"
     }
   }
@@ -108,12 +108,12 @@ resource "tama_specification" "example" {
   wait_for {
     field {
       key   = "metadata.deployment.status"
-      value = "deployed"
+      value = "completed"
     }
 
     field {
       key   = "config.health.status"
-      value = "healthy"
+      value = "active"
     }
   }
 }
@@ -161,12 +161,12 @@ The `key` parameter supports standard JSON path notation:
 wait_for {
   field {
     key   = "current_state"
-    value = "active"
+    value = "completed"
   }
 
   field {
     key   = "provision_state"
-    value = "completed"
+    value = "active"
   }
 }
 ```
@@ -187,8 +187,8 @@ wait_for {
 ```hcl
 wait_for {
   field {
-    key        = "status"
-    value      = "^(running|active|ready)$"
+    key        = "current_state"
+    value      = "^(completed|failed)$"
     value_type = "regex"
   }
 }

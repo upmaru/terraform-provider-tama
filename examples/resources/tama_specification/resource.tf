@@ -390,13 +390,13 @@ resource "tama_specification" "advanced_wait" {
   # Wait for multiple conditions
   wait_for {
     field {
-      key   = "provision_state"
-      value = "active"
+      key   = "current_state"
+      value = "completed"
     }
 
     field {
-      key        = "current_state"
-      value      = "^(completed|failed)$"
+      key        = "provision_state"
+      value      = "^(active|inactive)$"
       value_type = "regex"
     }
   }

@@ -37,6 +37,8 @@ func TestAccSpecificationResource(t *testing.T) {
 				ResourceName:      "tama_specification.test",
 				ImportState:       true,
 				ImportStateVerify: true,
+				// Ignore current_state as it may differ based on timing
+				ImportStateVerifyIgnore: []string{"current_state"},
 			},
 			// Update and Read testing
 			{
@@ -242,6 +244,102 @@ resource "tama_specification" "test" {
 `, version, endpoint)
 }
 
+func TestAccSpecificationResource_WaitFor(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing with wait_for
+			{
+				Config: testAccSpecificationResourceConfigWaitFor("1.0.0", "https://api.example.com", testhelpers.MustMarshalJSON(testhelpers.TestSchema())),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_specification.test", "version", "1.0.0"),
+					resource.TestCheckResourceAttr("tama_specification.test", "endpoint", "https://api.example.com"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "space_id"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "schema"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "current_state"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "provision_state"),
+					// Verify wait_for configuration is accepted and doesn't cause errors
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.#", "1"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.#", "1"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.0.key", "current_state"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.0.value", "completed"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.0.value_type", "eq"),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      "tama_specification.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+				// Ignore wait_for during import as it's configuration-only
+				// Also ignore current_state as it may differ after wait_for execution
+				ImportStateVerifyIgnore: []string{"wait_for", "current_state"},
+			},
+		},
+	})
+}
+
+func TestAccSpecificationResource_WaitForMultipleConditions(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing with multiple wait_for conditions
+			{
+				Config: testAccSpecificationResourceConfigWaitForMultiple("1.0.0", "https://api.example.com", testhelpers.MustMarshalJSON(testhelpers.TestSchema())),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_specification.test", "version", "1.0.0"),
+					resource.TestCheckResourceAttr("tama_specification.test", "endpoint", "https://api.example.com"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "space_id"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "schema"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "current_state"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "provision_state"),
+					// Verify multiple wait_for conditions
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.#", "1"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.#", "2"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.0.key", "current_state"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.0.value", "completed"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.0.value_type", "eq"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.1.key", "provision_state"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.1.value", "^(active|inactive)$"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.1.value_type", "regex"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSpecificationResource_WaitForRegex(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing with regex wait_for condition
+			{
+				Config: testAccSpecificationResourceConfigWaitForRegex("1.0.0", "https://api.example.com", testhelpers.MustMarshalJSON(testhelpers.TestSchema())),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_specification.test", "version", "1.0.0"),
+					resource.TestCheckResourceAttr("tama_specification.test", "endpoint", "https://api.example.com"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "space_id"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "schema"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "current_state"),
+					resource.TestCheckResourceAttrSet("tama_specification.test", "provision_state"),
+					// Verify regex wait_for condition
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.#", "1"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.#", "1"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.0.key", "current_state"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.0.value", "^(completed|failed)$"),
+					resource.TestCheckResourceAttr("tama_specification.test", "wait_for.0.field.0.value_type", "regex"),
+				),
+			},
+		},
+	})
+}
+
 func testAccSpecificationResourceConfigMultiple() string {
 	timestamp := time.Now().UnixNano()
 	return acceptance.ProviderConfig + fmt.Sprintf(`
@@ -264,4 +362,83 @@ resource "tama_specification" "test2" {
   schema   = %q
 }
 `, testhelpers.MustMarshalJSON(testhelpers.TestSchema()), testhelpers.MustMarshalJSON(testhelpers.TestSchemaUpdated()))
+}
+
+func testAccSpecificationResourceConfigWaitFor(version, endpoint, schema string) string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test_space" {
+  name = "test-space-for-spec-wait-%d"
+  type = "root"
+}`, timestamp) + fmt.Sprintf(`
+
+resource "tama_specification" "test" {
+  space_id = tama_space.test_space.id
+  version  = %[1]q
+  endpoint = %[2]q
+  schema   = %[3]q
+
+  wait_for {
+    field {
+      key   = "current_state"
+      value = "completed"
+    }
+  }
+}
+`, version, endpoint, schema)
+}
+
+func testAccSpecificationResourceConfigWaitForMultiple(version, endpoint, schema string) string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test_space" {
+  name = "test-space-for-spec-wait-multiple-%d"
+  type = "root"
+}`, timestamp) + fmt.Sprintf(`
+
+resource "tama_specification" "test" {
+  space_id = tama_space.test_space.id
+  version  = %[1]q
+  endpoint = %[2]q
+  schema   = %[3]q
+
+  wait_for {
+    field {
+      key   = "current_state"
+      value = "completed"
+    }
+
+    field {
+      key        = "provision_state"
+      value      = "^(active|inactive)$"
+      value_type = "regex"
+    }
+  }
+}
+`, version, endpoint, schema)
+}
+
+func testAccSpecificationResourceConfigWaitForRegex(version, endpoint, schema string) string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test_space" {
+  name = "test-space-for-spec-wait-regex-%d"
+  type = "root"
+}`, timestamp) + fmt.Sprintf(`
+
+resource "tama_specification" "test" {
+  space_id = tama_space.test_space.id
+  version  = %[1]q
+  endpoint = %[2]q
+  schema   = %[3]q
+
+  wait_for {
+    field {
+      key        = "current_state"
+      value      = "^(completed|failed)$"
+      value_type = "regex"
+    }
+  }
+}
+`, version, endpoint, schema)
 }
