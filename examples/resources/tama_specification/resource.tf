@@ -1,0 +1,328 @@
+terraform {
+  required_providers {
+    tama = {
+      source = "upmaru/tama"
+    }
+  }
+}
+
+# First, create a space to contain the specification
+resource "tama_space" "example" {
+  name = "example-space"
+  type = "root"
+}
+
+# Create a specification with a simple schema
+resource "tama_specification" "elasticsearch" {
+  space_id = tama_space.example.id
+  version  = "3.1.0"
+  endpoint = "https://elasticsearch.arrakis.upmaru.network"
+  schema = jsonencode({
+    openapi = "3.0.3"
+    info = {
+      title       = "Elasticsearch API"
+      version     = "3.1.0"
+      description = "Search API for Elasticsearch"
+    }
+    paths = {
+      "/search" = {
+        post = {
+          summary     = "Execute search query"
+          description = "Search documents in the specified index"
+          requestBody = {
+            required = true
+            content = {
+              "application/json" = {
+                schema = {
+                  type = "object"
+                  properties = {
+                    query = {
+                      type        = "string"
+                      description = "The search query"
+                      example     = "user:john AND status:active"
+                    }
+                    index = {
+                      type        = "string"
+                      description = "The Elasticsearch index to search"
+                      example     = "documents"
+                    }
+                    size = {
+                      type    = "integer"
+                      minimum = 1
+                      maximum = 1000
+                      default = 10
+                      example = 50
+                    }
+                    filters = {
+                      type = "object"
+                      properties = {
+                        date_range = {
+                          type = "object"
+                          properties = {
+                            from = { type = "string", format = "date-time" }
+                            to   = { type = "string", format = "date-time" }
+                          }
+                        }
+                        tags = {
+                          type  = "array"
+                          items = { type = "string" }
+                        }
+                      }
+                    }
+                  }
+                  required = ["query", "index"]
+                }
+              }
+            }
+          }
+          responses = {
+            "200" = {
+              description = "Successful search response"
+              content = {
+                "application/json" = {
+                  schema = {
+                    type = "object"
+                    properties = {
+                      hits = {
+                        type  = "array"
+                        items = { type = "object" }
+                      }
+                      total = { type = "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+}
+
+# Example with a more complex OpenAPI-like schema
+resource "tama_specification" "api_gateway" {
+  space_id = tama_space.example.id
+  version  = "1.0.0"
+  endpoint = "https://api-gateway.example.com/v1"
+  schema = jsonencode({
+    openapi = "3.0.3"
+    info = {
+      title       = "API Gateway"
+      version     = "1.0.0"
+      description = "REST API Gateway for microservices"
+    }
+    servers = [
+      {
+        url         = "https://api-gateway.example.com/v1"
+        description = "Production server"
+      }
+    ]
+    paths = {
+      "/users" = {
+        get = {
+          summary     = "List users"
+          description = "Retrieve a paginated list of users"
+          parameters = [
+            {
+              name        = "limit"
+              in          = "query"
+              description = "Number of items to return"
+              schema = {
+                type    = "integer"
+                minimum = 1
+                maximum = 100
+                default = 20
+              }
+            },
+            {
+              name        = "offset"
+              in          = "query"
+              description = "Number of items to skip"
+              schema = {
+                type    = "integer"
+                minimum = 0
+                default = 0
+              }
+            },
+            {
+              name        = "sort"
+              in          = "query"
+              description = "Sort order"
+              schema = {
+                type    = "string"
+                enum    = ["asc", "desc"]
+                default = "asc"
+              }
+            }
+          ]
+          responses = {
+            "200" = {
+              description = "Successful response"
+              content = {
+                "application/json" = {
+                  schema = {
+                    type = "object"
+                    properties = {
+                      users = {
+                        type = "array"
+                        items = {
+                          type = "object"
+                          properties = {
+                            id    = { type = "string" }
+                            name  = { type = "string" }
+                            email = { type = "string", format = "email" }
+                          }
+                        }
+                      }
+                      total = { type = "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        post = {
+          summary     = "Create user"
+          description = "Create a new user"
+          requestBody = {
+            required = true
+            content = {
+              "application/json" = {
+                schema = {
+                  type = "object"
+                  properties = {
+                    name = {
+                      type        = "string"
+                      description = "User's full name"
+                      example     = "John Doe"
+                    }
+                    email = {
+                      type        = "string"
+                      format      = "email"
+                      description = "User's email address"
+                      example     = "john@example.com"
+                    }
+                  }
+                  required = ["name", "email"]
+                }
+              }
+            }
+          }
+          responses = {
+            "201" = {
+              description = "User created successfully"
+              content = {
+                "application/json" = {
+                  schema = {
+                    type = "object"
+                    properties = {
+                      id    = { type = "string" }
+                      name  = { type = "string" }
+                      email = { type = "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    components = {
+      securitySchemes = {
+        bearerAuth = {
+          type   = "http"
+          scheme = "bearer"
+        }
+      }
+    }
+    security = [
+      {
+        bearerAuth = []
+      }
+    ]
+  })
+}
+
+# Example using external schema variable
+variable "custom_schema" {
+  description = "Custom JSON schema for the specification"
+  type        = string
+  default = jsonencode({
+    openapi = "3.0.3"
+    info = {
+      title       = "Custom API"
+      version     = "2.0.0-beta.1"
+      description = "Custom API specification"
+    }
+    paths = {
+      "/messages" = {
+        post = {
+          summary     = "Send message"
+          description = "Send a message to the system"
+          requestBody = {
+            required = true
+            content = {
+              "application/json" = {
+                schema = {
+                  type = "object"
+                  properties = {
+                    message = {
+                      type        = "string"
+                      description = "The message content"
+                      example     = "Hello, world!"
+                    }
+                    timestamp = {
+                      type        = "string"
+                      format      = "date-time"
+                      description = "Message timestamp"
+                    }
+                  }
+                  required = ["message"]
+                }
+              }
+            }
+          }
+          responses = {
+            "200" = {
+              description = "Message sent successfully"
+            }
+          }
+        }
+      }
+    }
+  })
+}
+
+resource "tama_specification" "custom" {
+  space_id = tama_space.example.id
+  version  = "2.0.0-beta.1"
+  endpoint = "https://custom-api.example.com"
+  schema   = var.custom_schema
+}
+
+# Outputs to show the created specifications
+output "elasticsearch_specification_id" {
+  description = "ID of the Elasticsearch specification"
+  value       = tama_specification.elasticsearch.id
+}
+
+output "elasticsearch_specification_state" {
+  description = "Current and provision states of the Elasticsearch specification"
+  value = {
+    current_state   = tama_specification.elasticsearch.current_state
+    provision_state = tama_specification.elasticsearch.provision_state
+  }
+}
+
+output "api_gateway_specification_id" {
+  description = "ID of the API Gateway specification"
+  value       = tama_specification.api_gateway.id
+}
+
+output "custom_specification_id" {
+  description = "ID of the custom specification"
+  value       = tama_specification.custom.id
+}

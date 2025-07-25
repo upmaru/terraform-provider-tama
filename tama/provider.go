@@ -27,6 +27,7 @@ import (
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/limit"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/model"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/source"
+	"github.com/upmaru/terraform-provider-tama/tama/sensory/specification"
 )
 
 // Ensure TamaProvider satisfies various provider interfaces.
@@ -163,6 +164,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		source.NewResource,
 		model.NewResource,
 		limit.NewResource,
+		specification.NewResource,
 		prompt.NewResource,
 		chain.NewResource,
 		thought.NewResource,
@@ -181,6 +183,7 @@ func (p *TamaProvider) DataSources(ctx context.Context) []func() datasource.Data
 		source.NewDataSource,
 		model.NewDataSource,
 		limit.NewDataSource,
+		specification.NewDataSource,
 		prompt.NewDataSource,
 		chain.NewDataSource,
 		thought.NewDataSource,

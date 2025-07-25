@@ -14,6 +14,7 @@ This provider supports managing the following Tama resources:
   - `tama_source` - AI service sources (e.g., OpenAI, Mistral, Anthropic)
   - `tama_model` - AI models available from sources
   - `tama_limit` - Rate limiting configurations for sources
+  - `tama_specification` - OpenAPI 3.0 schema definitions with endpoints and versioning
 
 - **Data Sources:**
   - All resources above have corresponding data sources for referencing existing resources
@@ -86,6 +87,54 @@ resource "tama_limit" "openai_rate_limit" {
   scale_unit  = "minutes"
   scale_count = 1
   limit       = 100
+}
+
+# Create an OpenAPI specification
+resource "tama_specification" "elasticsearch" {
+  space_id = tama_space.production.id
+  version  = "3.1.0"
+  endpoint = "https://elasticsearch.arrakis.upmaru.network"
+  schema = jsonencode({
+    openapi = "3.0.3"
+    info = {
+      title       = "Elasticsearch API"
+      version     = "3.1.0"
+      description = "Search API for Elasticsearch"
+    }
+    paths = {
+      "/search" = {
+        post = {
+          summary = "Execute search query"
+          requestBody = {
+            required = true
+            content = {
+              "application/json" = {
+                schema = {
+                  type = "object"
+                  properties = {
+                    query = {
+                      type        = "string"
+                      description = "The search query"
+                    }
+                    index = {
+                      type        = "string"
+                      description = "The Elasticsearch index to search"
+                    }
+                  }
+                  required = ["query", "index"]
+                }
+              }
+            }
+          }
+          responses = {
+            "200" = {
+              description = "Successful search response"
+            }
+          }
+        }
+      }
+    }
+  })
 }
 ```
 
@@ -261,6 +310,75 @@ resource "tama_limit" "example" {
 **Attributes:**
 - `id` - Unique identifier for the limit
 
+### tama_specification
+
+Manages OpenAPI 3.0 schema definitions with endpoints and versioning within a space.
+
+```hcl
+resource "tama_specification" "elasticsearch" {
+  space_id = tama_space.example.id
+  version  = "3.1.0"
+  endpoint = "https://elasticsearch.arrakis.upmaru.network"
+  schema = jsonencode({
+    openapi = "3.0.3"
+    info = {
+      title       = "Elasticsearch API"
+      version     = "3.1.0"
+      description = "Search API for Elasticsearch"
+    }
+    paths = {
+      "/search" = {
+        post = {
+          summary = "Execute search query"
+          requestBody = {
+            required = true
+            content = {
+              "application/json" = {
+                schema = {
+                  type = "object"
+                  properties = {
+                    query = {
+                      type        = "string"
+                      description = "The search query"
+                    }
+                    index = {
+                      type        = "string"
+                      description = "The Elasticsearch index to search"
+                    }
+                  }
+                  required = ["query", "index"]
+                }
+              }
+            }
+          }
+          responses = {
+            "200" = {
+              description = "Successful search response"
+            }
+          }
+        }
+      }
+    }
+  })
+}
+```
+
+**Arguments:**
+- `space_id` (Required, Forces new resource) - ID of the space this specification belongs to
+- `schema` (Required) - OpenAPI 3.0 schema definition as JSON string
+- `version` (Required) - Version of the specification
+- `endpoint` (Required) - API endpoint URL for the specification
+
+**Attributes:**
+- `id` - Unique identifier for the specification
+- `current_state` - Current state of the specification
+- `provision_state` - Provision state of the specification
+
+**Features:**
+- **JSON Normalization**: The schema field uses JSON normalization to prevent unnecessary updates when the JSON structure is semantically identical but formatted differently
+- **OpenAPI 3.0 Support**: Expects valid OpenAPI 3.0 specifications including `openapi` version, `info` object, and `paths` definitions
+- **State Management**: Tracks both `current_state` and `provision_state` which are managed server-side
+
 ## Data Sources
 
 All resources have corresponding data sources:
@@ -285,6 +403,16 @@ data "tama_model" "example" {
 data "tama_limit" "example" {
   id = "limit-101"
 }
+
+data "tama_specification" "example" {
+  id = "spec-123"
+}
+
+# Parse the OpenAPI schema from a specification
+locals {
+  api_schema = jsondecode(data.tama_specification.example.schema)
+  api_info   = local.api_schema.info
+}
 ```
 
 ## Examples
@@ -303,6 +431,7 @@ The Tama provider resources follow this hierarchy:
 ```
 Space (Neural)
 ├── Processor (Neural)
+├── Specification (Sensory)
 └── Source (Sensory)
     ├── Model (Sensory)
     └── Limit (Sensory)
@@ -310,6 +439,7 @@ Space (Neural)
 
 - **Spaces** are top-level containers for organizing AI services
 - **Processors** define AI processing capabilities within a space using specific models
+- **Specifications** define OpenAPI 3.0 schemas with endpoints and versioning within a space
 - **Sources** represent external AI providers/APIs and belong to a space
 - **Models** define specific AI models available from a source
 - **Limits** define rate limiting rules for a source
@@ -321,6 +451,7 @@ Resources can be imported using their IDs:
 ```bash
 terraform import tama_space.example space-123
 terraform import tama_space_processor.example space-123/model-456
+terraform import tama_specification.example spec-123
 terraform import tama_source.example source-456
 terraform import tama_model.example model-789
 terraform import tama_limit.example limit-101
