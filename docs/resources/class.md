@@ -222,24 +222,24 @@ output "class_details" {
   description = "Details of all created classes"
   value = {
     action_call = {
-      id            = tama_class.action_call.id
-      name          = tama_class.action_call.name
-      description   = tama_class.action_call.description
-      current_state = tama_class.action_call.current_state
-      schema_title  = tama_class.action_call.schema[0].title
+      id              = tama_class.action_call.id
+      name            = tama_class.action_call.name
+      description     = tama_class.action_call.description
+      provision_state = tama_class.action_call.provision_state
+      schema_title    = tama_class.action_call.schema[0].title
     }
     collection = {
-      id            = tama_class.collection.id
-      name          = tama_class.collection.name
-      description   = tama_class.collection.description
-      current_state = tama_class.collection.current_state
+      id              = tama_class.collection.id
+      name            = tama_class.collection.name
+      description     = tama_class.collection.description
+      provision_state = tama_class.collection.provision_state
     }
     entity_network = {
-      id            = tama_class.entity_network.id
-      name          = tama_class.entity_network.name
-      description   = tama_class.entity_network.description
-      current_state = tama_class.entity_network.current_state
-      schema_title  = tama_class.entity_network.schema[0].title
+      id              = tama_class.entity_network.id
+      name            = tama_class.entity_network.name
+      description     = tama_class.entity_network.description
+      provision_state = tama_class.entity_network.provision_state
+      schema_title    = tama_class.entity_network.schema[0].title
     }
   }
 }
@@ -259,10 +259,10 @@ output "class_details" {
 
 ### Read-Only
 
-- `current_state` (String) Current state of the class
 - `description` (String) Description of the class
 - `id` (String) Class identifier
 - `name` (String) Name of the class
+- `provision_state` (String) Current state of the class
 
 <a id="nestedblock--schema"></a>
 ### Nested Schema for `schema`

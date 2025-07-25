@@ -44,13 +44,13 @@ type SchemaModel struct {
 
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id           types.String  `tfsdk:"id"`
-	Name         types.String  `tfsdk:"name"`
-	Description  types.String  `tfsdk:"description"`
-	Schema       []SchemaModel `tfsdk:"schema"`
-	SchemaJSON   types.String  `tfsdk:"schema_json"`
-	CurrentState types.String  `tfsdk:"current_state"`
-	SpaceId      types.String  `tfsdk:"space_id"`
+	Id             types.String  `tfsdk:"id"`
+	Name           types.String  `tfsdk:"name"`
+	Description    types.String  `tfsdk:"description"`
+	Schema         []SchemaModel `tfsdk:"schema"`
+	SchemaJSON     types.String  `tfsdk:"schema_json"`
+	ProvisionState types.String  `tfsdk:"provision_state"`
+	SpaceId        types.String  `tfsdk:"space_id"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -84,7 +84,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 					internalplanmodifier.JSONNormalize(),
 				},
 			},
-			"current_state": schema.StringAttribute{
+			"provision_state": schema.StringAttribute{
 				MarkdownDescription: "Current state of the class",
 				Computed:            true,
 			},
@@ -262,7 +262,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	data.Id = types.StringValue(classResponse.ID)
 	data.Name = types.StringValue(classResponse.Name)
 	data.Description = types.StringValue(classResponse.Description)
-	data.CurrentState = types.StringValue(classResponse.CurrentState)
+	data.ProvisionState = types.StringValue(classResponse.ProvisionState)
 	data.SpaceId = types.StringValue(classResponse.SpaceID)
 
 	// Update schema based on which method was used
@@ -314,9 +314,10 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 	}
 
 	// Update the model with the latest data
+	data.Id = types.StringValue(classResponse.ID)
 	data.Name = types.StringValue(classResponse.Name)
 	data.Description = types.StringValue(classResponse.Description)
-	data.CurrentState = types.StringValue(classResponse.CurrentState)
+	data.ProvisionState = types.StringValue(classResponse.ProvisionState)
 	data.SpaceId = types.StringValue(classResponse.SpaceID)
 
 	// Update schema based on which method was used in current state
@@ -453,9 +454,10 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	}
 
 	// Update the model with the response data
+	data.Id = types.StringValue(classResponse.ID)
 	data.Name = types.StringValue(classResponse.Name)
 	data.Description = types.StringValue(classResponse.Description)
-	data.CurrentState = types.StringValue(classResponse.CurrentState)
+	data.ProvisionState = types.StringValue(classResponse.ProvisionState)
 	data.SpaceId = types.StringValue(classResponse.SpaceID)
 
 	// Update schema based on which method was used
@@ -518,11 +520,11 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 
 	// Create model from API response
 	data := ResourceModel{
-		Id:           types.StringValue(classResponse.ID),
-		Name:         types.StringValue(classResponse.Name),
-		Description:  types.StringValue(classResponse.Description),
-		CurrentState: types.StringValue(classResponse.CurrentState),
-		SpaceId:      types.StringValue(classResponse.SpaceID),
+		Id:             types.StringValue(classResponse.ID),
+		Name:           types.StringValue(classResponse.Name),
+		Description:    types.StringValue(classResponse.Description),
+		ProvisionState: types.StringValue(classResponse.ProvisionState),
+		SpaceId:        types.StringValue(classResponse.SpaceID),
 	}
 
 	// For import, populate both schema formats to maintain compatibility

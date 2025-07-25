@@ -56,7 +56,7 @@ output "processor_type" {
 
 output "processor_current_state" {
   description = "The current state of the processor"
-  value       = data.tama_space_processor.example.current_state
+  value       = data.tama_space_processor.example.provision_state
 }
 
 output "completion_config" {
@@ -81,15 +81,15 @@ output "reranking_config" {
 ### Required
 
 - `space_id` (String) ID of the space this processor belongs to
-- `type` (String) Type of processor: completion, embedding, or reranking
+- `type` (String) Processor type
 
 ### Read-Only
 
 - `completion_config` (Block List) Configuration for completion type processors (see [below for nested schema](#nestedblock--completion_config))
-- `current_state` (String) Current state of the processor
 - `embedding_config` (Block List) Configuration for embedding type processors (see [below for nested schema](#nestedblock--embedding_config))
 - `id` (String) Processor identifier
 - `model_id` (String) ID of the model this processor uses
+- `provision_state` (String) Current state of the processor
 - `reranking_config` (Block List) Configuration for reranking type processors (see [below for nested schema](#nestedblock--reranking_config))
 
 <a id="nestedblock--completion_config"></a>

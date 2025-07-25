@@ -46,7 +46,7 @@ resource "tama_thought" "content_description" {
 ### Computed
 
 - `id` - (String) Thought identifier.
-- `current_state` - (String) Current state of the thought (managed by the API).
+- `provision_state` - (String) Current state of the thought (managed by the API).
 - `index` - (Number) Index position of the thought in the chain.
 
 ## Example Configurations
@@ -263,7 +263,7 @@ The example includes several outputs to demonstrate accessing thought attributes
 - Module parameters must be valid JSON when provided
 - Output classes provide structured validation for thought results
 - Some modules (like `tama/identities/validate`) work without explicit parameters
-- The `current_state` reflects the thought's processing status and is managed by the API
+- The `provision_state` reflects the thought's processing status and is managed by the API
 
 ## Best Practices
 

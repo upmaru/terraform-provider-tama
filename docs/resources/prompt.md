@@ -133,6 +133,6 @@ output "workspace_prompts" {
 
 ### Read-Only
 
-- `current_state` (String) Current state of the prompt
 - `id` (String) Prompt identifier
+- `provision_state` (String) Current state of the prompt
 - `slug` (String) Slug for the prompt

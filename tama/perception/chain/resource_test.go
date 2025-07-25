@@ -25,7 +25,7 @@ func TestAccChainResource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_chain.test", "space_id"),
 					resource.TestCheckResourceAttr("tama_chain.test", "name", "Identity Validation"),
 					resource.TestCheckResourceAttrSet("tama_chain.test", "slug"),
-					resource.TestCheckResourceAttrSet("tama_chain.test", "current_state"),
+					resource.TestCheckResourceAttrSet("tama_chain.test", "provision_state"),
 				),
 			},
 			// ImportState testing
@@ -42,7 +42,7 @@ func TestAccChainResource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_chain.test", "space_id"),
 					resource.TestCheckResourceAttr("tama_chain.test", "name", "Updated Identity Validation"),
 					resource.TestCheckResourceAttrSet("tama_chain.test", "slug"),
-					resource.TestCheckResourceAttrSet("tama_chain.test", "current_state"),
+					resource.TestCheckResourceAttrSet("tama_chain.test", "provision_state"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase

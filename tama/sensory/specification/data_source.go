@@ -1,10 +1,11 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package space
+package specification
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -29,39 +30,49 @@ type DataSource struct {
 // DataSourceModel describes the data source data model.
 type DataSourceModel struct {
 	Id             types.String `tfsdk:"id"`
-	Name           types.String `tfsdk:"name"`
-	Type           types.String `tfsdk:"type"`
-	Slug           types.String `tfsdk:"slug"`
+	SpaceId        types.String `tfsdk:"space_id"`
+	Schema         types.String `tfsdk:"schema"`
+	Version        types.String `tfsdk:"version"`
+	Endpoint       types.String `tfsdk:"endpoint"`
+	CurrentState   types.String `tfsdk:"current_state"`
 	ProvisionState types.String `tfsdk:"provision_state"`
 }
 
 func (d *DataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_space"
+	resp.TypeName = req.ProviderTypeName + "_specification"
 }
 
 func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Fetches information about a Tama Neural Space",
+		MarkdownDescription: "Fetches information about a Tama Sensory Specification",
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Space identifier",
+				MarkdownDescription: "Specification identifier",
 				Required:            true,
 			},
-			"name": schema.StringAttribute{
-				MarkdownDescription: "Name of the space",
+			"space_id": schema.StringAttribute{
+				MarkdownDescription: "ID of the space this specification belongs to",
 				Computed:            true,
 			},
-			"type": schema.StringAttribute{
-				MarkdownDescription: "Type of the space",
+			"schema": schema.StringAttribute{
+				MarkdownDescription: "OpenAPI 3.0 schema definition for the specification",
 				Computed:            true,
 			},
-			"slug": schema.StringAttribute{
-				MarkdownDescription: "Slug identifier for the space",
+			"version": schema.StringAttribute{
+				MarkdownDescription: "Version of the specification",
+				Computed:            true,
+			},
+			"endpoint": schema.StringAttribute{
+				MarkdownDescription: "API endpoint URL for the specification",
+				Computed:            true,
+			},
+			"current_state": schema.StringAttribute{
+				MarkdownDescription: "Current state of the specification",
 				Computed:            true,
 			},
 			"provision_state": schema.StringAttribute{
-				MarkdownDescription: "Current state of the space",
+				MarkdownDescription: "Provision state of the specification",
 				Computed:            true,
 			},
 		},
@@ -98,26 +109,39 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 		return
 	}
 
-	// Get space from API
-	tflog.Debug(ctx, "Reading space", map[string]any{
+	// Get specification from API
+	tflog.Debug(ctx, "Reading specification", map[string]any{
 		"id": data.Id.ValueString(),
 	})
 
-	spaceResponse, err := d.client.Neural.GetSpace(data.Id.ValueString())
+	specResponse, err := d.client.Sensory.GetSpecification(data.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read space, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read specification, got error: %s", err))
 		return
 	}
 
 	// Map response to data source schema
-	data.Id = types.StringValue(spaceResponse.ID)
-	data.Name = types.StringValue(spaceResponse.Name)
-	data.Type = types.StringValue(spaceResponse.Type)
-	data.Slug = types.StringValue(spaceResponse.Slug)
-	data.ProvisionState = types.StringValue(spaceResponse.ProvisionState)
+	data.Id = types.StringValue(specResponse.ID)
+	data.SpaceId = types.StringValue(specResponse.SpaceID)
+	data.Version = types.StringValue(specResponse.Version)
+	data.Endpoint = types.StringValue(specResponse.Endpoint)
+	data.CurrentState = types.StringValue(specResponse.CurrentState)
+	data.ProvisionState = types.StringValue(specResponse.ProvisionState)
+
+	// Handle schema from response
+	if len(specResponse.Schema) > 0 {
+		schemaJSON, err := json.Marshal(specResponse.Schema)
+		if err != nil {
+			resp.Diagnostics.AddError("Schema Serialization Error", fmt.Sprintf("Unable to serialize schema: %s", err))
+			return
+		}
+		data.Schema = types.StringValue(string(schemaJSON))
+	} else {
+		data.Schema = types.StringValue("")
+	}
 
 	// Write logs using the tflog package
-	tflog.Trace(ctx, "read a space data source")
+	tflog.Trace(ctx, "read a specification data source")
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

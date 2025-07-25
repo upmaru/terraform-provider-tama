@@ -138,7 +138,7 @@ output "validation_thought_id" {
 
 output "validation_thought_state" {
   description = "Current state of the validation thought"
-  value       = tama_thought.content_validation.current_state
+  value       = tama_thought.content_validation.provision_state
 }
 
 output "summary_thought_id" {
@@ -172,9 +172,9 @@ output "validation_class_id" {
 
 ### Read-Only
 
-- `current_state` (String) Current state of the thought
 - `id` (String) Thought identifier
 - `index` (Number) Index position of the thought in the chain
+- `provision_state` (String) Current state of the thought
 
 <a id="nestedblock--module"></a>
 ### Nested Schema for `module`

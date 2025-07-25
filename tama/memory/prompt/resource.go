@@ -32,13 +32,13 @@ type Resource struct {
 
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id           types.String `tfsdk:"id"`
-	Name         types.String `tfsdk:"name"`
-	SpaceId      types.String `tfsdk:"space_id"`
-	Slug         types.String `tfsdk:"slug"`
-	Content      types.String `tfsdk:"content"`
-	Role         types.String `tfsdk:"role"`
-	CurrentState types.String `tfsdk:"current_state"`
+	Id             types.String `tfsdk:"id"`
+	Name           types.String `tfsdk:"name"`
+	SpaceId        types.String `tfsdk:"space_id"`
+	Slug           types.String `tfsdk:"slug"`
+	Content        types.String `tfsdk:"content"`
+	Role           types.String `tfsdk:"role"`
+	ProvisionState types.String `tfsdk:"provision_state"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -80,7 +80,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 				MarkdownDescription: "Role associated with the prompt (system or user)",
 				Required:            true,
 			},
-			"current_state": schema.StringAttribute{
+			"provision_state": schema.StringAttribute{
 				MarkdownDescription: "Current state of the prompt",
 				Computed:            true,
 				PlanModifiers: []planmodifier.String{
@@ -149,7 +149,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	data.Slug = types.StringValue(promptResponse.Slug)
 	data.Content = types.StringValue(promptResponse.Content)
 	data.Role = types.StringValue(promptResponse.Role)
-	data.CurrentState = types.StringValue(promptResponse.CurrentState)
+	data.ProvisionState = types.StringValue(promptResponse.ProvisionState)
 
 	// Write logs using the tflog package
 	tflog.Trace(ctx, "created a prompt resource")
@@ -180,7 +180,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 	data.Slug = types.StringValue(promptResponse.Slug)
 	data.Content = types.StringValue(promptResponse.Content)
 	data.Role = types.StringValue(promptResponse.Role)
-	data.CurrentState = types.StringValue(promptResponse.CurrentState)
+	data.ProvisionState = types.StringValue(promptResponse.ProvisionState)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -223,7 +223,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	data.Slug = types.StringValue(promptResponse.Slug)
 	data.Content = types.StringValue(promptResponse.Content)
 	data.Role = types.StringValue(promptResponse.Role)
-	data.CurrentState = types.StringValue(promptResponse.CurrentState)
+	data.ProvisionState = types.StringValue(promptResponse.ProvisionState)
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -261,13 +261,13 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 
 	// Create model from API response
 	data := ResourceModel{
-		Id:           types.StringValue(promptResponse.ID),
-		Name:         types.StringValue(promptResponse.Name),
-		SpaceId:      types.StringValue(promptResponse.SpaceID),
-		Slug:         types.StringValue(promptResponse.Slug),
-		Content:      types.StringValue(promptResponse.Content),
-		Role:         types.StringValue(promptResponse.Role),
-		CurrentState: types.StringValue(promptResponse.CurrentState),
+		Id:             types.StringValue(promptResponse.ID),
+		Name:           types.StringValue(promptResponse.Name),
+		SpaceId:        types.StringValue(promptResponse.SpaceID),
+		Slug:           types.StringValue(promptResponse.Slug),
+		Content:        types.StringValue(promptResponse.Content),
+		Role:           types.StringValue(promptResponse.Role),
+		ProvisionState: types.StringValue(promptResponse.ProvisionState),
 	}
 
 	// Save imported data into Terraform state

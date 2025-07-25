@@ -40,7 +40,7 @@ resource "tama_thought" "related_thought" {
 - `chain_id` - (String) ID of the chain this thought belongs to.
 - `output_class_id` - (String) ID of the output class for this thought (if any).
 - `relation` - (String) Relation type for the thought.
-- `current_state` - (String) Current state of the thought.
+- `provision_state` - (String) Current state of the thought.
 - `index` - (Number) Index position of the thought in the chain.
 - `module` - (List) Module configuration block containing:
   - `reference` - (String) Module reference.
@@ -164,7 +164,7 @@ output "thoughts_summary" {
       index           = thought.index
       module_reference = thought.module[0].reference
       has_output_class = thought.output_class_id != null && thought.output_class_id != ""
-      current_state   = thought.current_state
+      provision_state = thought.provision_state
     }
   }
 }
@@ -190,7 +190,7 @@ output "chain_analysis" {
     thought_id    = data.tama_thought.chain_member.id
     thought_index = data.tama_thought.chain_member.index
     chain_name    = data.tama_chain.parent_chain.name
-    chain_state   = data.tama_chain.parent_chain.current_state
+    chain_state   = data.tama_chain.parent_chain.provision_state
   }
 }
 ```

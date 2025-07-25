@@ -28,7 +28,7 @@ func TestAccSourceResource(t *testing.T) {
 					resource.TestCheckResourceAttr("tama_source.test", "api_key", "test-api-key"),
 					resource.TestCheckResourceAttrSet("tama_source.test", "id"),
 					resource.TestCheckResourceAttrSet("tama_source.test", "space_id"),
-					resource.TestCheckResourceAttrSet("tama_source.test", "current_state"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "provision_state"),
 				),
 			},
 			// ImportState testing
@@ -47,7 +47,7 @@ func TestAccSourceResource(t *testing.T) {
 					resource.TestCheckResourceAttr("tama_source.test", "endpoint", "https://api.updated.com"),
 					resource.TestCheckResourceAttr("tama_source.test", "api_key", "updated-api-key"),
 					resource.TestCheckResourceAttrSet("tama_source.test", "id"),
-					resource.TestCheckResourceAttrSet("tama_source.test", "current_state"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "provision_state"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -130,7 +130,7 @@ func TestAccSourceResource_LongName(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tama_source.test", "name", longName),
 					resource.TestCheckResourceAttr("tama_source.test", "type", "model"),
-					resource.TestCheckResourceAttrSet("tama_source.test", "current_state"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "provision_state"),
 				),
 			},
 		},
@@ -147,7 +147,7 @@ func TestAccSourceResource_SpecialCharacters(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tama_source.test", "name", "test-source-with-special_chars.123"),
 					resource.TestCheckResourceAttr("tama_source.test", "type", "model"),
-					resource.TestCheckResourceAttrSet("tama_source.test", "current_state"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "provision_state"),
 				),
 			},
 		},
@@ -167,13 +167,13 @@ func TestAccSourceResource_Multiple(t *testing.T) {
 					resource.TestCheckResourceAttr("tama_source.test1", "type", "model"),
 					resource.TestCheckResourceAttr("tama_source.test1", "endpoint", "https://api1.example.com"),
 					resource.TestCheckResourceAttrSet("tama_source.test1", "id"),
-					resource.TestCheckResourceAttrSet("tama_source.test1", "current_state"),
+					resource.TestCheckResourceAttrSet("tama_source.test1", "provision_state"),
 					// Second source
 					resource.TestCheckResourceAttr("tama_source.test2", "name", "test-source-2"),
 					resource.TestCheckResourceAttr("tama_source.test2", "type", "model"),
 					resource.TestCheckResourceAttr("tama_source.test2", "endpoint", "https://api2.example.com"),
 					resource.TestCheckResourceAttrSet("tama_source.test2", "id"),
-					resource.TestCheckResourceAttrSet("tama_source.test2", "current_state"),
+					resource.TestCheckResourceAttrSet("tama_source.test2", "provision_state"),
 				),
 			},
 		},
@@ -210,7 +210,7 @@ func TestAccSourceResource_DisappearResource(t *testing.T) {
 					resource.TestCheckResourceAttr("tama_source.test", "type", "model"),
 					resource.TestCheckResourceAttr("tama_source.test", "endpoint", "https://api.example.com"),
 					resource.TestCheckResourceAttrSet("tama_source.test", "id"),
-					resource.TestCheckResourceAttrSet("tama_source.test", "current_state"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "provision_state"),
 				),
 			},
 		},
@@ -273,9 +273,9 @@ func TestAccSourceResource_CurrentState(t *testing.T) {
 					resource.TestCheckResourceAttr("tama_source.test", "type", "model"),
 					resource.TestCheckResourceAttr("tama_source.test", "endpoint", "https://api.example.com"),
 					resource.TestCheckResourceAttrSet("tama_source.test", "id"),
-					resource.TestCheckResourceAttrSet("tama_source.test", "current_state"),
-					// Verify that current_state is not empty
-					resource.TestMatchResourceAttr("tama_source.test", "current_state", regexp.MustCompile(".+")),
+					resource.TestCheckResourceAttrSet("tama_source.test", "provision_state"),
+					// Verify that provision_state is not empty
+					resource.TestMatchResourceAttr("tama_source.test", "provision_state", regexp.MustCompile(".+")),
 				),
 			},
 		},

@@ -265,7 +265,7 @@ All class resources provide these computed outputs:
 - `id`: The unique identifier of the class
 - `name`: The computed name from the API
 - `description`: The computed description from the API  
-- `current_state`: The current state of the class
+- `provision_state`: The current state of the class
 - `space_id`: The ID of the space containing the class
 
 When using schema blocks, you can also access:

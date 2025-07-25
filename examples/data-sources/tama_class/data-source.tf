@@ -25,8 +25,10 @@ resource "tama_source" "example" {
 # Create a new class in the same space as the referenced class
 resource "tama_class" "related" {
   space_id = data.tama_class.example.space_id
-  schema = jsonencode({
-    type = "object"
+  schema_json = jsonencode({
+    title       = "Related Class Schema"
+    description = "A schema related to ${data.tama_class.example.name}"
+    type        = "object"
     properties = {
       reference_id = {
         type        = "string"
@@ -63,14 +65,24 @@ output "class_description" {
   value       = data.tama_class.example.description
 }
 
-output "class_schema" {
-  description = "Schema of the class"
-  value       = data.tama_class.example.schema
+output "class_schema_json" {
+  description = "Schema of the class as JSON string"
+  value       = data.tama_class.example.schema_json
+}
+
+output "class_schema_title" {
+  description = "Title from the schema block"
+  value       = length(data.tama_class.example.schema) > 0 ? data.tama_class.example.schema[0].title : null
+}
+
+output "class_schema_type" {
+  description = "Type from the schema block"
+  value       = length(data.tama_class.example.schema) > 0 ? data.tama_class.example.schema[0].type : null
 }
 
 output "class_current_state" {
   description = "Current state of the class"
-  value       = data.tama_class.example.current_state
+  value       = data.tama_class.example.provision_state
 }
 
 output "class_space_id" {
@@ -130,16 +142,16 @@ output "class_comparison" {
   description = "Comparison of multiple classes"
   value = {
     user_class = {
-      id            = data.tama_class.user_class.id
-      name          = data.tama_class.user_class.name
-      space_id      = data.tama_class.user_class.space_id
-      current_state = data.tama_class.user_class.current_state
+      id              = data.tama_class.user_class.id
+      name            = data.tama_class.user_class.name
+      space_id        = data.tama_class.user_class.space_id
+      provision_state = data.tama_class.user_class.provision_state
     }
     product_class = {
-      id            = data.tama_class.product_class.id
-      name          = data.tama_class.product_class.name
-      space_id      = data.tama_class.product_class.space_id
-      current_state = data.tama_class.product_class.current_state
+      id              = data.tama_class.product_class.id
+      name            = data.tama_class.product_class.name
+      space_id        = data.tama_class.product_class.space_id
+      provision_state = data.tama_class.product_class.provision_state
     }
     same_space = data.tama_class.user_class.space_id == data.tama_class.product_class.space_id
   }

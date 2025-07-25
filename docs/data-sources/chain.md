@@ -85,7 +85,7 @@ output "chain_space_id" {
 
 output "chain_current_state" {
   description = "Current state of the chain"
-  value       = data.tama_chain.example.current_state
+  value       = data.tama_chain.example.provision_state
 }
 
 output "chain_id" {
@@ -103,7 +103,7 @@ output "chain_id" {
 
 ### Read-Only
 
-- `current_state` (String) Current state of the chain
 - `name` (String) Name of the chain
+- `provision_state` (String) Current state of the chain
 - `slug` (String) Slug of the chain
 - `space_id` (String) ID of the space this chain belongs to

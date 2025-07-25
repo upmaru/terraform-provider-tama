@@ -70,7 +70,7 @@ output "space_id" {
 
 ### Read-Only
 
-- `current_state` (String) Current state of the space
 - `name` (String) Name of the space
+- `provision_state` (String) Current state of the space
 - `slug` (String) Slug identifier for the space
 - `type` (String) Type of the space

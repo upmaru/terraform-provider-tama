@@ -28,7 +28,7 @@ func TestAccPromptResource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_prompt.test", "id"),
 					resource.TestCheckResourceAttrSet("tama_prompt.test", "space_id"),
 					resource.TestCheckResourceAttrSet("tama_prompt.test", "slug"),
-					resource.TestCheckResourceAttrSet("tama_prompt.test", "current_state"),
+					resource.TestCheckResourceAttrSet("tama_prompt.test", "provision_state"),
 				),
 			},
 			// ImportState testing

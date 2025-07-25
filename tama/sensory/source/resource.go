@@ -32,13 +32,13 @@ type Resource struct {
 
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id           types.String `tfsdk:"id"`
-	SpaceId      types.String `tfsdk:"space_id"`
-	Name         types.String `tfsdk:"name"`
-	Type         types.String `tfsdk:"type"`
-	Endpoint     types.String `tfsdk:"endpoint"`
-	ApiKey       types.String `tfsdk:"api_key"`
-	CurrentState types.String `tfsdk:"current_state"`
+	Id             types.String `tfsdk:"id"`
+	SpaceId        types.String `tfsdk:"space_id"`
+	Name           types.String `tfsdk:"name"`
+	Type           types.String `tfsdk:"type"`
+	Endpoint       types.String `tfsdk:"endpoint"`
+	ApiKey         types.String `tfsdk:"api_key"`
+	ProvisionState types.String `tfsdk:"provision_state"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -81,7 +81,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 				Required:            true,
 				Sensitive:           true,
 			},
-			"current_state": schema.StringAttribute{
+			"provision_state": schema.StringAttribute{
 				MarkdownDescription: "Current state of the source ('active' or 'inactive')",
 				Computed:            true,
 			},
@@ -147,9 +147,11 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	// Map response body to schema and populate Computed attribute values
 	data.Id = types.StringValue(sourceResponse.ID)
 	data.Name = types.StringValue(sourceResponse.Name)
-	data.CurrentState = types.StringValue(sourceResponse.CurrentState)
+	data.Type = types.StringValue(sourceResponse.Type)
+	data.SpaceId = types.StringValue(sourceResponse.SpaceID)
+	data.ProvisionState = types.StringValue(sourceResponse.ProvisionState)
 	data.Endpoint = types.StringValue(sourceResponse.Endpoint)
-	// Note: Type and API key are not returned in response, keep the original values
+	// Note: API key is not returned in response, keep the original value
 
 	// Write logs using the tflog package
 	tflog.Trace(ctx, "created a source resource")
@@ -177,9 +179,11 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 
 	// Update the model with the latest data
 	data.Name = types.StringValue(sourceResponse.Name)
-	data.CurrentState = types.StringValue(sourceResponse.CurrentState)
+	data.Type = types.StringValue(sourceResponse.Type)
+	data.SpaceId = types.StringValue(sourceResponse.SpaceID)
+	data.ProvisionState = types.StringValue(sourceResponse.ProvisionState)
 	data.Endpoint = types.StringValue(sourceResponse.Endpoint)
-	// Note: Type and API key are not returned in response, keep the original values
+	// Note: API key is not returned in response, keep the original value
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -222,9 +226,11 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 
 	// Update the model with the response data
 	data.Name = types.StringValue(sourceResponse.Name)
-	data.CurrentState = types.StringValue(sourceResponse.CurrentState)
+	data.Type = types.StringValue(sourceResponse.Type)
+	data.SpaceId = types.StringValue(sourceResponse.SpaceID)
+	data.ProvisionState = types.StringValue(sourceResponse.ProvisionState)
 	data.Endpoint = types.StringValue(sourceResponse.Endpoint)
-	// Note: Type and API key are not returned in response, keep the original values
+	// Note: API key is not returned in response, keep the original value
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -262,15 +268,15 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 
 	// Create model from API response
 	data := ResourceModel{
-		Id:           types.StringValue(sourceResponse.ID),
-		Name:         types.StringValue(sourceResponse.Name),
-		CurrentState: types.StringValue(sourceResponse.CurrentState),
-		Endpoint:     types.StringValue(sourceResponse.Endpoint),
-		// SpaceId, Type, and ApiKey cannot be retrieved from API response
-		// These will need to be manually set after import
-		SpaceId: types.StringValue(""),
-		Type:    types.StringValue(""),
-		ApiKey:  types.StringValue(""),
+		Id:             types.StringValue(sourceResponse.ID),
+		Name:           types.StringValue(sourceResponse.Name),
+		Type:           types.StringValue(sourceResponse.Type),
+		SpaceId:        types.StringValue(sourceResponse.SpaceID),
+		ProvisionState: types.StringValue(sourceResponse.ProvisionState),
+		Endpoint:       types.StringValue(sourceResponse.Endpoint),
+		// ApiKey cannot be retrieved from API response
+		// This will need to be manually set after import
+		ApiKey: types.StringValue(""),
 	}
 
 	// Save imported data into Terraform state

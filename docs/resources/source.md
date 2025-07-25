@@ -85,5 +85,5 @@ output "openai_source_id" {
 
 ### Read-Only
 
-- `current_state` (String) Current state of the source ('active' or 'inactive')
 - `id` (String) Source identifier
+- `provision_state` (String) Current state of the source ('active' or 'inactive')

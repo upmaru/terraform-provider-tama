@@ -41,7 +41,7 @@ output "processor_type" {
 
 output "processor_current_state" {
   description = "The current state of the processor"
-  value       = data.tama_space_processor.example.current_state
+  value       = data.tama_space_processor.example.provision_state
 }
 
 output "completion_config" {
