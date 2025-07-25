@@ -7,13 +7,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -38,9 +36,8 @@ type Resource struct {
 
 // WaitForField represents a field condition for waiting.
 type WaitForField struct {
-	Key       types.String `tfsdk:"key"`
-	Value     types.String `tfsdk:"value"`
-	ValueType types.String `tfsdk:"value_type"`
+	Name types.String `tfsdk:"name"`
+	In   types.List   `tfsdk:"in"`
 }
 
 // WaitFor represents the wait_for configuration.
@@ -116,19 +113,14 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 							MarkdownDescription: "Condition criteria for a field",
 							NestedObject: schema.NestedBlockObject{
 								Attributes: map[string]schema.Attribute{
-									"key": schema.StringAttribute{
-										MarkdownDescription: "Key which should be matched from resulting object (JSON path)",
+									"name": schema.StringAttribute{
+										MarkdownDescription: "Name of the field to check (JSON path)",
 										Required:            true,
 									},
-									"value": schema.StringAttribute{
-										MarkdownDescription: "Value to wait for",
+									"in": schema.ListAttribute{
+										MarkdownDescription: "List of acceptable values for the field",
 										Required:            true,
-									},
-									"value_type": schema.StringAttribute{
-										MarkdownDescription: "Value type. Can be either 'eq' (equivalent) or 'regex'",
-										Optional:            true,
-										Computed:            true,
-										Default:             stringdefault.StaticString("eq"),
+										ElementType:         types.StringType,
 									},
 								},
 							},
@@ -432,8 +424,8 @@ func waitForConditions(ctx context.Context, client *tama.Client, specId string, 
 			gq := gojsonq.New().FromString(string(jsonBytes))
 
 			for _, condition := range conditions {
-				// Find the value at the specified key
-				value := gq.Reset().Find(condition.Key.ValueString())
+				// Find the value at the specified field name
+				value := gq.Reset().Find(condition.Name.ValueString())
 				if value == nil {
 					allConditionsMet = false
 					break
@@ -441,29 +433,25 @@ func waitForConditions(ctx context.Context, client *tama.Client, specId string, 
 
 				// Convert to string for comparison
 				stringVal := fmt.Sprintf("%v", value)
-				valueType := condition.ValueType.ValueString()
-				if valueType == "" || condition.ValueType.IsNull() {
-					valueType = "eq" // default to equality check
+
+				// Get the list of acceptable values
+				var acceptableValues []string
+				diags := condition.In.ElementsAs(ctx, &acceptableValues, false)
+				if diags.HasError() {
+					return fmt.Errorf("failed to parse acceptable values for field '%s'", condition.Name.ValueString())
 				}
 
-				switch valueType {
-				case "regex":
-					matched, err := regexp.MatchString(condition.Value.ValueString(), stringVal)
-					if err != nil {
-						return fmt.Errorf("invalid regex pattern '%s': %s", condition.Value.ValueString(), err)
+				// Check if the current value is in the list of acceptable values
+				found := false
+				for _, acceptableValue := range acceptableValues {
+					if stringVal == acceptableValue {
+						found = true
+						break
 					}
-					if !matched {
-						allConditionsMet = false
-					}
-				case "eq":
-					if stringVal != condition.Value.ValueString() {
-						allConditionsMet = false
-					}
-				default:
-					return fmt.Errorf("unsupported value_type '%s', must be 'eq' or 'regex'", valueType)
 				}
 
-				if !allConditionsMet {
+				if !found {
+					allConditionsMet = false
 					break
 				}
 			}

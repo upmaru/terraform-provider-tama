@@ -13,8 +13,8 @@ resource "tama_specification" "example" {
 
   wait_for {
     field {
-      key   = "current_state"
-      value = "active"
+      name = "current_state"
+      in   = ["completed"]
     }
   }
 }
@@ -30,13 +30,9 @@ The `field` block defines a condition that must be satisfied. You can specify mu
 
 #### Arguments
 
-- `key` (Required) - The JSON path to the field you want to check in the API response. Uses dot notation for nested fields (e.g., `metadata.status`, `config.deployment.state`).
+- `name` (Required) - The JSON path to the field you want to check in the API response. Uses dot notation for nested fields (e.g., `metadata.status`, `config.deployment.state`).
 
-- `value` (Required) - The expected value that the field should match.
-
-- `value_type` (Optional) - The type of comparison to perform. Defaults to `"eq"`.
-  - `"eq"` - Exact string equality (default)
-  - `"regex"` - Regular expression matching
+- `in` (Required) - A list of acceptable values for the field. The wait condition is satisfied when the field value matches any value in this list.
 
 ## Examples
 
@@ -50,8 +46,8 @@ resource "tama_specification" "example" {
 
   wait_for {
     field {
-      key   = "current_state"
-      value = "completed"
+      name = "current_state"
+      in   = ["completed"]
     }
   }
 }
@@ -67,21 +63,21 @@ resource "tama_specification" "example" {
 
   wait_for {
     field {
-      key   = "current_state"
-      value = "completed"
+      name = "current_state"
+      in   = ["completed"]
     }
 
     field {
-      key   = "provision_state"
-      value = "active"
+      name = "provision_state"
+      in   = ["active"]
     }
   }
 }
 ```
 
-### Regular Expression Matching
+### Multiple Acceptable Values
 
-Use regex to match against multiple possible values:
+Specify multiple acceptable values for a field:
 
 ```hcl
 resource "tama_specification" "example" {
@@ -89,9 +85,8 @@ resource "tama_specification" "example" {
 
   wait_for {
     field {
-      key        = "provision_state"
-      value      = "^(active|inactive)$"
-      value_type = "regex"
+      name = "provision_state"
+      in   = ["active", "inactive"]
     }
   }
 }
@@ -107,13 +102,13 @@ resource "tama_specification" "example" {
 
   wait_for {
     field {
-      key   = "metadata.deployment.status"
-      value = "completed"
+      name = "metadata.deployment.status"
+      in   = ["completed"]
     }
 
     field {
-      key   = "config.health.status"
-      value = "active"
+      name = "config.health.status"
+      in   = ["active"]
     }
   }
 }
@@ -134,8 +129,7 @@ The conditions are checked every 5 seconds until either:
 ### Error Handling
 
 If any of the following occurs, the wait will fail:
-- The specified field/key doesn't exist in the API response
-- An invalid regex pattern is provided
+- The specified field doesn't exist in the API response
 - The API call to fetch the specification fails
 - The timeout is exceeded
 
@@ -145,10 +139,10 @@ When multiple `field` blocks are specified, **all** conditions must be satisfied
 
 ## JSON Path Examples
 
-The `key` parameter supports standard JSON path notation:
+The `name` parameter supports standard JSON path notation:
 
-| JSON Response | Key | Description |
-|---------------|-----|-------------|
+| JSON Response | Name | Description |
+|---------------|------|-------------|
 | `{"status": "active"}` | `status` | Top-level field |
 | `{"config": {"state": "ready"}}` | `config.state` | Nested field |
 | `{"metadata": {"deployment": {"phase": "complete"}}}` | `metadata.deployment.phase` | Deeply nested field |
@@ -160,13 +154,13 @@ The `key` parameter supports standard JSON path notation:
 ```hcl
 wait_for {
   field {
-    key   = "current_state"
-    value = "completed"
+    name = "current_state"
+    in   = ["completed"]
   }
 
   field {
-    key   = "provision_state"
-    value = "active"
+    name = "provision_state"
+    in   = ["active"]
   }
 }
 ```
@@ -176,8 +170,8 @@ wait_for {
 ```hcl
 wait_for {
   field {
-    key   = "health.status"
-    value = "passing"
+    name = "health.status"
+    in   = ["passing"]
   }
 }
 ```
@@ -187,9 +181,8 @@ wait_for {
 ```hcl
 wait_for {
   field {
-    key        = "current_state"
-    value      = "^(completed|failed)$"
-    value_type = "regex"
+    name = "current_state"
+    in   = ["completed", "failed"]
   }
 }
 ```
@@ -200,7 +193,7 @@ wait_for {
 
 2. **Combine State Checks**: When waiting for complex operations, check multiple related fields to ensure the resource is truly ready.
 
-3. **Use Regex Sparingly**: While powerful, regex patterns can be harder to understand and debug. Use them only when you need to match multiple possible values.
+3. **Use Lists for Multiple Values**: When you need to accept multiple possible values, simply include them all in the `in` list rather than using complex patterns.
 
 4. **Monitor Timeouts**: If you frequently hit timeouts, consider whether your wait conditions are appropriate or if the underlying service needs more time.
 
