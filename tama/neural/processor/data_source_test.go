@@ -24,7 +24,7 @@ func TestAccSpaceProcessorDataSource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.tama_space_processor.test", "space_id"),
 					resource.TestCheckResourceAttrSet("data.tama_space_processor.test", "model_id"),
 					resource.TestCheckResourceAttr("data.tama_space_processor.test", "type", "completion"),
-					resource.TestCheckResourceAttrSet("data.tama_space_processor.test", "current_state"),
+					resource.TestCheckResourceAttrSet("data.tama_space_processor.test", "provision_state"),
 					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion_config.#", "1"),
 					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding_config.#", "0"),
 					resource.TestCheckResourceAttr("data.tama_space_processor.test", "reranking_config.#", "0"),

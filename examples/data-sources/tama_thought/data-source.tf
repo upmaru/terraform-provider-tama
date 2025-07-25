@@ -97,7 +97,7 @@ output "thought_index" {
 
 output "thought_current_state" {
   description = "Current state of the thought"
-  value       = data.tama_thought.example.current_state
+  value       = data.tama_thought.example.provision_state
 }
 
 output "thought_output_class_id" {

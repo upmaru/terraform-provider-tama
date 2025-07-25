@@ -45,24 +45,24 @@ data "tama_prompt" "code_assistant" {
 output "system_prompt_info" {
   description = "Information about the system prompt"
   value = {
-    id            = data.tama_prompt.existing_system_prompt.id
-    name          = data.tama_prompt.existing_system_prompt.name
-    slug          = data.tama_prompt.existing_system_prompt.slug
-    role          = data.tama_prompt.existing_system_prompt.role
-    current_state = data.tama_prompt.existing_system_prompt.current_state
-    space_id      = data.tama_prompt.existing_system_prompt.space_id
+    id              = data.tama_prompt.existing_system_prompt.id
+    name            = data.tama_prompt.existing_system_prompt.name
+    slug            = data.tama_prompt.existing_system_prompt.slug
+    role            = data.tama_prompt.existing_system_prompt.role
+    provision_state = data.tama_prompt.existing_system_prompt.provision_state
+    space_id        = data.tama_prompt.existing_system_prompt.space_id
   }
 }
 
 output "user_prompt_info" {
   description = "Information about the user prompt"
   value = {
-    id            = data.tama_prompt.existing_user_prompt.id
-    name          = data.tama_prompt.existing_user_prompt.name
-    slug          = data.tama_prompt.existing_user_prompt.slug
-    role          = data.tama_prompt.existing_user_prompt.role
-    current_state = data.tama_prompt.existing_user_prompt.current_state
-    space_id      = data.tama_prompt.existing_user_prompt.space_id
+    id              = data.tama_prompt.existing_user_prompt.id
+    name            = data.tama_prompt.existing_user_prompt.name
+    slug            = data.tama_prompt.existing_user_prompt.slug
+    role            = data.tama_prompt.existing_user_prompt.role
+    provision_state = data.tama_prompt.existing_user_prompt.provision_state
+    space_id        = data.tama_prompt.existing_user_prompt.space_id
   }
 }
 
@@ -104,8 +104,8 @@ output "all_prompts_summary" {
 ### Read-Only
 
 - `content` (String) Content of the prompt
-- `current_state` (String) Current state of the prompt
 - `name` (String) Name of the prompt
+- `provision_state` (String) Current state of the prompt
 - `role` (String) Role associated with the prompt (system or user)
 - `slug` (String) Slug for the prompt
 - `space_id` (String) ID of the space this prompt belongs to

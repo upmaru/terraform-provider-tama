@@ -123,7 +123,7 @@ output "validation_thought_id" {
 
 output "validation_thought_state" {
   description = "Current state of the validation thought"
-  value       = tama_thought.content_validation.current_state
+  value       = tama_thought.content_validation.provision_state
 }
 
 output "summary_thought_id" {

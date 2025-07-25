@@ -29,13 +29,13 @@ type DataSource struct {
 
 // DataSourceModel describes the data source data model.
 type DataSourceModel struct {
-	Id           types.String  `tfsdk:"id"`
-	Name         types.String  `tfsdk:"name"`
-	Description  types.String  `tfsdk:"description"`
-	Schema       []SchemaModel `tfsdk:"schema"`
-	SchemaJSON   types.String  `tfsdk:"schema_json"`
-	CurrentState types.String  `tfsdk:"current_state"`
-	SpaceId      types.String  `tfsdk:"space_id"`
+	Id             types.String  `tfsdk:"id"`
+	Name           types.String  `tfsdk:"name"`
+	Description    types.String  `tfsdk:"description"`
+	Schema         []SchemaModel `tfsdk:"schema"`
+	SchemaJSON     types.String  `tfsdk:"schema_json"`
+	ProvisionState types.String  `tfsdk:"provision_state"`
+	SpaceId        types.String  `tfsdk:"space_id"`
 }
 
 func (d *DataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -63,7 +63,7 @@ func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, r
 				MarkdownDescription: "JSON schema as a string",
 				Computed:            true,
 			},
-			"current_state": schema.StringAttribute{
+			"provision_state": schema.StringAttribute{
 				MarkdownDescription: "Current state of the class",
 				Computed:            true,
 			},
@@ -154,7 +154,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	data.Id = types.StringValue(classResponse.ID)
 	data.Name = types.StringValue(classResponse.Name)
 	data.Description = types.StringValue(classResponse.Description)
-	data.CurrentState = types.StringValue(classResponse.CurrentState)
+	data.ProvisionState = types.StringValue(classResponse.ProvisionState)
 	data.SpaceId = types.StringValue(classResponse.SpaceID)
 
 	// Update both schema block and schema_json with response data

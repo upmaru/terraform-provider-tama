@@ -40,13 +40,13 @@ type ModuleModel struct {
 
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id            types.String  `tfsdk:"id"`
-	ChainId       types.String  `tfsdk:"chain_id"`
-	OutputClassId types.String  `tfsdk:"output_class_id"`
-	Module        []ModuleModel `tfsdk:"module"`
-	CurrentState  types.String  `tfsdk:"current_state"`
-	Relation      types.String  `tfsdk:"relation"`
-	Index         types.Int64   `tfsdk:"index"`
+	Id             types.String  `tfsdk:"id"`
+	ChainId        types.String  `tfsdk:"chain_id"`
+	OutputClassId  types.String  `tfsdk:"output_class_id"`
+	Module         []ModuleModel `tfsdk:"module"`
+	ProvisionState types.String  `tfsdk:"provision_state"`
+	Relation       types.String  `tfsdk:"relation"`
+	Index          types.Int64   `tfsdk:"index"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -77,7 +77,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 				Optional:            true,
 				Computed:            true,
 			},
-			"current_state": schema.StringAttribute{
+			"provision_state": schema.StringAttribute{
 				MarkdownDescription: "Current state of the thought",
 				Computed:            true,
 			},
@@ -194,7 +194,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	data.Id = types.StringValue(thoughtResponse.ID)
 	data.ChainId = types.StringValue(thoughtResponse.ChainID)
 	data.OutputClassId = types.StringValue(thoughtResponse.OutputClassID)
-	data.CurrentState = types.StringValue(thoughtResponse.CurrentState)
+	data.ProvisionState = types.StringValue(thoughtResponse.ProvisionState)
 	data.Relation = types.StringValue(thoughtResponse.Relation)
 	data.Index = types.Int64Value(int64(thoughtResponse.Index))
 
@@ -237,7 +237,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 	data.Id = types.StringValue(thoughtResponse.ID)
 	data.ChainId = types.StringValue(thoughtResponse.ChainID)
 	data.OutputClassId = types.StringValue(thoughtResponse.OutputClassID)
-	data.CurrentState = types.StringValue(thoughtResponse.CurrentState)
+	data.ProvisionState = types.StringValue(thoughtResponse.ProvisionState)
 	data.Relation = types.StringValue(thoughtResponse.Relation)
 	data.Index = types.Int64Value(int64(thoughtResponse.Index))
 
@@ -312,7 +312,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	data.Id = types.StringValue(thoughtResponse.ID)
 	data.ChainId = types.StringValue(thoughtResponse.ChainID)
 	data.OutputClassId = types.StringValue(thoughtResponse.OutputClassID)
-	data.CurrentState = types.StringValue(thoughtResponse.CurrentState)
+	data.ProvisionState = types.StringValue(thoughtResponse.ProvisionState)
 	data.Relation = types.StringValue(thoughtResponse.Relation)
 	data.Index = types.Int64Value(int64(thoughtResponse.Index))
 
@@ -366,7 +366,7 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 	data.Id = types.StringValue(thoughtResponse.ID)
 	data.ChainId = types.StringValue(thoughtResponse.ChainID)
 	data.OutputClassId = types.StringValue(thoughtResponse.OutputClassID)
-	data.CurrentState = types.StringValue(thoughtResponse.CurrentState)
+	data.ProvisionState = types.StringValue(thoughtResponse.ProvisionState)
 	data.Relation = types.StringValue(thoughtResponse.Relation)
 	data.Index = types.Int64Value(int64(thoughtResponse.Index))
 

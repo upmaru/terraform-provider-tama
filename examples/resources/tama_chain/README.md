@@ -33,7 +33,7 @@ resource "tama_chain" "identity_validation" {
 
 - `id` - (String) Chain identifier.
 - `slug` - (String) URL-friendly slug generated from the chain name.
-- `current_state` - (String) Current state of the chain (managed by the API).
+- `provision_state` - (String) Current state of the chain (managed by the API).
 
 ## Example Configurations
 
@@ -117,4 +117,4 @@ The example includes several outputs to demonstrate accessing chain attributes:
 - Chains require an existing space to be created first
 - The `space_id` cannot be changed after creation (forces replacement)
 - Chain names should be descriptive of their intended purpose
-- The `slug` and `current_state` are managed by the API and cannot be set directly
+- The `slug` and `provision_state` are managed by the API and cannot be set directly

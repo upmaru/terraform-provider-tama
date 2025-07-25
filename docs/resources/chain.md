@@ -65,7 +65,7 @@ output "content_analysis_chain_id" {
 
 output "data_processing_chain_state" {
   description = "Current state of the data processing chain"
-  value       = tama_chain.data_processing.current_state
+  value       = tama_chain.data_processing.provision_state
 }
 
 output "space_id" {
@@ -84,6 +84,6 @@ output "space_id" {
 
 ### Read-Only
 
-- `current_state` (String) Current state of the chain
 - `id` (String) Chain identifier
+- `provision_state` (String) Current state of the chain
 - `slug` (String) Slug of the chain

@@ -28,11 +28,11 @@ type DataSource struct {
 
 // DataSourceModel describes the data source data model.
 type DataSourceModel struct {
-	Id           types.String `tfsdk:"id"`
-	SpaceId      types.String `tfsdk:"space_id"`
-	Name         types.String `tfsdk:"name"`
-	Slug         types.String `tfsdk:"slug"`
-	CurrentState types.String `tfsdk:"current_state"`
+	Id             types.String `tfsdk:"id"`
+	SpaceId        types.String `tfsdk:"space_id"`
+	Name           types.String `tfsdk:"name"`
+	Slug           types.String `tfsdk:"slug"`
+	ProvisionState types.String `tfsdk:"provision_state"`
 }
 
 func (d *DataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -60,7 +60,7 @@ func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, r
 				MarkdownDescription: "Slug of the chain",
 				Computed:            true,
 			},
-			"current_state": schema.StringAttribute{
+			"provision_state": schema.StringAttribute{
 				MarkdownDescription: "Current state of the chain",
 				Computed:            true,
 			},
@@ -114,7 +114,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	data.SpaceId = types.StringValue(chainResponse.SpaceID)
 	data.Name = types.StringValue(chainResponse.Name)
 	data.Slug = types.StringValue(chainResponse.Slug)
-	data.CurrentState = types.StringValue(chainResponse.CurrentState)
+	data.ProvisionState = types.StringValue(chainResponse.ProvisionState)
 
 	// Write logs using the tflog package
 	tflog.Trace(ctx, "read a chain data source")

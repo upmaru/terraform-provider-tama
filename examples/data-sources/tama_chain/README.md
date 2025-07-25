@@ -32,7 +32,7 @@ resource "tama_chain" "related_chain" {
 - `space_id` - (String) ID of the space this chain belongs to.
 - `name` - (String) Name of the chain.
 - `slug` - (String) URL-friendly slug generated from the chain name.
-- `current_state` - (String) Current state of the chain.
+- `provision_state` - (String) Current state of the chain.
 
 ## Example Configurations
 
@@ -104,7 +104,7 @@ The example includes several outputs to demonstrate accessing chain data source 
 - `chain_name` - Name of the chain
 - `chain_slug` - Slug of the chain
 - `chain_space_id` - Space ID that contains the chain
-- `chain_current_state` - Current state of the chain
+- `chain_current_state` - Current provision state of the chain
 - `chain_id` - ID of the chain
 
 ## Running the Example

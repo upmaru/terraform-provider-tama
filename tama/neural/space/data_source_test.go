@@ -24,7 +24,7 @@ func TestAccSpaceDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.tama_space.test", "type", "root"),
 					resource.TestCheckResourceAttrSet("data.tama_space.test", "id"),
 					resource.TestCheckResourceAttrSet("data.tama_space.test", "slug"),
-					resource.TestCheckResourceAttrSet("data.tama_space.test", "current_state"),
+					resource.TestCheckResourceAttrSet("data.tama_space.test", "provision_state"),
 				),
 			},
 		},
@@ -43,7 +43,7 @@ func TestAccSpaceDataSource_RootType(t *testing.T) {
 					resource.TestCheckResourceAttr("data.tama_space.test", "type", "root"),
 					resource.TestCheckResourceAttrSet("data.tama_space.test", "id"),
 					resource.TestCheckResourceAttrSet("data.tama_space.test", "slug"),
-					resource.TestCheckResourceAttrSet("data.tama_space.test", "current_state"),
+					resource.TestCheckResourceAttrSet("data.tama_space.test", "provision_state"),
 				),
 			},
 		},
@@ -146,7 +146,7 @@ func TestAccSpaceDataSource_VerifyAllAttributes(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.tama_space.test", "name"),
 					resource.TestCheckResourceAttrSet("data.tama_space.test", "type"),
 					resource.TestCheckResourceAttrSet("data.tama_space.test", "slug"),
-					resource.TestCheckResourceAttrSet("data.tama_space.test", "current_state"),
+					resource.TestCheckResourceAttrSet("data.tama_space.test", "provision_state"),
 
 					// Verify specific values
 					resource.TestCheckResourceAttrSet("data.tama_space.test", "name"),
@@ -189,7 +189,7 @@ func TestAccSpaceDataSource_ComplexScenario(t *testing.T) {
 					resource.TestCheckResourceAttr("data.tama_space.test", "type", "component"),
 					resource.TestCheckResourceAttrSet("data.tama_space.test", "id"),
 					resource.TestCheckResourceAttrSet("data.tama_space.test", "slug"),
-					resource.TestCheckResourceAttrSet("data.tama_space.test", "current_state"),
+					resource.TestCheckResourceAttrSet("data.tama_space.test", "provision_state"),
 				),
 			},
 		},
@@ -206,9 +206,9 @@ func TestAccSpaceDataSource_StateVerification(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("data.tama_space.test", "name"),
 					resource.TestCheckResourceAttr("data.tama_space.test", "type", "root"),
-					resource.TestCheckResourceAttrSet("data.tama_space.test", "current_state"),
-					// Verify that current_state is not empty
-					resource.TestCheckNoResourceAttr("data.tama_space.test", "current_state.#"),
+					resource.TestCheckResourceAttrSet("data.tama_space.test", "provision_state"),
+					// Verify that provision_state is not empty
+					resource.TestCheckNoResourceAttr("data.tama_space.test", "provision_state.#"),
 				),
 			},
 		},

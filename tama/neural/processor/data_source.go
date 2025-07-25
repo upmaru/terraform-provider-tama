@@ -34,7 +34,7 @@ type DataSourceModel struct {
 	SpaceId          types.String            `tfsdk:"space_id"`
 	ModelId          types.String            `tfsdk:"model_id"`
 	Type             types.String            `tfsdk:"type"`
-	CurrentState     types.String            `tfsdk:"current_state"`
+	ProvisionState   types.String            `tfsdk:"provision_state"`
 	CompletionConfig []CompletionConfigModel `tfsdk:"completion_config"`
 	EmbeddingConfig  []EmbeddingConfigModel  `tfsdk:"embedding_config"`
 	RerankingConfig  []RerankingConfigModel  `tfsdk:"reranking_config"`
@@ -62,10 +62,10 @@ func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, r
 				Computed:            true,
 			},
 			"type": schema.StringAttribute{
-				MarkdownDescription: "Type of processor: completion, embedding, or reranking",
+				MarkdownDescription: "Processor type",
 				Required:            true,
 			},
-			"current_state": schema.StringAttribute{
+			"provision_state": schema.StringAttribute{
 				MarkdownDescription: "Current state of the processor",
 				Computed:            true,
 			},
@@ -191,7 +191,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	data.SpaceId = types.StringValue(processorResponse.SpaceID)
 	data.ModelId = types.StringValue(processorResponse.ModelID)
 	data.Type = types.StringValue(processorResponse.Type)
-	data.CurrentState = types.StringValue(processorResponse.CurrentState)
+	data.ProvisionState = types.StringValue(processorResponse.ProvisionState)
 
 	// Update configuration blocks based on the type and API response
 	d.updateConfigurationFromResponse(processorResponse, &data)

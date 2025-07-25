@@ -70,7 +70,7 @@ output "chain_space_id" {
 
 output "chain_current_state" {
   description = "Current state of the chain"
-  value       = data.tama_chain.example.current_state
+  value       = data.tama_chain.example.provision_state
 }
 
 output "chain_id" {

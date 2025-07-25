@@ -112,7 +112,7 @@ output "thought_index" {
 
 output "thought_current_state" {
   description = "Current state of the thought"
-  value       = data.tama_thought.example.current_state
+  value       = data.tama_thought.example.provision_state
 }
 
 output "thought_output_class_id" {
@@ -172,10 +172,10 @@ output "module_category" {
 ### Read-Only
 
 - `chain_id` (String) ID of the chain this thought belongs to
-- `current_state` (String) Current state of the thought
 - `index` (Number) Index position of the thought in the chain
 - `module` (Block List) Module configuration for the thought (see [below for nested schema](#nestedblock--module))
 - `output_class_id` (String) ID of the output class for this thought
+- `provision_state` (String) Current state of the thought
 - `relation` (String) Relation type for the thought
 
 <a id="nestedblock--module"></a>
