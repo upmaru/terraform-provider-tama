@@ -326,3 +326,94 @@ output "custom_specification_id" {
   description = "ID of the custom specification"
   value       = tama_specification.custom.id
 }
+
+# Example with wait_for - wait for specification to be active
+resource "tama_specification" "with_wait" {
+  space_id = tama_space.example.id
+  schema = jsonencode({
+    openapi = "3.0.0"
+    info = {
+      title   = "Wait Example API"
+      version = "1.0.0"
+    }
+    paths = {
+      "/health" = {
+        get = {
+          summary = "Health check"
+          responses = {
+            "200" = {
+              description = "OK"
+            }
+          }
+        }
+      }
+    }
+  })
+  version  = "1.0.0"
+  endpoint = "https://api.example.com"
+
+  # Wait for the specification to be in "active" state
+  wait_for {
+    field {
+      key        = "current_state"
+      value      = "^(completed|failed)$"
+      value_type = "regex"
+    }
+  }
+}
+
+# Example with multiple conditions and regex matching
+resource "tama_specification" "advanced_wait" {
+  space_id = tama_space.example.id
+  schema = jsonencode({
+    openapi = "3.0.0"
+    info = {
+      title   = "Advanced Wait API"
+      version = "2.0.0"
+    }
+    paths = {
+      "/users" = {
+        get = {
+          summary = "List users"
+          responses = {
+            "200" = {
+              description = "OK"
+            }
+          }
+        }
+      }
+    }
+  })
+  version  = "2.0.0"
+  endpoint = "https://api.advanced.com"
+
+  # Wait for multiple conditions
+  wait_for {
+    field {
+      key   = "provision_state"
+      value = "active"
+    }
+
+    field {
+      key        = "current_state"
+      value      = "^(completed|failed)$"
+      value_type = "regex"
+    }
+  }
+}
+
+
+output "wait_specification_id" {
+  description = "ID of the specification with wait conditions"
+  value       = tama_specification.with_wait.id
+}
+
+output "advanced_wait_specification_id" {
+  description = "ID of the specification with advanced wait conditions"
+  value       = tama_specification.advanced_wait.id
+}
+
+output "nested_wait_specification_id" {
+  description = "ID of the specification with nested wait conditions"
+  value       = tama_specification.nested_wait.id
+}

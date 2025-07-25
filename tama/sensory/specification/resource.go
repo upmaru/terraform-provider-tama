@@ -7,13 +7,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/thedevsaddam/gojsonq/v2"
 	tama "github.com/upmaru/tama-go"
 	"github.com/upmaru/tama-go/sensory"
 	internalplanmodifier "github.com/upmaru/terraform-provider-tama/internal/planmodifier"
@@ -32,6 +36,18 @@ type Resource struct {
 	client *tama.Client
 }
 
+// WaitForField represents a field condition for waiting.
+type WaitForField struct {
+	Key       types.String `tfsdk:"key"`
+	Value     types.String `tfsdk:"value"`
+	ValueType types.String `tfsdk:"value_type"`
+}
+
+// WaitFor represents the wait_for configuration.
+type WaitFor struct {
+	Field []WaitForField `tfsdk:"field"`
+}
+
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
 	Id             types.String `tfsdk:"id"`
@@ -41,6 +57,7 @@ type ResourceModel struct {
 	Endpoint       types.String `tfsdk:"endpoint"`
 	CurrentState   types.String `tfsdk:"current_state"`
 	ProvisionState types.String `tfsdk:"provision_state"`
+	WaitFor        []WaitFor    `tfsdk:"wait_for"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -88,6 +105,36 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			"provision_state": schema.StringAttribute{
 				MarkdownDescription: "Provision state of the specification",
 				Computed:            true,
+			},
+		},
+		Blocks: map[string]schema.Block{
+			"wait_for": schema.ListNestedBlock{
+				MarkdownDescription: "If set, will wait until either all of conditions are satisfied, or until timeout is reached",
+				NestedObject: schema.NestedBlockObject{
+					Blocks: map[string]schema.Block{
+						"field": schema.ListNestedBlock{
+							MarkdownDescription: "Condition criteria for a field",
+							NestedObject: schema.NestedBlockObject{
+								Attributes: map[string]schema.Attribute{
+									"key": schema.StringAttribute{
+										MarkdownDescription: "Key which should be matched from resulting object (JSON path)",
+										Required:            true,
+									},
+									"value": schema.StringAttribute{
+										MarkdownDescription: "Value to wait for",
+										Required:            true,
+									},
+									"value_type": schema.StringAttribute{
+										MarkdownDescription: "Value type. Can be either 'eq' (equivalent) or 'regex'",
+										Optional:            true,
+										Computed:            true,
+										Default:             stringdefault.StaticString("eq"),
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -168,6 +215,17 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 			return
 		}
 		data.Schema = types.StringValue(string(schemaJSON))
+	}
+
+	// Handle wait_for conditions if specified
+	if len(data.WaitFor) > 0 {
+		for _, waitFor := range data.WaitFor {
+			err := waitForConditions(ctx, r.client, data.Id.ValueString(), waitFor.Field, 10*time.Minute)
+			if err != nil {
+				resp.Diagnostics.AddError("Wait Condition Failed", fmt.Sprintf("Unable to satisfy wait conditions: %s", err))
+				return
+			}
+		}
 	}
 
 	// Write logs using the tflog package
@@ -271,6 +329,17 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		data.Schema = types.StringValue(string(schemaJSON))
 	}
 
+	// Handle wait_for conditions if specified
+	if len(data.WaitFor) > 0 {
+		for _, waitFor := range data.WaitFor {
+			err := waitForConditions(ctx, r.client, data.Id.ValueString(), waitFor.Field, 10*time.Minute)
+			if err != nil {
+				resp.Diagnostics.AddError("Wait Condition Failed", fmt.Sprintf("Unable to satisfy wait conditions: %s", err))
+				return
+			}
+		}
+	}
+
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -331,4 +400,77 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 
 	// Save imported data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+// waitForConditions waits for specified field conditions to be met.
+func waitForConditions(ctx context.Context, client *tama.Client, specId string, conditions []WaitForField, timeout time.Duration) error {
+	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-timeoutCtx.Done():
+			return fmt.Errorf("timeout waiting for conditions")
+		case <-ticker.C:
+			// Get current specification state
+			specResponse, err := client.Sensory.GetSpecification(specId)
+			if err != nil {
+				return fmt.Errorf("failed to get specification: %s", err)
+			}
+
+			// Convert to JSON for querying
+			jsonBytes, err := json.Marshal(specResponse)
+			if err != nil {
+				return fmt.Errorf("failed to marshal specification to JSON: %s", err)
+			}
+
+			// Check all conditions
+			allConditionsMet := true
+			gq := gojsonq.New().FromString(string(jsonBytes))
+
+			for _, condition := range conditions {
+				// Find the value at the specified key
+				value := gq.Reset().Find(condition.Key.ValueString())
+				if value == nil {
+					allConditionsMet = false
+					break
+				}
+
+				// Convert to string for comparison
+				stringVal := fmt.Sprintf("%v", value)
+				valueType := condition.ValueType.ValueString()
+				if valueType == "" || condition.ValueType.IsNull() {
+					valueType = "eq" // default to equality check
+				}
+
+				switch valueType {
+				case "regex":
+					matched, err := regexp.MatchString(condition.Value.ValueString(), stringVal)
+					if err != nil {
+						return fmt.Errorf("invalid regex pattern '%s': %s", condition.Value.ValueString(), err)
+					}
+					if !matched {
+						allConditionsMet = false
+					}
+				case "eq":
+					if stringVal != condition.Value.ValueString() {
+						allConditionsMet = false
+					}
+				default:
+					return fmt.Errorf("unsupported value_type '%s', must be 'eq' or 'regex'", valueType)
+				}
+
+				if !allConditionsMet {
+					break
+				}
+			}
+
+			if allConditionsMet {
+				return nil
+			}
+		}
+	}
 }
