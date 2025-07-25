@@ -367,17 +367,16 @@ resource "tama_specification" "with_wait" {
   version  = "1.0.0"
   endpoint = "https://api.example.com"
 
-  # Wait for the specification to be in "active" state
+  # Wait for the specification to be in "completed" state
   wait_for {
     field {
-      key        = "current_state"
-      value      = "^(completed|failed)$"
-      value_type = "regex"
+      name = "current_state"
+      in   = ["completed"]
     }
   }
 }
 
-# Example with multiple conditions and regex matching
+# Example with multiple conditions
 resource "tama_specification" "advanced_wait" {
   space_id = tama_space.example.id
   schema = jsonencode({
@@ -405,18 +404,55 @@ resource "tama_specification" "advanced_wait" {
   # Wait for multiple conditions
   wait_for {
     field {
-      key   = "current_state"
-      value = "completed"
+      name = "current_state"
+      in   = ["completed"]
     }
 
     field {
-      key        = "provision_state"
-      value      = "^(active|inactive)$"
-      value_type = "regex"
+      name = "provision_state"
+      in   = ["active", "inactive"]
     }
   }
 }
 
+# Example waiting for nested field values
+resource "tama_specification" "nested_wait" {
+  space_id = tama_space.example.id
+  schema = jsonencode({
+    openapi = "3.0.0"
+    info = {
+      title   = "Nested Wait API"
+      version = "3.0.0"
+    }
+    paths = {
+      "/status" = {
+        get = {
+          summary = "Get status"
+          responses = {
+            "200" = {
+              description = "OK"
+            }
+          }
+        }
+      }
+    }
+  })
+  version  = "3.0.0"
+  endpoint = "https://api.nested.com"
+
+  # Wait for nested field using JSON path notation
+  wait_for {
+    field {
+      name = "metadata.deployment.status"
+      in   = ["completed"]
+    }
+
+    field {
+      name = "config.health.status"
+      in   = ["active", "healthy"]
+    }
+  }
+}
 
 output "wait_specification_id" {
   description = "ID of the specification with wait conditions"
@@ -466,9 +502,5 @@ Optional:
 
 Required:
 
-- `key` (String) Key which should be matched from resulting object (JSON path)
-- `value` (String) Value to wait for
-
-Optional:
-
-- `value_type` (String) Value type. Can be either 'eq' (equivalent) or 'regex'
+- `in` (List of String) List of acceptable values for the field
+- `name` (String) Name of the field to check (JSON path)
