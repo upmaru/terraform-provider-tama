@@ -247,6 +247,7 @@ output "specification_with_identities" {
 ### Optional
 
 - `validation` (Block, Optional) Validation configuration for the identity (see [below for nested schema](#nestedblock--validation))
+- `wait_for` (Block List) If set, will wait until either all of conditions are satisfied, or until timeout is reached (see [below for nested schema](#nestedblock--wait_for))
 
 ### Read-Only
 
@@ -262,3 +263,19 @@ Required:
 - `codes` (List of Number) List of acceptable HTTP status codes
 - `method` (String) HTTP method for validation (e.g., 'GET', 'POST')
 - `path` (String) Validation endpoint path
+
+
+<a id="nestedblock--wait_for"></a>
+### Nested Schema for `wait_for`
+
+Optional:
+
+- `field` (Block List) Condition criteria for a field (see [below for nested schema](#nestedblock--wait_for--field))
+
+<a id="nestedblock--wait_for--field"></a>
+### Nested Schema for `wait_for.field`
+
+Required:
+
+- `in` (List of String) List of acceptable values for the field
+- `name` (String) Name of the field to check (JSON path)
