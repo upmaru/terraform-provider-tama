@@ -128,6 +128,17 @@ func TestAccSourceIdentityResource_DifferentIdentifiers(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_source_identity.test", "current_state"),
 				),
 			},
+			{
+				Config: testAccSourceIdentityResourceConfig("ApiKey2", "test-api-key-2", "/status", "POST", "[200]"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_source_identity.test", "identifier", "ApiKey2"),
+					resource.TestCheckResourceAttr("tama_source_identity.test", "api_key", "test-api-key-2"),
+					resource.TestCheckResourceAttr("tama_source_identity.test", "validation.path", "/status"),
+					resource.TestCheckResourceAttr("tama_source_identity.test", "validation.method", "POST"),
+					resource.TestCheckResourceAttrSet("tama_source_identity.test", "provision_state"),
+					resource.TestCheckResourceAttrSet("tama_source_identity.test", "current_state"),
+				),
+			},
 		},
 	})
 }
