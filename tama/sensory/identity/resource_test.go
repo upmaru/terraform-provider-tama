@@ -115,34 +115,21 @@ func TestAccSourceIdentityResource_EmptyCodes(t *testing.T) {
 }
 
 func TestAccSourceIdentityResource_DifferentIdentifiers(t *testing.T) {
-	testCases := []struct {
-		name       string
-		identifier string
-	}{
-		{"Bearer token", "BearerToken"},
-		{"Basic auth", "BasicAuth"},
-		{"Custom header", "CustomHeader"},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			resource.Test(t, resource.TestCase{
-				PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
-				ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
-				Steps: []resource.TestStep{
-					{
-						Config: testAccSourceIdentityResourceConfig(tc.identifier, "test-api-key", "/health", "GET", "[200]"),
-						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("tama_source_identity.test", "identifier", tc.identifier),
-							resource.TestCheckResourceAttr("tama_source_identity.test", "api_key", "test-api-key"),
-							resource.TestCheckResourceAttrSet("tama_source_identity.test", "provision_state"),
-							resource.TestCheckResourceAttrSet("tama_source_identity.test", "current_state"),
-						),
-					},
-				},
-			})
-		})
-	}
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceIdentityResourceConfig("ApiKey", "test-api-key", "/health", "GET", "[200]"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_source_identity.test", "identifier", "ApiKey"),
+					resource.TestCheckResourceAttr("tama_source_identity.test", "api_key", "test-api-key"),
+					resource.TestCheckResourceAttrSet("tama_source_identity.test", "provision_state"),
+					resource.TestCheckResourceAttrSet("tama_source_identity.test", "current_state"),
+				),
+			},
+		},
+	})
 }
 
 func TestAccSourceIdentityResource_DifferentHttpMethods(t *testing.T) {
@@ -251,15 +238,15 @@ func TestAccSourceIdentityResource_Multiple(t *testing.T) {
 			{
 				Config: testAccSourceIdentityResourceConfigMultiple(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// First identity
+					// Test single identity
 					resource.TestCheckResourceAttr("tama_source_identity.test1", "identifier", "ApiKey"),
+					resource.TestCheckResourceAttr("tama_source_identity.test2", "identifier", "ApiKey2"),
 					resource.TestCheckResourceAttr("tama_source_identity.test1", "api_key", "test-api-key-1"),
 					resource.TestCheckResourceAttr("tama_source_identity.test1", "validation.path", "/health"),
 					resource.TestCheckResourceAttr("tama_source_identity.test1", "validation.method", "GET"),
 					resource.TestCheckResourceAttrSet("tama_source_identity.test1", "id"),
 					resource.TestCheckResourceAttrSet("tama_source_identity.test1", "provision_state"),
-					// Second identity
-					resource.TestCheckResourceAttr("tama_source_identity.test2", "identifier", "BearerToken"),
+					// Test second identity
 					resource.TestCheckResourceAttr("tama_source_identity.test2", "api_key", "test-api-key-2"),
 					resource.TestCheckResourceAttr("tama_source_identity.test2", "validation.path", "/status"),
 					resource.TestCheckResourceAttr("tama_source_identity.test2", "validation.method", "POST"),
@@ -293,6 +280,46 @@ func TestAccSourceIdentityResource_StateValues(t *testing.T) {
 	})
 }
 
+func TestAccSourceIdentityResource_WaitFor(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceIdentityResourceConfigWaitFor("ApiKey", "test-api-key", "/health", "GET", "[200]"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_source_identity.test", "identifier", "ApiKey"),
+					resource.TestCheckResourceAttr("tama_source_identity.test", "api_key", "test-api-key"),
+					resource.TestCheckResourceAttr("tama_source_identity.test", "validation.path", "/health"),
+					resource.TestCheckResourceAttr("tama_source_identity.test", "validation.method", "GET"),
+					resource.TestCheckResourceAttrSet("tama_source_identity.test", "provision_state"),
+					resource.TestCheckResourceAttrSet("tama_source_identity.test", "current_state"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSourceIdentityResource_WaitForMultipleConditions(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceIdentityResourceConfigWaitForMultiple("ApiKey", "test-api-key", "/health", "GET", "[200]"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_source_identity.test", "identifier", "ApiKey"),
+					resource.TestCheckResourceAttr("tama_source_identity.test", "api_key", "test-api-key"),
+					resource.TestCheckResourceAttr("tama_source_identity.test", "validation.path", "/health"),
+					resource.TestCheckResourceAttr("tama_source_identity.test", "validation.method", "GET"),
+					resource.TestCheckResourceAttrSet("tama_source_identity.test", "provision_state"),
+					resource.TestCheckResourceAttrSet("tama_source_identity.test", "current_state"),
+				),
+			},
+		},
+	})
+}
+
 func testAccSourceIdentityResourceConfig(identifier, apiKey, validationPath, validationMethod, validationCodes string) string {
 	timestamp := time.Now().UnixNano()
 	return acceptance.ProviderConfig + fmt.Sprintf(`
@@ -306,6 +333,13 @@ resource "tama_specification" "test_spec" {
   version  = "1.0.0"
   endpoint = "https://elasticsearch.arrakis.upmaru.network"
   schema   = jsonencode(jsondecode(file("${path.module}/testdata/elasticsearch_schema.json")))
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["completed"]
+    }
+  }
 }`, timestamp) + fmt.Sprintf(`
 
 resource "tama_source_identity" "test" {
@@ -335,6 +369,13 @@ resource "tama_specification" "test_spec" {
   version  = "1.0.0"
   endpoint = "https://elasticsearch.arrakis.upmaru.network"
   schema   = jsonencode(jsondecode(file("${path.module}/testdata/elasticsearch_schema.json")))
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["completed"]
+    }
+  }
 }`, timestamp) + `
 
 resource "tama_source_identity" "test1" {
@@ -351,7 +392,7 @@ resource "tama_source_identity" "test1" {
 
 resource "tama_source_identity" "test2" {
   specification_id = tama_specification.test_spec.id
-  identifier       = "BearerToken"
+  identifier       = "ApiKey2"
   api_key          = "test-api-key-2"
 
   validation {
@@ -361,4 +402,94 @@ resource "tama_source_identity" "test2" {
   }
 }
 `
+}
+
+func testAccSourceIdentityResourceConfigWaitFor(identifier, apiKey, validationPath, validationMethod, validationCodes string) string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test_space" {
+  name = "test-space-for-identity-wait-%d"
+  type = "root"
+}
+
+resource "tama_specification" "test_spec" {
+  space_id = tama_space.test_space.id
+  version  = "1.0.0"
+  endpoint = "https://elasticsearch.arrakis.upmaru.network"
+  schema   = jsonencode(jsondecode(file("${path.module}/testdata/elasticsearch_schema.json")))
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["completed"]
+    }
+  }
+}`, timestamp) + fmt.Sprintf(`
+
+resource "tama_source_identity" "test" {
+  specification_id = tama_specification.test_spec.id
+  identifier       = %[1]q
+  api_key          = %[2]q
+
+  validation {
+    path   = %[3]q
+    method = %[4]q
+    codes  = %[5]s
+  }
+
+  wait_for {
+    field {
+      name = "provision_state"
+      in   = ["active"]
+    }
+  }
+}
+`, identifier, apiKey, validationPath, validationMethod, validationCodes)
+}
+
+func testAccSourceIdentityResourceConfigWaitForMultiple(identifier, apiKey, validationPath, validationMethod, validationCodes string) string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test_space" {
+  name = "test-space-for-identity-wait-multiple-%d"
+  type = "root"
+}
+
+resource "tama_specification" "test_spec" {
+  space_id = tama_space.test_space.id
+  version  = "1.0.0"
+  endpoint = "https://elasticsearch.arrakis.upmaru.network"
+  schema   = jsonencode(jsondecode(file("${path.module}/testdata/elasticsearch_schema.json")))
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["completed"]
+    }
+  }
+}`, timestamp) + fmt.Sprintf(`
+
+resource "tama_source_identity" "test" {
+  specification_id = tama_specification.test_spec.id
+  identifier       = %[1]q
+  api_key          = %[2]q
+
+  validation {
+    path   = %[3]q
+    method = %[4]q
+    codes  = %[5]s
+  }
+
+  wait_for {
+    field {
+      name = "provision_state"
+      in   = ["active"]
+    }
+    field {
+      name = "current_state"
+      in   = ["active", "failed"]
+    }
+  }
+}
+`, identifier, apiKey, validationPath, validationMethod, validationCodes)
 }

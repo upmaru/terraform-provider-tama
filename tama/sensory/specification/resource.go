@@ -15,10 +15,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/thedevsaddam/gojsonq/v2"
 	tama "github.com/upmaru/tama-go"
 	"github.com/upmaru/tama-go/sensory"
 	internalplanmodifier "github.com/upmaru/terraform-provider-tama/internal/planmodifier"
+	"github.com/upmaru/terraform-provider-tama/internal/wait"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -34,27 +34,16 @@ type Resource struct {
 	client *tama.Client
 }
 
-// WaitForField represents a field condition for waiting.
-type WaitForField struct {
-	Name types.String `tfsdk:"name"`
-	In   types.List   `tfsdk:"in"`
-}
-
-// WaitFor represents the wait_for configuration.
-type WaitFor struct {
-	Field []WaitForField `tfsdk:"field"`
-}
-
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id             types.String `tfsdk:"id"`
-	SpaceId        types.String `tfsdk:"space_id"`
-	Schema         types.String `tfsdk:"schema"`
-	Version        types.String `tfsdk:"version"`
-	Endpoint       types.String `tfsdk:"endpoint"`
-	CurrentState   types.String `tfsdk:"current_state"`
-	ProvisionState types.String `tfsdk:"provision_state"`
-	WaitFor        []WaitFor    `tfsdk:"wait_for"`
+	Id             types.String   `tfsdk:"id"`
+	SpaceId        types.String   `tfsdk:"space_id"`
+	Schema         types.String   `tfsdk:"schema"`
+	Version        types.String   `tfsdk:"version"`
+	Endpoint       types.String   `tfsdk:"endpoint"`
+	CurrentState   types.String   `tfsdk:"current_state"`
+	ProvisionState types.String   `tfsdk:"provision_state"`
+	WaitFor        []wait.WaitFor `tfsdk:"wait_for"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -104,31 +93,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 				Computed:            true,
 			},
 		},
-		Blocks: map[string]schema.Block{
-			"wait_for": schema.ListNestedBlock{
-				MarkdownDescription: "If set, will wait until either all of conditions are satisfied, or until timeout is reached",
-				NestedObject: schema.NestedBlockObject{
-					Blocks: map[string]schema.Block{
-						"field": schema.ListNestedBlock{
-							MarkdownDescription: "Condition criteria for a field",
-							NestedObject: schema.NestedBlockObject{
-								Attributes: map[string]schema.Attribute{
-									"name": schema.StringAttribute{
-										MarkdownDescription: "Name of the field to check (JSON path)",
-										Required:            true,
-									},
-									"in": schema.ListAttribute{
-										MarkdownDescription: "List of acceptable values for the field",
-										Required:            true,
-										ElementType:         types.StringType,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+		Blocks: wait.WaitForBlockSchema(),
 	}
 }
 
@@ -211,8 +176,11 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 
 	// Handle wait_for conditions if specified
 	if len(data.WaitFor) > 0 {
+		getSpecificationFunc := func(id string) (interface{}, error) {
+			return r.client.Sensory.GetSpecification(id)
+		}
 		for _, waitFor := range data.WaitFor {
-			err := waitForConditions(ctx, r.client, data.Id.ValueString(), waitFor.Field, 10*time.Minute)
+			err := wait.ForConditions(ctx, getSpecificationFunc, data.Id.ValueString(), waitFor.Field, 10*time.Minute)
 			if err != nil {
 				resp.Diagnostics.AddError("Wait Condition Failed", fmt.Sprintf("Unable to satisfy wait conditions: %s", err))
 				return
@@ -323,8 +291,11 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 
 	// Handle wait_for conditions if specified
 	if len(data.WaitFor) > 0 {
+		getSpecificationFunc := func(id string) (interface{}, error) {
+			return r.client.Sensory.GetSpecification(id)
+		}
 		for _, waitFor := range data.WaitFor {
-			err := waitForConditions(ctx, r.client, data.Id.ValueString(), waitFor.Field, 10*time.Minute)
+			err := wait.ForConditions(ctx, getSpecificationFunc, data.Id.ValueString(), waitFor.Field, 10*time.Minute)
 			if err != nil {
 				resp.Diagnostics.AddError("Wait Condition Failed", fmt.Sprintf("Unable to satisfy wait conditions: %s", err))
 				return
@@ -392,73 +363,4 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 
 	// Save imported data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-// waitForConditions waits for specified field conditions to be met.
-func waitForConditions(ctx context.Context, client *tama.Client, specId string, conditions []WaitForField, timeout time.Duration) error {
-	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-timeoutCtx.Done():
-			return fmt.Errorf("timeout waiting for conditions")
-		case <-ticker.C:
-			// Get current specification state
-			specResponse, err := client.Sensory.GetSpecification(specId)
-			if err != nil {
-				return fmt.Errorf("failed to get specification: %s", err)
-			}
-
-			// Convert to JSON for querying
-			jsonBytes, err := json.Marshal(specResponse)
-			if err != nil {
-				return fmt.Errorf("failed to marshal specification to JSON: %s", err)
-			}
-
-			// Check all conditions
-			allConditionsMet := true
-			gq := gojsonq.New().FromString(string(jsonBytes))
-
-			for _, condition := range conditions {
-				// Find the value at the specified field name
-				value := gq.Reset().Find(condition.Name.ValueString())
-				if value == nil {
-					allConditionsMet = false
-					break
-				}
-
-				// Convert to string for comparison
-				stringVal := fmt.Sprintf("%v", value)
-
-				// Get the list of acceptable values
-				var acceptableValues []string
-				diags := condition.In.ElementsAs(ctx, &acceptableValues, false)
-				if diags.HasError() {
-					return fmt.Errorf("failed to parse acceptable values for field '%s'", condition.Name.ValueString())
-				}
-
-				// Check if the current value is in the list of acceptable values
-				found := false
-				for _, acceptableValue := range acceptableValues {
-					if stringVal == acceptableValue {
-						found = true
-						break
-					}
-				}
-
-				if !found {
-					allConditionsMet = false
-					break
-				}
-			}
-
-			if allConditionsMet {
-				return nil
-			}
-		}
-	}
 }

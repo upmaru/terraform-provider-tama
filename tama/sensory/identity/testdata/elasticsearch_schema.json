@@ -1,10 +1,16 @@
 {
   "components": {
-    "security": [{"ApiKey": {}}],
+    "security": [{ "ApiKey": {} }, { "ApiKey2": {} }],
     "securitySchemes": {
       "ApiKey": {
         "in": "header",
         "name": "Authorization",
+        "scheme": "ApiKey",
+        "type": "apiKey"
+      },
+      "ApiKey2": {
+        "in": "header",
+        "name": "X-API-Key",
         "scheme": "ApiKey",
         "type": "apiKey"
       }
@@ -27,7 +33,7 @@
             "in": "path",
             "name": "index",
             "required": true,
-            "schema": {"type": "string"}
+            "schema": { "type": "string" }
           }
         ],
         "requestBody": {
@@ -89,14 +95,14 @@
             "in": "path",
             "name": "index",
             "required": true,
-            "schema": {"type": "string"}
+            "schema": { "type": "string" }
           },
           {
             "description": "The document ID to be used. If the document already exists, it will be updated.",
             "in": "path",
             "name": "id",
             "required": true,
-            "schema": {"type": "string"}
+            "schema": { "type": "string" }
           }
         ],
         "requestBody": {
@@ -120,12 +126,12 @@
                   "title": "create-or-update-index-response",
                   "description": "The expected response when the document is created or updated.",
                   "properties": {
-                    "_index": {"type": "string"},
-                    "_id": {"type": "string"},
-                    "_version": {"type": "integer"},
-                    "result": {"type": "string"},
-                    "_seq_no": {"type": "integer"},
-                    "_primary_term": {"type": "integer"}
+                    "_index": { "type": "string" },
+                    "_id": { "type": "string" },
+                    "_version": { "type": "integer" },
+                    "result": { "type": "string" },
+                    "_seq_no": { "type": "integer" },
+                    "_primary_term": { "type": "integer" }
                   },
                   "type": "object"
                 }
@@ -160,8 +166,8 @@
                           "description": "Adds an alias to the index.",
                           "type": "object",
                           "properties": {
-                            "alias": {"type": "string"},
-                            "index": {"type": "string"}
+                            "alias": { "type": "string" },
+                            "index": { "type": "string" }
                           },
                           "required": ["alias", "index"]
                         },
@@ -169,8 +175,8 @@
                           "description": "Removes an alias from the index.",
                           "type": "object",
                           "properties": {
-                            "alias": {"type": "string"},
-                            "index": {"type": "string"}
+                            "alias": { "type": "string" },
+                            "index": { "type": "string" }
                           },
                           "required": ["alias", "index"]
                         }
@@ -190,11 +196,15 @@
               "application/json": {
                 "schema": {
                   "properties": {
-                    "acknowledged": {"type": "boolean"},
-                    "success": {"type": "boolean"},
-                    "shards_acknowledged": {"type": "boolean"}
+                    "acknowledged": { "type": "boolean" },
+                    "success": { "type": "boolean" },
+                    "shards_acknowledged": { "type": "boolean" }
                   },
-                  "required": ["acknowledged", "success", "shards_acknowledged"],
+                  "required": [
+                    "acknowledged",
+                    "success",
+                    "shards_acknowledged"
+                  ],
                   "type": "object"
                 }
               }

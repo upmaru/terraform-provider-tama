@@ -6,6 +6,7 @@ package source_identity
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -16,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	tama "github.com/upmaru/tama-go"
 	"github.com/upmaru/tama-go/sensory"
+	"github.com/upmaru/terraform-provider-tama/internal/wait"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -47,6 +49,7 @@ type ResourceModel struct {
 	Validation      *ValidationModel `tfsdk:"validation"`
 	ProvisionState  types.String     `tfsdk:"provision_state"`
 	CurrentState    types.String     `tfsdk:"current_state"`
+	WaitFor         []wait.WaitFor   `tfsdk:"wait_for"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -94,29 +97,36 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			},
 		},
 
-		Blocks: map[string]schema.Block{
-			"validation": schema.SingleNestedBlock{
-				MarkdownDescription: "Validation configuration for the identity",
-				Attributes: map[string]schema.Attribute{
-					"path": schema.StringAttribute{
-						MarkdownDescription: "Validation endpoint path",
-						Required:            true,
-					},
-					"method": schema.StringAttribute{
-						MarkdownDescription: "HTTP method for validation (e.g., 'GET', 'POST')",
-						Required:            true,
-					},
-					"codes": schema.ListAttribute{
-						MarkdownDescription: "List of acceptable HTTP status codes",
-						Required:            true,
-						ElementType:         types.Int64Type,
-						PlanModifiers: []planmodifier.List{
-							listplanmodifier.RequiresReplace(),
+		Blocks: func() map[string]schema.Block {
+			blocks := map[string]schema.Block{
+				"validation": schema.SingleNestedBlock{
+					MarkdownDescription: "Validation configuration for the identity",
+					Attributes: map[string]schema.Attribute{
+						"path": schema.StringAttribute{
+							MarkdownDescription: "Validation endpoint path",
+							Required:            true,
+						},
+						"method": schema.StringAttribute{
+							MarkdownDescription: "HTTP method for validation (e.g., 'GET', 'POST')",
+							Required:            true,
+						},
+						"codes": schema.ListAttribute{
+							MarkdownDescription: "List of acceptable HTTP status codes",
+							Required:            true,
+							ElementType:         types.Int64Type,
+							PlanModifiers: []planmodifier.List{
+								listplanmodifier.RequiresReplace(),
+							},
 						},
 					},
 				},
-			},
-		},
+			}
+			// Add wait_for blocks from the shared utility
+			for key, block := range wait.WaitForBlockSchema() {
+				blocks[key] = block
+			}
+			return blocks
+		}(),
 	}
 }
 
@@ -214,6 +224,20 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		Path:   types.StringValue(identityResponse.Validation.Path),
 		Method: types.StringValue(identityResponse.Validation.Method),
 		Codes:  codesList,
+	}
+
+	// Handle wait_for conditions if specified
+	if len(data.WaitFor) > 0 {
+		getIdentityFunc := func(id string) (interface{}, error) {
+			return r.client.Sensory.GetIdentity(id)
+		}
+		for _, waitFor := range data.WaitFor {
+			err := wait.ForConditions(ctx, getIdentityFunc, data.Id.ValueString(), waitFor.Field, 10*time.Minute)
+			if err != nil {
+				resp.Diagnostics.AddError("Wait Condition Failed", fmt.Sprintf("Unable to satisfy wait conditions: %s", err))
+				return
+			}
+		}
 	}
 
 	// Write logs using the tflog package
@@ -340,6 +364,20 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	}
 
 	// Note: API key is not returned in response, keep the original value
+
+	// Handle wait_for conditions if specified
+	if len(data.WaitFor) > 0 {
+		getIdentityFunc := func(id string) (interface{}, error) {
+			return r.client.Sensory.GetIdentity(id)
+		}
+		for _, waitFor := range data.WaitFor {
+			err := wait.ForConditions(ctx, getIdentityFunc, data.Id.ValueString(), waitFor.Field, 10*time.Minute)
+			if err != nil {
+				resp.Diagnostics.AddError("Wait Condition Failed", fmt.Sprintf("Unable to satisfy wait conditions: %s", err))
+				return
+			}
+		}
+	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
