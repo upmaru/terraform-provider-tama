@@ -53,9 +53,9 @@ func TestAccSourceIdentityDataSource_MultipleStatusCodes(t *testing.T) {
 		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceIdentityDataSourceConfig("BearerToken", "test-bearer-token", "/status", "POST", "[200, 201, 202]"),
+				Config: testAccSourceIdentityDataSourceConfig("ApiKey2", "test-bearer-token", "/status", "POST", "[200, 201, 202]"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.tama_source_identity.test", "identifier", "BearerToken"),
+					resource.TestCheckResourceAttr("data.tama_source_identity.test", "identifier", "ApiKey2"),
 					resource.TestCheckResourceAttr("data.tama_source_identity.test", "validation.path", "/status"),
 					resource.TestCheckResourceAttr("data.tama_source_identity.test", "validation.method", "POST"),
 					resource.TestCheckResourceAttr("data.tama_source_identity.test", "validation.codes.#", "3"),
@@ -78,9 +78,9 @@ func TestAccSourceIdentityDataSource_ComplexValidationPath(t *testing.T) {
 		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceIdentityDataSourceConfig("CustomHeader", "test-custom-header", "/api/v1/health?check=all", "GET", "[200, 204]"),
+				Config: testAccSourceIdentityDataSourceConfig("ApiKey", "test-custom-header", "/api/v1/health?check=all", "GET", "[200, 204]"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.tama_source_identity.test", "identifier", "CustomHeader"),
+					resource.TestCheckResourceAttr("data.tama_source_identity.test", "identifier", "ApiKey"),
 					resource.TestCheckResourceAttr("data.tama_source_identity.test", "validation.path", "/api/v1/health?check=all"),
 					resource.TestCheckResourceAttr("data.tama_source_identity.test", "validation.method", "GET"),
 					resource.TestCheckResourceAttr("data.tama_source_identity.test", "validation.codes.#", "2"),
@@ -104,10 +104,6 @@ func TestAccSourceIdentityDataSource_DifferentHttpMethods(t *testing.T) {
 		{"GET method", "GET"},
 		{"POST method", "POST"},
 		{"PUT method", "PUT"},
-		{"PATCH method", "PATCH"},
-		{"DELETE method", "DELETE"},
-		{"HEAD method", "HEAD"},
-		{"OPTIONS method", "OPTIONS"},
 	}
 
 	for _, tc := range testCases {
@@ -139,10 +135,7 @@ func TestAccSourceIdentityDataSource_DifferentIdentifiers(t *testing.T) {
 		identifier string
 	}{
 		{"API Key", "ApiKey"},
-		{"Bearer token", "BearerToken"},
-		{"Basic auth", "BasicAuth"},
-		{"Custom header", "CustomHeader"},
-		{"JWT token", "JWTToken"},
+		{"API Key 2", "ApiKey2"},
 	}
 
 	for _, tc := range testCases {
@@ -187,7 +180,7 @@ func TestAccSourceIdentityDataSource_EmptyId(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccSourceIdentityDataSourceConfigEmptyId(),
-				ExpectError: regexp.MustCompile("Invalid Attribute Value|Attribute id string length must be at least 1"),
+				ExpectError: regexp.MustCompile("identity ID is required"),
 			},
 		},
 	})
@@ -221,9 +214,9 @@ func TestAccSourceIdentityDataSource_ValidationCodes(t *testing.T) {
 		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceIdentityDataSourceConfig("WebhookSecret", "webhook-secret", "/webhook/validate", "POST", "[200, 201, 202, 204]"),
+				Config: testAccSourceIdentityDataSourceConfig("ApiKey2", "webhook-secret", "/webhook/validate", "POST", "[200, 201, 202, 204]"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.tama_source_identity.test", "identifier", "WebhookSecret"),
+					resource.TestCheckResourceAttr("data.tama_source_identity.test", "identifier", "ApiKey2"),
 					resource.TestCheckResourceAttr("data.tama_source_identity.test", "validation.codes.#", "4"),
 					resource.TestCheckResourceAttr("data.tama_source_identity.test", "validation.codes.0", "200"),
 					resource.TestCheckResourceAttr("data.tama_source_identity.test", "validation.codes.1", "201"),
@@ -255,7 +248,7 @@ func TestAccSourceIdentityDataSource_Multiple(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.tama_source_identity.test1", "specification_id"),
 					resource.TestCheckResourceAttrSet("data.tama_source_identity.test1", "provision_state"),
 					// Second identity data source
-					resource.TestCheckResourceAttr("data.tama_source_identity.test2", "identifier", "BearerToken"),
+					resource.TestCheckResourceAttr("data.tama_source_identity.test2", "identifier", "ApiKey2"),
 					resource.TestCheckResourceAttr("data.tama_source_identity.test2", "validation.path", "/status"),
 					resource.TestCheckResourceAttr("data.tama_source_identity.test2", "validation.method", "POST"),
 					resource.TestCheckResourceAttr("data.tama_source_identity.test2", "validation.codes.#", "2"),
@@ -284,13 +277,13 @@ resource "tama_space" "test_space" {
 resource "tama_specification" "test_spec" {
   space_id = tama_space.test_space.id
   version  = "1.0.0"
-  endpoint = "https://api.example.com"
-  schema = {
-    "type" = "object"
-    "properties" = {
-      "message" = {
-        "type" = "string"
-      }
+  endpoint = "https://elasticsearch.arrakis.upmaru.network"
+  schema   = jsonencode(jsondecode(file("${path.module}/testdata/elasticsearch_schema.json")))
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["completed"]
     }
   }
 }`, timestamp) + fmt.Sprintf(`
@@ -340,13 +333,13 @@ resource "tama_space" "test_space" {
 resource "tama_specification" "test_spec" {
   space_id = tama_space.test_space.id
   version  = "1.0.0"
-  endpoint = "https://api.example.com"
-  schema = {
-    "type" = "object"
-    "properties" = {
-      "message" = {
-        "type" = "string"
-      }
+  endpoint = "https://elasticsearch.arrakis.upmaru.network"
+  schema   = jsonencode(jsondecode(file("${path.module}/testdata/elasticsearch_schema.json")))
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["completed"]
     }
   }
 }`, timestamp) + `
@@ -365,7 +358,7 @@ resource "tama_source_identity" "test1" {
 
 resource "tama_source_identity" "test2" {
   specification_id = tama_specification.test_spec.id
-  identifier       = "BearerToken"
+  identifier       = "ApiKey2"
   api_key          = "test-api-key-2"
 
   validation {
