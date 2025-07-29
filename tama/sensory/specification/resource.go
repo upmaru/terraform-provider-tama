@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -17,6 +18,7 @@ import (
 	tama "github.com/upmaru/tama-go"
 	"github.com/upmaru/tama-go/sensory"
 	internalplanmodifier "github.com/upmaru/terraform-provider-tama/internal/planmodifier"
+	"github.com/upmaru/terraform-provider-tama/internal/wait"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -34,13 +36,14 @@ type Resource struct {
 
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id             types.String `tfsdk:"id"`
-	SpaceId        types.String `tfsdk:"space_id"`
-	Schema         types.String `tfsdk:"schema"`
-	Version        types.String `tfsdk:"version"`
-	Endpoint       types.String `tfsdk:"endpoint"`
-	CurrentState   types.String `tfsdk:"current_state"`
-	ProvisionState types.String `tfsdk:"provision_state"`
+	Id             types.String   `tfsdk:"id"`
+	SpaceId        types.String   `tfsdk:"space_id"`
+	Schema         types.String   `tfsdk:"schema"`
+	Version        types.String   `tfsdk:"version"`
+	Endpoint       types.String   `tfsdk:"endpoint"`
+	CurrentState   types.String   `tfsdk:"current_state"`
+	ProvisionState types.String   `tfsdk:"provision_state"`
+	WaitFor        []wait.WaitFor `tfsdk:"wait_for"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -90,6 +93,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 				Computed:            true,
 			},
 		},
+		Blocks: wait.WaitForBlockSchema(),
 	}
 }
 
@@ -168,6 +172,20 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 			return
 		}
 		data.Schema = types.StringValue(string(schemaJSON))
+	}
+
+	// Handle wait_for conditions if specified
+	if len(data.WaitFor) > 0 {
+		getSpecificationFunc := func(id string) (interface{}, error) {
+			return r.client.Sensory.GetSpecification(id)
+		}
+		for _, waitFor := range data.WaitFor {
+			err := wait.ForConditions(ctx, getSpecificationFunc, data.Id.ValueString(), waitFor.Field, 10*time.Minute)
+			if err != nil {
+				resp.Diagnostics.AddError("Wait Condition Failed", fmt.Sprintf("Unable to satisfy wait conditions: %s", err))
+				return
+			}
+		}
 	}
 
 	// Write logs using the tflog package
@@ -269,6 +287,20 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 			return
 		}
 		data.Schema = types.StringValue(string(schemaJSON))
+	}
+
+	// Handle wait_for conditions if specified
+	if len(data.WaitFor) > 0 {
+		getSpecificationFunc := func(id string) (interface{}, error) {
+			return r.client.Sensory.GetSpecification(id)
+		}
+		for _, waitFor := range data.WaitFor {
+			err := wait.ForConditions(ctx, getSpecificationFunc, data.Id.ValueString(), waitFor.Field, 10*time.Minute)
+			if err != nil {
+				resp.Diagnostics.AddError("Wait Condition Failed", fmt.Sprintf("Unable to satisfy wait conditions: %s", err))
+				return
+			}
+		}
 	}
 
 	// Save updated data into Terraform state
