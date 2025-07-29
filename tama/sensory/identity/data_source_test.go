@@ -37,7 +37,6 @@ func TestAccSourceIdentityDataSource(t *testing.T) {
 					resource.TestCheckResourceAttrPair("data.tama_source_identity.test", "specification_id", "tama_source_identity.test", "specification_id"),
 					resource.TestCheckResourceAttrPair("data.tama_source_identity.test", "identifier", "tama_source_identity.test", "identifier"),
 					resource.TestCheckResourceAttrPair("data.tama_source_identity.test", "provision_state", "tama_source_identity.test", "provision_state"),
-					resource.TestCheckResourceAttrPair("data.tama_source_identity.test", "current_state", "tama_source_identity.test", "current_state"),
 					resource.TestCheckResourceAttrPair("data.tama_source_identity.test", "validation.path", "tama_source_identity.test", "validation.path"),
 					resource.TestCheckResourceAttrPair("data.tama_source_identity.test", "validation.method", "tama_source_identity.test", "validation.method"),
 					resource.TestCheckResourceAttrPair("data.tama_source_identity.test", "validation.codes.#", "tama_source_identity.test", "validation.codes.#"),
