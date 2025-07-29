@@ -20,6 +20,7 @@ import (
 
 	"github.com/upmaru/terraform-provider-tama/tama/memory/prompt"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/class"
+	"github.com/upmaru/terraform-provider-tama/tama/neural/corpus"
 	space_processor "github.com/upmaru/terraform-provider-tama/tama/neural/processor"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/space"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/chain"
@@ -161,6 +162,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 	return []func() resource.Resource{
 		space.NewResource,
 		class.NewResource,
+		corpus.NewResource,
 		space_processor.NewResource,
 		source.NewResource,
 		source_identity.NewResource,
@@ -181,6 +183,7 @@ func (p *TamaProvider) DataSources(ctx context.Context) []func() datasource.Data
 	return []func() datasource.DataSource{
 		space.NewDataSource,
 		class.NewDataSource,
+		corpus.NewDataSource,
 		space_processor.NewDataSource,
 		source.NewDataSource,
 		source_identity.NewDataSource,
