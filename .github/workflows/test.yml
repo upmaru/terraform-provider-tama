@@ -119,12 +119,5 @@ jobs:
           TAMA_BASE_URL: "http://localhost:4000"
           TAMA_API_KEY: "dummy"
         run: |
-          go test -v -cover ./tama/memory
-          go test -v -cover ./tama/neural
-          go test -v -cover ./tama/perception
-          go test -v -cover ./tama/sensory/limit
-          go test -v -cover ./tama/sensory/model
-          go test -v -cover ./tama/sensory/source
-          go test -v -cover ./tama/sensory/identity
-          go test -v -cover ./tama/sensory/specification
+          go test -v -cover ./tama/memory/**/*
         timeout-minutes: 10
