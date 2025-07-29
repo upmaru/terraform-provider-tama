@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -56,7 +57,7 @@ func WaitForBlockSchema() map[string]schema.Block {
 
 // ForConditions waits for specified field conditions to be met on a resource.
 // This is a generic function that can be used by any resource that needs wait functionality.
-func ForConditions(ctx context.Context, getResourceFunc func(string) (interface{}, error), resourceId string, conditions []WaitForField, timeout time.Duration) error {
+func ForConditions(ctx context.Context, getResourceFunc func(string) (any, error), resourceId string, conditions []WaitForField, timeout time.Duration) error {
 	timeoutCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
@@ -103,15 +104,7 @@ func ForConditions(ctx context.Context, getResourceFunc func(string) (interface{
 				}
 
 				// Check if the current value is in the list of acceptable values
-				found := false
-				for _, acceptableValue := range acceptableValues {
-					if stringVal == acceptableValue {
-						found = true
-						break
-					}
-				}
-
-				if !found {
+				if !slices.Contains(acceptableValues, stringVal) {
 					allConditionsMet = false
 					break
 				}

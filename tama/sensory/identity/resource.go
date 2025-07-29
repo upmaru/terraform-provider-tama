@@ -228,7 +228,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 
 	// Handle wait_for conditions if specified
 	if len(data.WaitFor) > 0 {
-		getIdentityFunc := func(id string) (interface{}, error) {
+		getIdentityFunc := func(id string) (any, error) {
 			return r.client.Sensory.GetIdentity(id)
 		}
 		for _, waitFor := range data.WaitFor {
@@ -367,7 +367,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 
 	// Handle wait_for conditions if specified
 	if len(data.WaitFor) > 0 {
-		getIdentityFunc := func(id string) (interface{}, error) {
+		getIdentityFunc := func(id string) (any, error) {
 			return r.client.Sensory.GetIdentity(id)
 		}
 		for _, waitFor := range data.WaitFor {
