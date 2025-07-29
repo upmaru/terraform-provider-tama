@@ -15,6 +15,7 @@ This provider supports managing the following Tama resources:
   - `tama_model` - AI models available from sources
   - `tama_limit` - Rate limiting configurations for sources
   - `tama_specification` - OpenAPI 3.0 schema definitions with endpoints and versioning
+  - `tama_source_identity` - Source identities with API credentials and validation endpoints
 
 - **Data Sources:**
   - All resources above have corresponding data sources for referencing existing resources

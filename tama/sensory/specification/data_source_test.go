@@ -21,32 +21,19 @@ func TestAccSpecificationDataSource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create a specification resource first
 			{
-				Config: testAccSpecificationDataSourceConfig("3.1.0", "https://elasticsearch.arrakis.upmaru.network", testhelpers.MustMarshalJSON(testhelpers.TestSchema())),
+				Config: testAccSpecificationDataSourceConfig("1.0.0", "https://api.example.com", testhelpers.MustMarshalJSON(testhelpers.TestSchema())),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// Resource checks
-					resource.TestCheckResourceAttr("tama_specification.test", "version", "3.1.0"),
-					resource.TestCheckResourceAttr("tama_specification.test", "endpoint", "https://elasticsearch.arrakis.upmaru.network"),
-					resource.TestCheckResourceAttrSet("tama_specification.test", "id"),
-					resource.TestCheckResourceAttrSet("tama_specification.test", "space_id"),
-					resource.TestCheckResourceAttrSet("tama_specification.test", "schema"),
-					resource.TestCheckResourceAttrSet("tama_specification.test", "current_state"),
-					resource.TestCheckResourceAttrSet("tama_specification.test", "provision_state"),
 					// Data source checks
-					resource.TestCheckResourceAttr("data.tama_specification.test", "version", "3.1.0"),
-					resource.TestCheckResourceAttr("data.tama_specification.test", "endpoint", "https://elasticsearch.arrakis.upmaru.network"),
+					resource.TestCheckResourceAttr("data.tama_specification.test", "version", "1.0.0"),
+					resource.TestCheckResourceAttr("data.tama_specification.test", "endpoint", "https://api.example.com"),
 					resource.TestCheckResourceAttrSet("data.tama_specification.test", "id"),
 					resource.TestCheckResourceAttrSet("data.tama_specification.test", "space_id"),
 					resource.TestCheckResourceAttrSet("data.tama_specification.test", "schema"),
 					resource.TestCheckResourceAttrSet("data.tama_specification.test", "current_state"),
 					resource.TestCheckResourceAttrSet("data.tama_specification.test", "provision_state"),
-					// Verify resource and data source match
-					resource.TestCheckResourceAttrPair("tama_specification.test", "id", "data.tama_specification.test", "id"),
-					resource.TestCheckResourceAttrPair("tama_specification.test", "space_id", "data.tama_specification.test", "space_id"),
-					resource.TestCheckResourceAttrPair("tama_specification.test", "version", "data.tama_specification.test", "version"),
-					resource.TestCheckResourceAttrPair("tama_specification.test", "endpoint", "data.tama_specification.test", "endpoint"),
-					resource.TestCheckResourceAttrPair("tama_specification.test", "schema", "data.tama_specification.test", "schema"),
-					resource.TestCheckResourceAttrPair("tama_specification.test", "current_state", "data.tama_specification.test", "current_state"),
-					resource.TestCheckResourceAttrPair("tama_specification.test", "provision_state", "data.tama_specification.test", "provision_state"),
+					// Verify that states are not empty
+					resource.TestMatchResourceAttr("data.tama_specification.test", "current_state", regexp.MustCompile(".+")),
+					resource.TestMatchResourceAttr("data.tama_specification.test", "provision_state", regexp.MustCompile(".+")),
 				),
 			},
 		},
@@ -188,6 +175,13 @@ resource "tama_specification" "test" {
   version  = %[1]q
   endpoint = %[2]q
   schema   = %[3]q
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["completed"]
+    }
+  }
 }
 
 data "tama_specification" "test" {

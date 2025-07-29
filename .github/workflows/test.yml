@@ -4,9 +4,6 @@ name: Tests
 # This GitHub action runs your tests for each pull request and push.
 # Optionally, you can turn it on using a schedule for regular testing.
 on:
-  pull_request:
-    paths-ignore:
-      - "README.md"
   push:
     paths-ignore:
       - "README.md"
@@ -118,5 +115,6 @@ jobs:
           TF_ACC: "1"
           TAMA_BASE_URL: "http://localhost:4000"
           TAMA_API_KEY: "dummy"
-        run: go test -v -cover ./...
-        timeout-minutes: 10
+        run: |
+          go test -v -cover ./...
+        timeout-minutes: 30

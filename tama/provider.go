@@ -24,6 +24,7 @@ import (
 	"github.com/upmaru/terraform-provider-tama/tama/neural/space"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/chain"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/thought"
+	source_identity "github.com/upmaru/terraform-provider-tama/tama/sensory/identity"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/limit"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/model"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/source"
@@ -162,6 +163,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		class.NewResource,
 		space_processor.NewResource,
 		source.NewResource,
+		source_identity.NewResource,
 		model.NewResource,
 		limit.NewResource,
 		specification.NewResource,
@@ -181,6 +183,7 @@ func (p *TamaProvider) DataSources(ctx context.Context) []func() datasource.Data
 		class.NewDataSource,
 		space_processor.NewDataSource,
 		source.NewDataSource,
+		source_identity.NewDataSource,
 		model.NewDataSource,
 		limit.NewDataSource,
 		specification.NewDataSource,
