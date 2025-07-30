@@ -5,6 +5,7 @@ package thought_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 	"time"
 
@@ -72,6 +73,50 @@ func TestAccThoughtResource_WithOutputClass(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_thought.test", "provision_state"),
 					resource.TestCheckResourceAttrSet("tama_thought.test", "index"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccThoughtResource_WithIndex(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing with explicit index
+			{
+				Config: testAccThoughtResourceConfigWithIndex(fmt.Sprintf("test-space-%d", time.Now().UnixNano())),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("tama_thought.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_thought.test", "chain_id"),
+					resource.TestCheckResourceAttr("tama_thought.test", "relation", "description"),
+					resource.TestCheckResourceAttr("tama_thought.test", "index", "5"),
+					resource.TestCheckResourceAttr("tama_thought.test", "module.0.reference", "tama/agentic/generate"),
+					resource.TestCheckResourceAttrSet("tama_thought.test", "module.0.parameters"),
+					resource.TestCheckResourceAttrSet("tama_thought.test", "provision_state"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccThoughtResource_DuplicateIndex(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create first thought with index 3
+			{
+				Config: testAccThoughtResourceConfigWithDuplicateIndex(fmt.Sprintf("test-space-%d", time.Now().UnixNano())),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("tama_thought.test1", "id"),
+					resource.TestCheckResourceAttr("tama_thought.test1", "index", "3"),
+				),
+			},
+			// Try to create second thought with same index - should fail with 422
+			{
+				Config:      testAccThoughtResourceConfigWithDuplicateIndexError(fmt.Sprintf("test-space-%d", time.Now().UnixNano())),
+				ExpectError: regexp.MustCompile("422|duplicate|index"),
 			},
 		},
 	})
@@ -173,6 +218,100 @@ resource "tama_thought" "test" {
     reference = "tama/agentic/generate"
     parameters = jsonencode({
       relation = "validation"
+    })
+  }
+}
+`, spaceName)
+}
+
+func testAccThoughtResourceConfigWithIndex(spaceName string) string {
+	return fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "%s"
+  type = "root"
+}
+
+resource "tama_chain" "test" {
+  space_id = tama_space.test.id
+  name     = "Test Processing Chain"
+}
+
+resource "tama_thought" "test" {
+  chain_id = tama_chain.test.id
+  relation = "description"
+  index    = 5
+
+  module {
+    reference = "tama/agentic/generate"
+    parameters = jsonencode({
+      relation = "description"
+    })
+  }
+}
+`, spaceName)
+}
+
+func testAccThoughtResourceConfigWithDuplicateIndex(spaceName string) string {
+	return fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "%s"
+  type = "root"
+}
+
+resource "tama_chain" "test" {
+  space_id = tama_space.test.id
+  name     = "Test Processing Chain"
+}
+
+resource "tama_thought" "test1" {
+  chain_id = tama_chain.test.id
+  relation = "description"
+  index    = 3
+
+  module {
+    reference = "tama/agentic/generate"
+    parameters = jsonencode({
+      relation = "description"
+    })
+  }
+}
+`, spaceName)
+}
+
+func testAccThoughtResourceConfigWithDuplicateIndexError(spaceName string) string {
+	return fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "%s"
+  type = "root"
+}
+
+resource "tama_chain" "test" {
+  space_id = tama_space.test.id
+  name     = "Test Processing Chain"
+}
+
+resource "tama_thought" "test1" {
+  chain_id = tama_chain.test.id
+  relation = "description"
+  index    = 3
+
+  module {
+    reference = "tama/agentic/generate"
+    parameters = jsonencode({
+      relation = "description"
+    })
+  }
+}
+
+resource "tama_thought" "test2" {
+  chain_id = tama_chain.test.id
+  relation = "analysis"
+  index    = 3
+
+  module {
+    reference = "tama/agentic/generate"
+    parameters = jsonencode({
+      relation = "analysis"
     })
   }
 }
