@@ -87,6 +87,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			},
 			"index": schema.Int64Attribute{
 				MarkdownDescription: "Index position of the thought in the chain",
+				Optional:            true,
 				Computed:            true,
 			},
 		},
@@ -175,6 +176,11 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	// Add output_class_id if provided and not empty
 	if !data.OutputClassId.IsNull() && !data.OutputClassId.IsUnknown() && data.OutputClassId.ValueString() != "" {
 		createReq.Thought.OutputClassID = data.OutputClassId.ValueString()
+	}
+
+	// Add index if provided and not empty
+	if !data.Index.IsNull() && !data.Index.IsUnknown() {
+		createReq.Thought.Index = int(data.Index.ValueInt64())
 	}
 
 	tflog.Debug(ctx, "Creating thought", map[string]any{
@@ -293,6 +299,11 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	// Add output_class_id if provided and not empty
 	if !data.OutputClassId.IsNull() && !data.OutputClassId.IsUnknown() && data.OutputClassId.ValueString() != "" {
 		updateReq.Thought.OutputClassID = data.OutputClassId.ValueString()
+	}
+
+	// Add index if provided and not empty
+	if !data.Index.IsNull() && !data.Index.IsUnknown() {
+		updateReq.Thought.Index = int(data.Index.ValueInt64())
 	}
 
 	tflog.Debug(ctx, "Updating thought", map[string]any{

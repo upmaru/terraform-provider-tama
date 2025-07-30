@@ -167,13 +167,13 @@ output "validation_class_id" {
 
 ### Optional
 
+- `index` (Number) Index position of the thought in the chain
 - `module` (Block List) Module configuration for the thought (see [below for nested schema](#nestedblock--module))
 - `output_class_id` (String) ID of the output class for this thought
 
 ### Read-Only
 
 - `id` (String) Thought identifier
-- `index` (Number) Index position of the thought in the chain
 - `provision_state` (String) Current state of the thought
 
 <a id="nestedblock--module"></a>
