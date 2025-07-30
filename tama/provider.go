@@ -19,11 +19,13 @@ import (
 	tama "github.com/upmaru/tama-go"
 
 	"github.com/upmaru/terraform-provider-tama/tama/memory/prompt"
+	"github.com/upmaru/terraform-provider-tama/tama/neural/bridge"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/class"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/corpus"
 	space_processor "github.com/upmaru/terraform-provider-tama/tama/neural/processor"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/space"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/chain"
+	"github.com/upmaru/terraform-provider-tama/tama/perception/path"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/thought"
 	source_identity "github.com/upmaru/terraform-provider-tama/tama/sensory/identity"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/limit"
@@ -161,6 +163,7 @@ func (p *TamaProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		space.NewResource,
+		bridge.NewResource,
 		class.NewResource,
 		corpus.NewResource,
 		space_processor.NewResource,
@@ -172,6 +175,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		prompt.NewResource,
 		chain.NewResource,
 		thought.NewResource,
+		path.NewResource,
 	}
 }
 
@@ -182,6 +186,7 @@ func (p *TamaProvider) EphemeralResources(ctx context.Context) []func() ephemera
 func (p *TamaProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		space.NewDataSource,
+		bridge.NewDataSource,
 		class.NewDataSource,
 		corpus.NewDataSource,
 		space_processor.NewDataSource,
@@ -193,6 +198,7 @@ func (p *TamaProvider) DataSources(ctx context.Context) []func() datasource.Data
 		prompt.NewDataSource,
 		chain.NewDataSource,
 		thought.NewDataSource,
+		path.NewDataSource,
 	}
 }
 
