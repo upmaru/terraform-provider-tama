@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -393,6 +394,7 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 }
 
 // updateModuleFromResponse updates the module block in the resource model from the API response.
+// It attempts to preserve user-provided float types when the server converts them to strings.
 func (r *Resource) updateModuleFromResponse(responseModule perception.Module, data *ResourceModel) error {
 	moduleModel := ModuleModel{
 		Reference: types.StringValue(responseModule.Reference),
@@ -400,6 +402,36 @@ func (r *Resource) updateModuleFromResponse(responseModule perception.Module, da
 
 	// Handle parameters
 	if responseModule.Parameters != nil {
+		// If we have existing module data, try to preserve user types
+		if len(data.Module) > 0 && !data.Module[0].Parameters.IsNull() && !data.Module[0].Parameters.IsUnknown() {
+			existingParamsStr := data.Module[0].Parameters.ValueString()
+			if existingParamsStr != "" {
+				// Parse existing parameters to get original types
+				var existingParams map[string]any
+				if err := json.Unmarshal([]byte(existingParamsStr), &existingParams); err == nil {
+					// Merge response parameters with existing ones, preserving float types
+					mergedParams := preserveUserFloatTypes(existingParams, responseModule.Parameters)
+
+					// Use merged parameters
+					parametersJSON, err := json.Marshal(mergedParams)
+					if err != nil {
+						return fmt.Errorf("unable to marshal merged module parameters: %s", err)
+					}
+
+					// Normalize the marshaled JSON to ensure consistent formatting
+					normalizedJSON, err := internalplanmodifier.NormalizeJSON(string(parametersJSON))
+					if err != nil {
+						return fmt.Errorf("unable to normalize merged module parameters JSON: %s", err)
+					}
+					moduleModel.Parameters = types.StringValue(normalizedJSON)
+
+					data.Module = []ModuleModel{moduleModel}
+					return nil
+				}
+			}
+		}
+
+		// Fallback: use server response as-is
 		parametersJSON, err := json.Marshal(responseModule.Parameters)
 		if err != nil {
 			return fmt.Errorf("unable to marshal module parameters: %s", err)
@@ -417,4 +449,48 @@ func (r *Resource) updateModuleFromResponse(responseModule perception.Module, da
 
 	data.Module = []ModuleModel{moduleModel}
 	return nil
+}
+
+// preserveUserFloatTypes merges server response parameters with user-provided parameters,
+// preserving the user's original float types when the server converts them to strings.
+func preserveUserFloatTypes(userParams, serverParams map[string]any) map[string]any {
+	result := make(map[string]any)
+
+	// Start with server parameters (includes any new parameters the server added)
+	maps.Copy(result, serverParams)
+
+	// Override with user parameters, preserving their original float types
+	for k, userValue := range userParams {
+		serverValue, exists := serverParams[k]
+		if !exists {
+			// User parameter doesn't exist in server response, keep user value
+			result[k] = userValue
+			continue
+		}
+
+		// Handle nested objects recursively
+		if userMap, userIsMap := userValue.(map[string]any); userIsMap {
+			if serverMap, serverIsMap := serverValue.(map[string]any); serverIsMap {
+				// Both are maps, merge recursively
+				result[k] = preserveUserFloatTypes(userMap, serverMap)
+				continue
+			}
+		}
+
+		// Preserve user's float types when server converts them to strings
+		if userFloat, userIsFloat := userValue.(float64); userIsFloat {
+			if serverStr, serverIsString := serverValue.(string); serverIsString {
+				// Check if the string representation matches the float
+				if fmt.Sprintf("%g", userFloat) == serverStr {
+					result[k] = userValue // Preserve the original float
+					continue
+				}
+			}
+		}
+
+		// For other cases, prefer server value (it might have been updated)
+		result[k] = serverValue
+	}
+
+	return result
 }
