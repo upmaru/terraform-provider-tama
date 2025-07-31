@@ -4,6 +4,7 @@
 package thought_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"testing"
@@ -312,6 +313,94 @@ resource "tama_thought" "test2" {
     reference = "tama/agentic/generate"
     parameters = jsonencode({
       relation = "analysis"
+    })
+  }
+}
+`, spaceName)
+}
+
+func TestAccThoughtResource_ParameterMerging(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create thought with complex parameters similar to user's routing example
+			{
+				Config: testAccThoughtResourceConfigWithComplexParameters(fmt.Sprintf("test-space-%d", time.Now().UnixNano())),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("tama_thought.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_thought.test", "chain_id"),
+					resource.TestCheckResourceAttr("tama_thought.test", "relation", "routing"),
+					resource.TestCheckResourceAttr("tama_thought.test", "module.0.reference", "tama/agentic/router"),
+					resource.TestCheckResourceAttrSet("tama_thought.test", "module.0.parameters"),
+					resource.TestCheckResourceAttrSet("tama_thought.test", "provision_state"),
+					resource.TestCheckResourceAttrSet("tama_thought.test", "index"),
+					// Verify that the threshold remains a number (0.9) in the parameters
+					resource.TestCheckResourceAttrWith("tama_thought.test", "module.0.parameters", func(value string) error {
+						var params map[string]any
+						if err := json.Unmarshal([]byte(value), &params); err != nil {
+							return fmt.Errorf("failed to parse parameters JSON: %v", err)
+						}
+
+						// Check that similarity.threshold is preserved as a number
+						if similarity, ok := params["similarity"].(map[string]any); ok {
+							if threshold, exists := similarity["threshold"]; exists {
+								// Should be a number (float64), not a string
+								if _, isFloat := threshold.(float64); !isFloat {
+									return fmt.Errorf("threshold should be preserved as number, got %T: %v", threshold, threshold)
+								}
+								if threshold.(float64) != 0.9 {
+									return fmt.Errorf("threshold should be 0.9, got %v", threshold)
+								}
+							}
+						}
+
+						// Check that classification parameters are preserved
+						if classification, ok := params["classification"].(map[string]any); ok {
+							if className, exists := classification["class_name"]; exists {
+								if className != "class" {
+									return fmt.Errorf("class_name should be 'class', got %v", className)
+								}
+							}
+						}
+
+						return nil
+					}),
+				),
+			},
+		},
+	})
+}
+
+func testAccThoughtResourceConfigWithComplexParameters(spaceName string) string {
+	return fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "%s"
+  type = "root"
+}
+
+resource "tama_chain" "test" {
+  space_id = tama_space.test.id
+  name     = "Test Processing Chain"
+}
+
+resource "tama_thought" "test" {
+  chain_id = tama_chain.test.id
+  relation = "routing"
+  index    = 1
+
+  module {
+    reference = "tama/agentic/router"
+    parameters = jsonencode({
+      similarity = {
+        limit     = 10
+        threshold = 0.9
+      }
+      classification = {
+        class_name = "class"
+        properties = ["class", "confidence"]
+        look_back_limit = 5
+      }
     })
   }
 }
