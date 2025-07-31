@@ -346,10 +346,11 @@ func TestAccThoughtResource_ParameterMerging(t *testing.T) {
 						if similarity, ok := params["similarity"].(map[string]any); ok {
 							if threshold, exists := similarity["threshold"]; exists {
 								// Should be a number (float64), not a string
-								if _, isFloat := threshold.(float64); !isFloat {
+								thresholdFloat, isFloat := threshold.(float64)
+								if !isFloat {
 									return fmt.Errorf("threshold should be preserved as number, got %T: %v", threshold, threshold)
 								}
-								if threshold.(float64) != 0.9 {
+								if thresholdFloat != 0.9 {
 									return fmt.Errorf("threshold should be 0.9, got %v", threshold)
 								}
 							}
