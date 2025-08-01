@@ -46,7 +46,7 @@ resource "tama_chain" "example" {
 }
 
 # Create a thought within the chain
-resource "tama_thought" "example" {
+resource "tama_modular_thought" "example" {
   chain_id = tama_chain.example.id
   relation = "description"
 
@@ -59,8 +59,8 @@ resource "tama_thought" "example" {
 }
 
 # Create a thought context
-resource "tama_thought_context" "example" {
-  thought_id = tama_thought.example.id
+resource "tama_modular_thought_context" "example" {
+  thought_id = tama_modular_thought.example.id
   prompt_id  = tama_prompt.example.id
   layer      = 0
 }
@@ -74,8 +74,8 @@ resource "tama_prompt" "secondary" {
 }
 
 # You can also create additional contexts with different layers
-resource "tama_thought_context" "secondary" {
-  thought_id = tama_thought.example.id
+resource "tama_modular_thought_context" "secondary" {
+  thought_id = tama_modular_thought.example.id
   prompt_id  = tama_prompt.secondary.id
   layer      = 1
 }
@@ -83,12 +83,12 @@ resource "tama_thought_context" "secondary" {
 # Output the context information
 output "thought_context_id" {
   description = "The ID of the created thought context"
-  value       = tama_thought_context.example.id
+  value       = tama_modular_thought_context.example.id
 }
 
 output "thought_context_provision_state" {
   description = "The provision state of the thought context"
-  value       = tama_thought_context.example.provision_state
+  value       = tama_modular_thought_context.example.provision_state
 }
 ```
 
