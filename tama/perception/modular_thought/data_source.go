@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package thought
+package modular_thought
 
 import (
 	"context"
@@ -31,62 +31,60 @@ type DataSource struct {
 
 // DataSourceModel describes the data source data model.
 type DataSourceModel struct {
-	Id             types.String  `tfsdk:"id"`
-	ChainId        types.String  `tfsdk:"chain_id"`
-	OutputClassId  types.String  `tfsdk:"output_class_id"`
-	Module         []ModuleModel `tfsdk:"module"`
-	ProvisionState types.String  `tfsdk:"provision_state"`
-	Relation       types.String  `tfsdk:"relation"`
-	Index          types.Int64   `tfsdk:"index"`
+	Id             types.String `tfsdk:"id"`
+	ChainId        types.String `tfsdk:"chain_id"`
+	OutputClassId  types.String `tfsdk:"output_class_id"`
+	Module         *ModuleModel `tfsdk:"module"`
+	ProvisionState types.String `tfsdk:"provision_state"`
+	Relation       types.String `tfsdk:"relation"`
+	Index          types.Int64  `tfsdk:"index"`
 }
 
 func (d *DataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_thought"
+	resp.TypeName = req.ProviderTypeName + "_modular_thought"
 }
 
 func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Fetches information about a Tama Perception Thought",
+		MarkdownDescription: "Fetches information about a Tama Perception Modular Thought",
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Thought identifier",
+				MarkdownDescription: "Modular thought identifier",
 				Required:            true,
 			},
 			"chain_id": schema.StringAttribute{
-				MarkdownDescription: "ID of the chain this thought belongs to",
+				MarkdownDescription: "ID of the chain this modular thought belongs to",
 				Computed:            true,
 			},
 			"output_class_id": schema.StringAttribute{
-				MarkdownDescription: "ID of the output class for this thought",
+				MarkdownDescription: "ID of the output class for this modular thought",
 				Computed:            true,
 			},
 			"provision_state": schema.StringAttribute{
-				MarkdownDescription: "Current state of the thought",
+				MarkdownDescription: "Current state of the modular thought",
 				Computed:            true,
 			},
 			"relation": schema.StringAttribute{
-				MarkdownDescription: "Relation type for the thought",
+				MarkdownDescription: "Relation type for the modular thought",
 				Computed:            true,
 			},
 			"index": schema.Int64Attribute{
-				MarkdownDescription: "Index position of the thought in the chain",
+				MarkdownDescription: "Index position of the modular thought in the chain",
 				Computed:            true,
 			},
 		},
 		Blocks: map[string]schema.Block{
-			"module": schema.ListNestedBlock{
-				MarkdownDescription: "Module configuration for the thought",
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"reference": schema.StringAttribute{
-							MarkdownDescription: "Module reference",
-							Computed:            true,
-						},
-						"parameters": schema.StringAttribute{
-							MarkdownDescription: "Module parameters as JSON string",
-							Computed:            true,
-						},
+			"module": schema.SingleNestedBlock{
+				MarkdownDescription: "Module configuration for the modular thought",
+				Attributes: map[string]schema.Attribute{
+					"reference": schema.StringAttribute{
+						MarkdownDescription: "Module reference",
+						Computed:            true,
+					},
+					"parameters": schema.StringAttribute{
+						MarkdownDescription: "Module parameters as JSON string",
+						Computed:            true,
 					},
 				},
 			},
@@ -124,14 +122,14 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 		return
 	}
 
-	// Get thought from API
-	tflog.Debug(ctx, "Reading thought", map[string]any{
+	// Get modular thought from API
+	tflog.Debug(ctx, "Reading modular thought", map[string]any{
 		"id": data.Id.ValueString(),
 	})
 
 	thoughtResponse, err := d.client.Perception.GetThought(data.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read thought, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read modular thought, got error: %s", err))
 		return
 	}
 
@@ -144,14 +142,14 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	data.Index = types.Int64Value(int64(thoughtResponse.Index))
 
 	// Update module with response data
-	err = d.updateModuleFromResponse(thoughtResponse.Module, &data)
+	err = d.updateModuleFromResponse(*thoughtResponse.Module, &data)
 	if err != nil {
 		resp.Diagnostics.AddError("Module Error", fmt.Sprintf("Unable to update module from response: %s", err))
 		return
 	}
 
 	// Write logs using the tflog package
-	tflog.Trace(ctx, "read a thought data source")
+	tflog.Trace(ctx, "read a modular thought data source")
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -180,6 +178,6 @@ func (d *DataSource) updateModuleFromResponse(responseModule perception.Module, 
 		moduleModel.Parameters = types.StringNull()
 	}
 
-	data.Module = []ModuleModel{moduleModel}
+	data.Module = &moduleModel
 	return nil
 }
