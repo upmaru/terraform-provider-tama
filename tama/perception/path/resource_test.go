@@ -310,7 +310,7 @@ resource "tama_chain" "test_chain" {
 }
 
 resource "tama_modular_thought" "test" {
-  chain_id = tama_chain.test.id
+  chain_id = tama_chain.test_chain.id
   relation = "description"
 
   module {
@@ -374,7 +374,7 @@ resource "tama_modular_thought" "test_thought" {
 }
 
 resource "tama_thought_path" "test" {
-  thought_id      = tama_modular_thought.test.id
+  thought_id      = tama_modular_thought.test_thought.id
   target_class_id = tama_class.test_class.id
 
   parameters = jsonencode({
@@ -524,7 +524,7 @@ resource "tama_modular_thought" "thought1" {
 }
 
 resource "tama_modular_thought" "test" {
-  chain_id = tama_chain.test.id
+  chain_id = tama_chain.test_chain2.id
   relation = "analysis"
 
   module {

@@ -200,7 +200,7 @@ resource "tama_chain" "test_chain" {
 }
 
 resource "tama_modular_thought" "test" {
-  chain_id = tama_chain.test.id
+  chain_id = tama_chain.test_chain.id
   relation = "description"
 
   module {
