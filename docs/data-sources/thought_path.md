@@ -13,7 +13,7 @@ Fetches information about a Tama Thought Path
 ## Example Usage
 
 ```terraform
-# Example configuration for tama_thought_path data source
+# Example configuration for tama_modular_thought_path data source
 
 terraform {
   required_providers {
@@ -24,18 +24,18 @@ terraform {
 }
 
 # Fetch information about an existing thought path by ID
-data "tama_thought_path" "example" {
+data "tama_modular_thought_path" "example" {
   id = "path-12345"
 }
 
 # Use the path data source to create a similar path with different parameters
-resource "tama_thought_path" "derived_path" {
-  thought_id      = data.tama_thought_path.example.thought_id
-  target_class_id = data.tama_thought_path.example.target_class_id
+resource "tama_modular_thought_path" "derived_path" {
+  thought_id      = data.tama_modular_thought_path.example.thought_id
+  target_class_id = data.tama_modular_thought_path.example.target_class_id
 
   # Modify the existing parameters
   parameters = jsonencode(merge(
-    jsondecode(data.tama_thought_path.example.parameters),
+    jsondecode(data.tama_modular_thought_path.example.parameters),
     {
       max_results  = 20
       boost_recent = true
@@ -44,15 +44,15 @@ resource "tama_thought_path" "derived_path" {
 }
 
 # Fetch multiple paths for comparison
-data "tama_thought_path" "classification_path" {
+data "tama_modular_thought_path" "classification_path" {
   id = "path-classification-123"
 }
 
-data "tama_thought_path" "similarity_path" {
+data "tama_modular_thought_path" "similarity_path" {
   id = "path-similarity-456"
 }
 
-data "tama_thought_path" "extraction_path" {
+data "tama_modular_thought_path" "extraction_path" {
   id = "path-extraction-789"
 }
 
@@ -64,26 +64,26 @@ variable "path_id" {
 }
 
 # Alternative example using variable
-data "tama_thought_path" "variable_example" {
+data "tama_modular_thought_path" "variable_example" {
   id = var.path_id
 }
 
 # Get related resources based on path information
-data "tama_thought" "source_thought" {
-  id = data.tama_thought_path.example.thought_id
+data "tama_modular_thought" "source_thought" {
+  id = data.tama_modular_thought_path.example.thought_id
 }
 
 data "tama_class" "target_class" {
-  id = data.tama_thought_path.example.target_class_id
+  id = data.tama_modular_thought_path.example.target_class_id
 }
 
 # Local values for processing path data
 locals {
   # Parse parameters from different paths
-  example_params        = jsondecode(data.tama_thought_path.example.parameters)
-  classification_params = jsondecode(data.tama_thought_path.classification_path.parameters)
-  similarity_params     = jsondecode(data.tama_thought_path.similarity_path.parameters)
-  extraction_params     = jsondecode(data.tama_thought_path.extraction_path.parameters)
+  example_params        = jsondecode(data.tama_modular_thought_path.example.parameters)
+  classification_params = jsondecode(data.tama_modular_thought_path.classification_path.parameters)
+  similarity_params     = jsondecode(data.tama_modular_thought_path.similarity_path.parameters)
+  extraction_params     = jsondecode(data.tama_modular_thought_path.extraction_path.parameters)
 
   # Extract relation types
   example_relation        = try(local.example_params.relation, "unknown")
@@ -93,21 +93,21 @@ locals {
 
   # Check if paths share the same thought
   same_thought_classification = (
-    data.tama_thought_path.example.thought_id ==
-    data.tama_thought_path.classification_path.thought_id
+    data.tama_modular_thought_path.example.thought_id ==
+    data.tama_modular_thought_path.classification_path.thought_id
   )
 
   same_thought_similarity = (
-    data.tama_thought_path.example.thought_id ==
-    data.tama_thought_path.similarity_path.thought_id
+    data.tama_modular_thought_path.example.thought_id ==
+    data.tama_modular_thought_path.similarity_path.thought_id
   )
 
   # Get unique target classes from all fetched paths
   target_classes = toset([
-    data.tama_thought_path.example.target_class_id,
-    data.tama_thought_path.classification_path.target_class_id,
-    data.tama_thought_path.similarity_path.target_class_id,
-    data.tama_thought_path.extraction_path.target_class_id
+    data.tama_modular_thought_path.example.target_class_id,
+    data.tama_modular_thought_path.classification_path.target_class_id,
+    data.tama_modular_thought_path.similarity_path.target_class_id,
+    data.tama_modular_thought_path.extraction_path.target_class_id
   ])
 
   # Extract thresholds and confidence scores
@@ -144,17 +144,17 @@ locals {
 }
 
 # Create new paths based on analysis of existing ones
-resource "tama_thought_path" "optimized_similarity" {
-  thought_id      = data.tama_thought_path.similarity_path.thought_id
-  target_class_id = data.tama_thought_path.similarity_path.target_class_id
+resource "tama_modular_thought_path" "optimized_similarity" {
+  thought_id      = data.tama_modular_thought_path.similarity_path.thought_id
+  target_class_id = data.tama_modular_thought_path.similarity_path.target_class_id
 
   parameters = jsonencode(local.optimized_similarity_params)
 }
 
 # Create a consolidated path that combines insights from multiple paths
-resource "tama_thought_path" "consolidated" {
-  thought_id      = data.tama_thought_path.example.thought_id
-  target_class_id = data.tama_thought_path.example.target_class_id
+resource "tama_modular_thought_path" "consolidated" {
+  thought_id      = data.tama_modular_thought_path.example.thought_id
+  target_class_id = data.tama_modular_thought_path.example.target_class_id
 
   parameters = jsonencode({
     relation = local.example_relation
@@ -186,7 +186,7 @@ variable "analysis_path_ids" {
   default     = ["path-1", "path-2", "path-3"]
 }
 
-data "tama_thought_path" "analysis_paths" {
+data "tama_modular_thought_path" "analysis_paths" {
   for_each = toset(var.analysis_path_ids)
   id       = each.value
 }
@@ -194,19 +194,19 @@ data "tama_thought_path" "analysis_paths" {
 # Filter and group paths by relation type
 locals {
   paths_by_relation = {
-    for k, path in data.tama_thought_path.analysis_paths :
+    for k, path in data.tama_modular_thought_path.analysis_paths :
     try(jsondecode(path.parameters).relation, "unknown") => k...
   }
 
   similarity_analysis_paths = {
-    for k, path in data.tama_thought_path.analysis_paths :
+    for k, path in data.tama_modular_thought_path.analysis_paths :
     k => path
     if can(jsondecode(path.parameters).relation) &&
     jsondecode(path.parameters).relation == "similarity"
   }
 
   high_threshold_paths = {
-    for k, path in data.tama_thought_path.analysis_paths :
+    for k, path in data.tama_modular_thought_path.analysis_paths :
     k => path
     if can(jsondecode(path.parameters).similarity.threshold) &&
     jsondecode(path.parameters).similarity.threshold > 0.8
@@ -216,22 +216,22 @@ locals {
 # Output the path information
 output "example_path_id" {
   description = "ID of the example path"
-  value       = data.tama_thought_path.example.id
+  value       = data.tama_modular_thought_path.example.id
 }
 
 output "example_thought_id" {
   description = "ID of the thought connected to the example path"
-  value       = data.tama_thought_path.example.thought_id
+  value       = data.tama_modular_thought_path.example.thought_id
 }
 
 output "example_target_class_id" {
   description = "ID of the target class for the example path"
-  value       = data.tama_thought_path.example.target_class_id
+  value       = data.tama_modular_thought_path.example.target_class_id
 }
 
 output "example_parameters" {
   description = "Parameters of the example path (raw JSON)"
-  value       = data.tama_thought_path.example.parameters
+  value       = data.tama_modular_thought_path.example.parameters
 }
 
 output "example_relation_type" {
@@ -247,17 +247,17 @@ output "parsed_example_parameters" {
 # Comparison outputs
 output "classification_path_id" {
   description = "ID of the classification path"
-  value       = data.tama_thought_path.classification_path.id
+  value       = data.tama_modular_thought_path.classification_path.id
 }
 
 output "similarity_path_id" {
   description = "ID of the similarity path"
-  value       = data.tama_thought_path.similarity_path.id
+  value       = data.tama_modular_thought_path.similarity_path.id
 }
 
 output "extraction_path_id" {
   description = "ID of the extraction path"
-  value       = data.tama_thought_path.extraction_path.id
+  value       = data.tama_modular_thought_path.extraction_path.id
 }
 
 # Analysis outputs
@@ -315,12 +315,12 @@ output "has_boost_recent" {
 # Related resource outputs
 output "source_thought_relation" {
   description = "Relation type of the source thought"
-  value       = data.tama_thought.source_thought.relation
+  value       = data.tama_modular_thought.source_thought.relation
 }
 
 output "source_thought_chain_id" {
   description = "Chain ID of the source thought"
-  value       = data.tama_thought.source_thought.chain_id
+  value       = data.tama_modular_thought.source_thought.chain_id
 }
 
 output "target_class_schema" {
@@ -347,17 +347,17 @@ output "high_threshold_paths_count" {
 # Derived resource outputs
 output "derived_path_id" {
   description = "ID of the derived path created from example"
-  value       = tama_thought_path.derived_path.id
+  value       = tama_modular_thought_path.derived_path.id
 }
 
 output "optimized_path_id" {
   description = "ID of the optimized similarity path"
-  value       = tama_thought_path.optimized_similarity.id
+  value       = tama_modular_thought_path.optimized_similarity.id
 }
 
 output "consolidated_path_id" {
   description = "ID of the consolidated path"
-  value       = tama_thought_path.consolidated.id
+  value       = tama_modular_thought_path.consolidated.id
 }
 
 output "optimized_parameters" {

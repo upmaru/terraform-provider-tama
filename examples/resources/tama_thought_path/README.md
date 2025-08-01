@@ -1,6 +1,6 @@
 # Tama Thought Path Resource Example
 
-This example demonstrates how to use the `tama_thought_path` resource to create perception paths in the Tama provider.
+This example demonstrates how to use the `tama_modular_thought_path` resource to create perception paths in the Tama provider.
 
 ## Overview
 
@@ -10,8 +10,8 @@ Perception paths define relationships between thoughts and target classes, enabl
 
 ```hcl
 # Create a path linking a thought to a target class
-resource "tama_thought_path" "content_categorization" {
-  thought_id      = tama_thought.content_analysis.id
+resource "tama_modular_thought_path" "content_categorization" {
+  thought_id      = tama_modular_thought.content_analysis.id
   target_class_id = tama_class.content_categories.id
   
   parameters = jsonencode({
@@ -44,8 +44,8 @@ resource "tama_thought_path" "content_categorization" {
 ### Basic Path without Parameters
 
 ```hcl
-resource "tama_thought_path" "simple_connection" {
-  thought_id      = tama_thought.content_analysis.id
+resource "tama_modular_thought_path" "simple_connection" {
+  thought_id      = tama_modular_thought.content_analysis.id
   target_class_id = tama_class.output_schema.id
 }
 ```
@@ -53,8 +53,8 @@ resource "tama_thought_path" "simple_connection" {
 ### Path with Similarity Parameters
 
 ```hcl
-resource "tama_thought_path" "similarity_based" {
-  thought_id      = tama_thought.content_matching.id
+resource "tama_modular_thought_path" "similarity_based" {
+  thought_id      = tama_modular_thought.content_matching.id
   target_class_id = tama_class.content_categories.id
   
   parameters = jsonencode({
@@ -71,8 +71,8 @@ resource "tama_thought_path" "similarity_based" {
 ### Path with Complex Filtering
 
 ```hcl
-resource "tama_thought_path" "filtered_results" {
-  thought_id      = tama_thought.content_search.id
+resource "tama_modular_thought_path" "filtered_results" {
+  thought_id      = tama_modular_thought.content_search.id
   target_class_id = tama_class.search_results.id
   
   parameters = jsonencode({
@@ -94,8 +94,8 @@ resource "tama_thought_path" "filtered_results" {
 
 ```hcl
 # Path for similarity-based connections
-resource "tama_thought_path" "similarity_path" {
-  thought_id      = tama_thought.content_processor.id
+resource "tama_modular_thought_path" "similarity_path" {
+  thought_id      = tama_modular_thought.content_processor.id
   target_class_id = tama_class.similar_content.id
   
   parameters = jsonencode({
@@ -107,8 +107,8 @@ resource "tama_thought_path" "similarity_path" {
 }
 
 # Path for classification connections
-resource "tama_thought_path" "classification_path" {
-  thought_id      = tama_thought.content_processor.id
+resource "tama_modular_thought_path" "classification_path" {
+  thought_id      = tama_modular_thought.content_processor.id
   target_class_id = tama_class.content_categories.id
   
   parameters = jsonencode({
@@ -118,8 +118,8 @@ resource "tama_thought_path" "classification_path" {
 }
 
 # Path for extraction connections
-resource "tama_thought_path" "extraction_path" {
-  thought_id      = tama_thought.content_processor.id
+resource "tama_modular_thought_path" "extraction_path" {
+  thought_id      = tama_modular_thought.content_processor.id
   target_class_id = tama_class.extracted_entities.id
   
   parameters = jsonencode({
@@ -244,7 +244,7 @@ resource "tama_class" "similar_content" {
 }
 
 # Create thoughts for processing content
-resource "tama_thought" "content_analyzer" {
+resource "tama_modular_thought" "content_analyzer" {
   chain_id = tama_chain.content_pipeline.id
   relation = "analysis"
 
@@ -256,7 +256,7 @@ resource "tama_thought" "content_analyzer" {
   }
 }
 
-resource "tama_thought" "content_classifier" {
+resource "tama_modular_thought" "content_classifier" {
   chain_id = tama_chain.content_pipeline.id
   relation = "classification"
 
@@ -269,8 +269,8 @@ resource "tama_thought" "content_classifier" {
 }
 
 # Create paths linking thoughts to target classes
-resource "tama_thought_path" "analysis_to_categories" {
-  thought_id      = tama_thought.content_analyzer.id
+resource "tama_modular_thought_path" "analysis_to_categories" {
+  thought_id      = tama_modular_thought.content_analyzer.id
   target_class_id = tama_class.content_categories.id
   
   parameters = jsonencode({
@@ -279,8 +279,8 @@ resource "tama_thought_path" "analysis_to_categories" {
   })
 }
 
-resource "tama_thought_path" "analysis_to_similar" {
-  thought_id      = tama_thought.content_analyzer.id
+resource "tama_modular_thought_path" "analysis_to_similar" {
+  thought_id      = tama_modular_thought.content_analyzer.id
   target_class_id = tama_class.similar_content.id
   
   parameters = jsonencode({
@@ -292,8 +292,8 @@ resource "tama_thought_path" "analysis_to_similar" {
   })
 }
 
-resource "tama_thought_path" "classifier_to_categories" {
-  thought_id      = tama_thought.content_classifier.id
+resource "tama_modular_thought_path" "classifier_to_categories" {
+  thought_id      = tama_modular_thought.content_classifier.id
   target_class_id = tama_class.content_categories.id
   
   parameters = jsonencode({
@@ -352,7 +352,7 @@ The example includes several outputs to demonstrate accessing path attributes:
 
 - `tama_space` - Required parent resource for chains and classes
 - `tama_chain` - Required parent resource for thoughts
-- `tama_thought` - Required source for path connections
+- `tama_modular_thought` - Required source for path connections
 - `tama_class` - Required target for path connections
 - `tama_source` - AI providers used by the modules in thoughts
 

@@ -1,6 +1,6 @@
-# Tama Thought Resource Example
+# Tama Modular Thought Resource Example
 
-This example demonstrates how to use the `tama_thought` resource to create perception thoughts in the Tama provider.
+This example demonstrates how to use the `tama_modular_thought` resource to create modular thoughts in the Tama provider.
 
 ## Overview
 
@@ -16,7 +16,7 @@ resource "tama_chain" "processing_pipeline" {
 }
 
 # Basic thought with generate module
-resource "tama_thought" "content_description" {
+resource "tama_modular_thought" "content_description" {
   chain_id = tama_chain.processing_pipeline.id
   relation = "description"
 
@@ -54,7 +54,7 @@ resource "tama_thought" "content_description" {
 ### Basic Thought with Parameters
 
 ```hcl
-resource "tama_thought" "content_analysis" {
+resource "tama_modular_thought" "content_analysis" {
   chain_id = tama_chain.processing_pipeline.id
   relation = "analysis"
 
@@ -89,7 +89,7 @@ resource "tama_class" "validation_schema" {
   })
 }
 
-resource "tama_thought" "content_validation" {
+resource "tama_modular_thought" "content_validation" {
   chain_id        = tama_chain.processing_pipeline.id
   output_class_id = tama_class.validation_schema.id
   relation        = "validation"
@@ -103,7 +103,7 @@ resource "tama_thought" "content_validation" {
 ### Thought without Parameters
 
 ```hcl
-resource "tama_thought" "identity_validation" {
+resource "tama_modular_thought" "identity_validation" {
   chain_id = tama_chain.processing_pipeline.id
   relation = "validation"
 
@@ -116,7 +116,7 @@ resource "tama_thought" "identity_validation" {
 ### Multiple Thoughts in Processing Order
 
 ```hcl
-resource "tama_thought" "step_1_description" {
+resource "tama_modular_thought" "step_1_description" {
   chain_id = tama_chain.processing_pipeline.id
   relation = "description"
 
@@ -128,7 +128,7 @@ resource "tama_thought" "step_1_description" {
   }
 }
 
-resource "tama_thought" "step_2_analysis" {
+resource "tama_modular_thought" "step_2_analysis" {
   chain_id = tama_chain.processing_pipeline.id
   relation = "analysis"
 
@@ -140,7 +140,7 @@ resource "tama_thought" "step_2_analysis" {
   }
 }
 
-resource "tama_thought" "step_3_validation" {
+resource "tama_modular_thought" "step_3_validation" {
   chain_id        = tama_chain.processing_pipeline.id
   output_class_id = tama_class.validation_schema.id
   relation        = "validation"
@@ -150,7 +150,7 @@ resource "tama_thought" "step_3_validation" {
   }
 }
 
-resource "tama_thought" "step_4_summary" {
+resource "tama_modular_thought" "content_summary" {
   chain_id = tama_chain.processing_pipeline.id
   relation = "summary"
 
@@ -250,7 +250,7 @@ The example includes several outputs to demonstrate accessing thought attributes
 ## Related Resources
 
 - `tama_space` - Required parent resource for chains and classes
-- `tama_chain` - Required parent resource for thoughts
+- `tama_modular_thought` - Required parent resource for modular thoughts
 - `tama_class` - Optional output schema definition for structured results
 - `tama_source` - AI providers used by the modules
 

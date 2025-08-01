@@ -309,7 +309,7 @@ resource "tama_chain" "test_chain" {
   name     = "test-chain-for-path"
 }
 
-resource "tama_thought" "test_thought" {
+resource "tama_modular_thought" "test" {
   chain_id = tama_chain.test_chain.id
   relation = "description"
 
@@ -322,9 +322,9 @@ resource "tama_thought" "test_thought" {
 }
 
 resource "tama_thought_path" "test" {
-  thought_id      = tama_thought.test_thought.id
+  thought_id      = tama_modular_thought.test.id
   target_class_id = tama_class.test_class.id
-  
+
   parameters = jsonencode({
     relation = "similarity"
   })
@@ -361,7 +361,7 @@ resource "tama_chain" "test_chain" {
   name     = "test-chain-for-path"
 }
 
-resource "tama_thought" "test_thought" {
+resource "tama_modular_thought" "test_thought" {
   chain_id = tama_chain.test_chain.id
   relation = "description"
 
@@ -374,9 +374,9 @@ resource "tama_thought" "test_thought" {
 }
 
 resource "tama_thought_path" "test" {
-  thought_id      = tama_thought.test_thought.id
+  thought_id      = tama_modular_thought.test_thought.id
   target_class_id = tama_class.test_class.id
-  
+
   parameters = jsonencode({
     relation = "updated"
   })
@@ -429,7 +429,7 @@ resource "tama_chain" "test_chain" {
   name     = "test-chain-for-multiple-paths"
 }
 
-resource "tama_thought" "test_thought" {
+resource "tama_modular_thought" "test_thought" {
   chain_id = tama_chain.test_chain.id
   relation = "description"
 
@@ -442,18 +442,18 @@ resource "tama_thought" "test_thought" {
 }
 
 resource "tama_thought_path" "test1" {
-  thought_id      = tama_thought.test_thought.id
+  thought_id      = tama_modular_thought.test_thought.id
   target_class_id = tama_class.test_class1.id
-  
+
   parameters = jsonencode({
     relation = "similarity"
   })
 }
 
 resource "tama_thought_path" "test2" {
-  thought_id      = tama_thought.test_thought.id
+  thought_id      = tama_modular_thought.test_thought.id
   target_class_id = tama_class.test_class2.id
-  
+
   parameters = jsonencode({
     relation = "similarity"
   })
@@ -511,7 +511,7 @@ resource "tama_chain" "test_chain2" {
   name     = "test-chain-for-thought2"
 }
 
-resource "tama_thought" "thought1" {
+resource "tama_modular_thought" "thought1" {
   chain_id = tama_chain.test_chain1.id
   relation = "description"
 
@@ -523,7 +523,7 @@ resource "tama_thought" "thought1" {
   }
 }
 
-resource "tama_thought" "thought2" {
+resource "tama_modular_thought" "test" {
   chain_id = tama_chain.test_chain2.id
   relation = "analysis"
 
@@ -536,18 +536,18 @@ resource "tama_thought" "thought2" {
 }
 
 resource "tama_thought_path" "thought1" {
-  thought_id      = tama_thought.thought1.id
+  thought_id      = tama_modular_thought.thought1.id
   target_class_id = tama_class.test_class_a.id
-  
+
   parameters = jsonencode({
     relation = "similarity"
   })
 }
 
 resource "tama_thought_path" "thought2" {
-  thought_id      = tama_thought.thought2.id
+  thought_id      = tama_modular_thought.test.id
   target_class_id = tama_class.test_class_b.id
-  
+
   parameters = jsonencode({
     relation = "similarity"
   })
@@ -568,7 +568,7 @@ resource "tama_chain" "test_chain" {
   name     = "test-chain-for-path"
 }
 
-resource "tama_thought" "test_thought" {
+resource "tama_modular_thought" "test_thought" {
   chain_id = tama_chain.test_chain.id
   relation = "description"
 
@@ -581,9 +581,9 @@ resource "tama_thought" "test_thought" {
 }
 
 resource "tama_thought_path" "test" {
-  thought_id      = tama_thought.test_thought.id
+  thought_id      = tama_modular_thought.test_thought.id
   target_class_id = "invalid-class-id"
-  
+
   parameters = jsonencode({
     relation = "similarity"
   })
@@ -620,7 +620,7 @@ resource "tama_chain" "test_chain" {
   name     = "test-chain-for-path"
 }
 
-resource "tama_thought" "test_thought" {
+resource "tama_modular_thought" "test_thought" {
   chain_id = tama_chain.test_chain.id
   relation = "description"
 
@@ -633,7 +633,7 @@ resource "tama_thought" "test_thought" {
 }
 
 resource "tama_thought_path" "test" {
-  thought_id      = tama_thought.test_thought.id
+  thought_id      = tama_modular_thought.test_thought.id
   target_class_id = tama_class.test_class.id`, timestamp)
 
 	if parameters != "" {

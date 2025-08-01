@@ -1,7 +1,7 @@
 // Copyright (c) HashiCorp, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package thought
+package modular_thought
 
 import (
 	"context"
@@ -41,73 +41,71 @@ type ModuleModel struct {
 
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id             types.String  `tfsdk:"id"`
-	ChainId        types.String  `tfsdk:"chain_id"`
-	OutputClassId  types.String  `tfsdk:"output_class_id"`
-	Module         []ModuleModel `tfsdk:"module"`
-	ProvisionState types.String  `tfsdk:"provision_state"`
-	Relation       types.String  `tfsdk:"relation"`
-	Index          types.Int64   `tfsdk:"index"`
+	Id             types.String `tfsdk:"id"`
+	ChainId        types.String `tfsdk:"chain_id"`
+	OutputClassId  types.String `tfsdk:"output_class_id"`
+	Module         ModuleModel  `tfsdk:"module"`
+	ProvisionState types.String `tfsdk:"provision_state"`
+	Relation       types.String `tfsdk:"relation"`
+	Index          types.Int64  `tfsdk:"index"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_thought"
+	resp.TypeName = req.ProviderTypeName + "_modular_thought"
 }
 
 func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manages a Tama Perception Thought resource",
+		MarkdownDescription: "Manages a Tama Perception Modular Thought resource",
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Thought identifier",
+				MarkdownDescription: "Modular thought identifier",
 				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"chain_id": schema.StringAttribute{
-				MarkdownDescription: "ID of the chain this thought belongs to",
+				MarkdownDescription: "ID of the chain this modular thought belongs to",
 				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"output_class_id": schema.StringAttribute{
-				MarkdownDescription: "ID of the output class for this thought",
+				MarkdownDescription: "ID of the output class for this modular thought",
 				Optional:            true,
 				Computed:            true,
 			},
 			"provision_state": schema.StringAttribute{
-				MarkdownDescription: "Current state of the thought",
+				MarkdownDescription: "Current state of the modular thought",
 				Computed:            true,
 			},
 			"relation": schema.StringAttribute{
-				MarkdownDescription: "Relation type for the thought (e.g., 'description', 'analysis')",
+				MarkdownDescription: "Relation type for the modular thought (e.g., 'description', 'analysis')",
 				Required:            true,
 			},
 			"index": schema.Int64Attribute{
-				MarkdownDescription: "Index position of the thought in the chain",
+				MarkdownDescription: "Index position of the modular thought in the chain",
 				Optional:            true,
 				Computed:            true,
 			},
 		},
 		Blocks: map[string]schema.Block{
-			"module": schema.ListNestedBlock{
-				MarkdownDescription: "Module configuration for the thought",
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"reference": schema.StringAttribute{
-							MarkdownDescription: "Module reference (e.g., 'tama/agentic/generate')",
-							Required:            true,
-						},
-						"parameters": schema.StringAttribute{
-							MarkdownDescription: "Module parameters as JSON string",
-							Optional:            true,
-							Computed:            true,
-							PlanModifiers: []planmodifier.String{
-								internalplanmodifier.JSONNormalize(),
-							},
+			"module": schema.SingleNestedBlock{
+				MarkdownDescription: "Module configuration for the modular thought",
+				Attributes: map[string]schema.Attribute{
+					"reference": schema.StringAttribute{
+						MarkdownDescription: "Module reference (e.g., 'tama/agentic/generate')",
+						Required:            true,
+					},
+					"parameters": schema.StringAttribute{
+						MarkdownDescription: "Module parameters as JSON string",
+						Optional:            true,
+						Computed:            true,
+						PlanModifiers: []planmodifier.String{
+							internalplanmodifier.JSONNormalize(),
 						},
 					},
 				},
@@ -146,13 +144,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
-	// Validate that exactly one module block is provided
-	if len(data.Module) != 1 {
-		resp.Diagnostics.AddError("Module Error", "Exactly one module block must be provided")
-		return
-	}
-
-	moduleBlock := data.Module[0]
+	moduleBlock := data.Module
 
 	// Parse module parameters if provided
 	var parameters map[string]any
@@ -163,11 +155,11 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		}
 	}
 
-	// Create thought request
+	// Create modular thought request
 	createReq := perception.CreateThoughtRequest{
 		Thought: perception.ThoughtRequestData{
 			Relation: data.Relation.ValueString(),
-			Module: perception.Module{
+			Module: &perception.Module{
 				Reference:  moduleBlock.Reference.ValueString(),
 				Parameters: parameters,
 			},
@@ -184,16 +176,16 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		createReq.Thought.Index = int(data.Index.ValueInt64())
 	}
 
-	tflog.Debug(ctx, "Creating thought", map[string]any{
+	tflog.Debug(ctx, "Creating modular thought", map[string]any{
 		"chain_id":         data.ChainId.ValueString(),
 		"relation":         createReq.Thought.Relation,
 		"module_reference": createReq.Thought.Module.Reference,
 	})
 
-	// Create thought
+	// Create modular thought
 	thoughtResponse, err := r.client.Perception.CreateThought(data.ChainId.ValueString(), createReq)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create thought, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to create modular thought, got error: %s", err))
 		return
 	}
 
@@ -206,14 +198,14 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	data.Index = types.Int64Value(int64(thoughtResponse.Index))
 
 	// Update module with response data
-	err = r.updateModuleFromResponse(thoughtResponse.Module, &data)
+	err = r.updateModuleFromResponse(*thoughtResponse.Module, &data)
 	if err != nil {
 		resp.Diagnostics.AddError("Module Error", fmt.Sprintf("Unable to update module from response: %s", err))
 		return
 	}
 
 	// Write logs using the tflog package
-	tflog.Trace(ctx, "created a thought resource")
+	tflog.Trace(ctx, "created a modular thought resource")
 
 	// Save data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
@@ -229,14 +221,14 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 		return
 	}
 
-	// Get thought from API
-	tflog.Debug(ctx, "Reading thought", map[string]any{
+	// Get modular thought from API
+	tflog.Debug(ctx, "Reading modular thought", map[string]any{
 		"id": data.Id.ValueString(),
 	})
 
 	thoughtResponse, err := r.client.Perception.GetThought(data.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read thought, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read modular thought for import, got error: %s", err))
 		return
 	}
 
@@ -249,7 +241,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 	data.Index = types.Int64Value(int64(thoughtResponse.Index))
 
 	// Update module with response data
-	err = r.updateModuleFromResponse(thoughtResponse.Module, &data)
+	err = r.updateModuleFromResponse(*thoughtResponse.Module, &data)
 	if err != nil {
 		resp.Diagnostics.AddError("Module Error", fmt.Sprintf("Unable to update module from response: %s", err))
 		return
@@ -269,13 +261,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		return
 	}
 
-	// Validate that exactly one module block is provided
-	if len(data.Module) != 1 {
-		resp.Diagnostics.AddError("Module Error", "Exactly one module block must be provided")
-		return
-	}
-
-	moduleBlock := data.Module[0]
+	moduleBlock := data.Module
 
 	// Parse module parameters if provided
 	var parameters map[string]any
@@ -286,11 +272,11 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		}
 	}
 
-	// Update thought request
+	// Update modular thought request
 	updateReq := perception.UpdateThoughtRequest{
 		Thought: perception.UpdateThoughtData{
 			Relation: data.Relation.ValueString(),
-			Module: perception.Module{
+			Module: &perception.Module{
 				Reference:  moduleBlock.Reference.ValueString(),
 				Parameters: parameters,
 			},
@@ -307,16 +293,16 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		updateReq.Thought.Index = int(data.Index.ValueInt64())
 	}
 
-	tflog.Debug(ctx, "Updating thought", map[string]any{
+	tflog.Debug(ctx, "Updating modular thought", map[string]any{
 		"id":               data.Id.ValueString(),
 		"relation":         updateReq.Thought.Relation,
 		"module_reference": updateReq.Thought.Module.Reference,
 	})
 
-	// Update thought
+	// Update modular thought
 	thoughtResponse, err := r.client.Perception.UpdateThought(data.Id.ValueString(), updateReq)
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update thought, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to update modular thought, got error: %s", err))
 		return
 	}
 
@@ -329,7 +315,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	data.Index = types.Int64Value(int64(thoughtResponse.Index))
 
 	// Update module with response data
-	err = r.updateModuleFromResponse(thoughtResponse.Module, &data)
+	err = r.updateModuleFromResponse(*thoughtResponse.Module, &data)
 	if err != nil {
 		resp.Diagnostics.AddError("Module Error", fmt.Sprintf("Unable to update module from response: %s", err))
 		return
@@ -350,13 +336,13 @@ func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp 
 	}
 
 	// Delete thought
-	tflog.Debug(ctx, "Deleting thought", map[string]any{
+	tflog.Debug(ctx, "Deleting modular thought", map[string]any{
 		"id": data.Id.ValueString(),
 	})
 
 	err := r.client.Perception.DeleteThought(data.Id.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete thought, got error: %s", err))
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete modular thought, got error: %s", err))
 		return
 	}
 }
@@ -383,7 +369,7 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 	data.Index = types.Int64Value(int64(thoughtResponse.Index))
 
 	// Update module with response data
-	err = r.updateModuleFromResponse(thoughtResponse.Module, &data)
+	err = r.updateModuleFromResponse(*thoughtResponse.Module, &data)
 	if err != nil {
 		resp.Diagnostics.AddError("Module Error", fmt.Sprintf("Unable to update module from response: %s", err))
 		return
@@ -403,8 +389,8 @@ func (r *Resource) updateModuleFromResponse(responseModule perception.Module, da
 	// Handle parameters
 	if responseModule.Parameters != nil {
 		// If we have existing module data, try to preserve user types
-		if len(data.Module) > 0 && !data.Module[0].Parameters.IsNull() && !data.Module[0].Parameters.IsUnknown() {
-			existingParamsStr := data.Module[0].Parameters.ValueString()
+		if !data.Module.Parameters.IsNull() && !data.Module.Parameters.IsUnknown() {
+			existingParamsStr := data.Module.Parameters.ValueString()
 			if existingParamsStr != "" {
 				// Parse existing parameters to get original types
 				var existingParams map[string]any
@@ -425,7 +411,7 @@ func (r *Resource) updateModuleFromResponse(responseModule perception.Module, da
 					}
 					moduleModel.Parameters = types.StringValue(normalizedJSON)
 
-					data.Module = []ModuleModel{moduleModel}
+					data.Module = moduleModel
 					return nil
 				}
 			}
@@ -447,7 +433,7 @@ func (r *Resource) updateModuleFromResponse(responseModule perception.Module, da
 		moduleModel.Parameters = types.StringNull()
 	}
 
-	data.Module = []ModuleModel{moduleModel}
+	data.Module = moduleModel
 	return nil
 }
 

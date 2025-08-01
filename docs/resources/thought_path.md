@@ -13,7 +13,7 @@ Manages a Tama Thought Path resource
 ## Example Usage
 
 ```terraform
-# Example configuration for tama_thought_path resource
+# Example configuration for tama_modular_thought_path resource
 
 terraform {
   required_providers {
@@ -148,7 +148,7 @@ resource "tama_class" "extracted_entities" {
 }
 
 # Create thoughts for processing content
-resource "tama_thought" "content_analyzer" {
+resource "tama_modular_thought" "content_analyzer" {
   chain_id = tama_chain.content_pipeline.id
   relation = "analysis"
 
@@ -160,7 +160,7 @@ resource "tama_thought" "content_analyzer" {
   }
 }
 
-resource "tama_thought" "content_classifier" {
+resource "tama_modular_thought" "content_classifier" {
   chain_id = tama_chain.content_pipeline.id
   relation = "classification"
 
@@ -172,7 +172,7 @@ resource "tama_thought" "content_classifier" {
   }
 }
 
-resource "tama_thought" "content_extractor" {
+resource "tama_modular_thought" "content_extractor" {
   chain_id = tama_chain.content_pipeline.id
   relation = "extraction"
 
@@ -185,14 +185,14 @@ resource "tama_thought" "content_extractor" {
 }
 
 # Basic path without parameters
-resource "tama_thought_path" "simple_connection" {
-  thought_id      = tama_thought.content_analyzer.id
+resource "tama_modular_thought_path" "simple_connection" {
+  thought_id      = tama_modular_thought.content_analyzer.id
   target_class_id = tama_class.content_categories.id
 }
 
 # Path with similarity parameters for content recommendations
-resource "tama_thought_path" "analysis_to_similar" {
-  thought_id      = tama_thought.content_analyzer.id
+resource "tama_modular_thought_path" "analysis_to_similar" {
+  thought_id      = tama_modular_thought.content_analyzer.id
   target_class_id = tama_class.similar_content.id
 
   parameters = jsonencode({
@@ -207,8 +207,8 @@ resource "tama_thought_path" "analysis_to_similar" {
 }
 
 # Path with classification parameters
-resource "tama_thought_path" "classifier_to_categories" {
-  thought_id      = tama_thought.content_classifier.id
+resource "tama_modular_thought_path" "classifier_to_categories" {
+  thought_id      = tama_modular_thought.content_classifier.id
   target_class_id = tama_class.content_categories.id
 
   parameters = jsonencode({
@@ -220,8 +220,8 @@ resource "tama_thought_path" "classifier_to_categories" {
 }
 
 # Path with extraction parameters
-resource "tama_thought_path" "extractor_to_entities" {
-  thought_id      = tama_thought.content_extractor.id
+resource "tama_modular_thought_path" "extractor_to_entities" {
+  thought_id      = tama_modular_thought.content_extractor.id
   target_class_id = tama_class.extracted_entities.id
 
   parameters = jsonencode({
@@ -233,8 +233,8 @@ resource "tama_thought_path" "extractor_to_entities" {
 }
 
 # Path with complex filtering for high-quality similar content
-resource "tama_thought_path" "filtered_similarity" {
-  thought_id      = tama_thought.content_analyzer.id
+resource "tama_modular_thought_path" "filtered_similarity" {
+  thought_id      = tama_modular_thought.content_analyzer.id
   target_class_id = tama_class.similar_content.id
 
   parameters = jsonencode({
@@ -257,27 +257,27 @@ resource "tama_thought_path" "filtered_similarity" {
 # Output the path information
 output "simple_connection_path_id" {
   description = "ID of the simple connection path"
-  value       = tama_thought_path.simple_connection.id
+  value       = tama_modular_thought_path.simple_connection.id
 }
 
 output "analysis_similar_path_id" {
   description = "ID of the analysis to similar content path"
-  value       = tama_thought_path.analysis_to_similar.id
+  value       = tama_modular_thought_path.analysis_to_similar.id
 }
 
 output "classifier_categories_path_id" {
   description = "ID of the classifier to categories path"
-  value       = tama_thought_path.classifier_to_categories.id
+  value       = tama_modular_thought_path.classifier_to_categories.id
 }
 
 output "extractor_entities_path_id" {
   description = "ID of the extractor to entities path"
-  value       = tama_thought_path.extractor_to_entities.id
+  value       = tama_modular_thought_path.extractor_to_entities.id
 }
 
 output "filtered_similarity_path_id" {
   description = "ID of the filtered similarity path"
-  value       = tama_thought_path.filtered_similarity.id
+  value       = tama_modular_thought_path.filtered_similarity.id
 }
 
 output "content_categories_class_id" {
@@ -297,17 +297,17 @@ output "extracted_entities_class_id" {
 
 output "analyzer_thought_id" {
   description = "ID of the content analyzer thought"
-  value       = tama_thought.content_analyzer.id
+  value       = tama_modular_thought.content_analyzer.id
 }
 
 output "classifier_thought_id" {
   description = "ID of the content classifier thought"
-  value       = tama_thought.content_classifier.id
+  value       = tama_modular_thought.content_classifier.id
 }
 
 output "extractor_thought_id" {
   description = "ID of the content extractor thought"
-  value       = tama_thought.content_extractor.id
+  value       = tama_modular_thought.content_extractor.id
 }
 
 output "chain_id" {

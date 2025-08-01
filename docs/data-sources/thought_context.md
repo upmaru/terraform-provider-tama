@@ -46,7 +46,7 @@ resource "tama_chain" "example" {
 }
 
 # Create a thought within the chain
-resource "tama_thought" "example" {
+resource "tama_modular_thought" "example" {
   chain_id = tama_chain.example.id
   relation = "description"
 
@@ -59,41 +59,41 @@ resource "tama_thought" "example" {
 }
 
 # Create a thought context
-resource "tama_thought_context" "example" {
-  thought_id = tama_thought.example.id
+resource "tama_modular_thought_context" "example" {
+  thought_id = tama_modular_thought.example.id
   prompt_id  = tama_prompt.example.id
   layer      = 0
 }
 
 # Use the data source to read the thought context
-data "tama_thought_context" "example" {
-  id = tama_thought_context.example.id
+data "tama_modular_thought_context" "example" {
+  id = tama_modular_thought_context.example.id
 }
 
 # You can also read an existing thought context by its ID
-data "tama_thought_context" "existing" {
+data "tama_modular_thought_context" "existing" {
   id = "existing-context-id-here"
 }
 
 # Output the data source information
 output "context_thought_id" {
   description = "The thought ID from the data source"
-  value       = data.tama_thought_context.example.thought_id
+  value       = data.tama_modular_thought_context.example.thought_id
 }
 
 output "context_prompt_id" {
   description = "The prompt ID from the data source"
-  value       = data.tama_thought_context.example.prompt_id
+  value       = data.tama_modular_thought_context.example.prompt_id
 }
 
 output "context_layer" {
   description = "The layer from the data source"
-  value       = data.tama_thought_context.example.layer
+  value       = data.tama_modular_thought_context.example.layer
 }
 
 output "context_provision_state" {
   description = "The provision state from the data source"
-  value       = data.tama_thought_context.example.provision_state
+  value       = data.tama_modular_thought_context.example.provision_state
 }
 ```
 

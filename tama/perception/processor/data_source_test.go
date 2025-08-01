@@ -202,7 +202,7 @@ resource "tama_chain" "test_chain" {
   name     = "Test Processing Chain"
 }
 
-resource "tama_thought" "test_thought" {
+resource "tama_modular_thought" "test" {
   chain_id = tama_chain.test_chain.id
   relation = "description"
 
@@ -215,7 +215,7 @@ resource "tama_thought" "test_thought" {
 }
 
 resource "tama_thought_processor" "test" {
-  thought_id = tama_thought.test_thought.id
+  thought_id = tama_modular_thought.test.id
   model_id = tama_model.test_model.id
 
   dynamic "completion_config" {
@@ -275,7 +275,7 @@ resource "tama_chain" "test_chain" {
   name     = "Test Processing Chain"
 }
 
-resource "tama_thought" "test_thought" {
+resource "tama_modular_thought" "test_thought" {
   chain_id = tama_chain.test_chain.id
   relation = "description"
 
@@ -288,7 +288,7 @@ resource "tama_thought" "test_thought" {
 }
 
 resource "tama_thought_processor" "test" {
-  thought_id = tama_thought.test_thought.id
+  thought_id = tama_modular_thought.test_thought.id
   model_id = tama_model.test_model.id
 
   completion_config {
@@ -342,7 +342,7 @@ resource "tama_chain" "test_chain" {
   name     = "Test Processing Chain"
 }
 
-resource "tama_thought" "test_thought" {
+resource "tama_modular_thought" "test_thought" {
   chain_id = tama_chain.test_chain.id
   relation = "description"
 
@@ -355,7 +355,7 @@ resource "tama_thought" "test_thought" {
 }
 
 resource "tama_thought_processor" "test" {
-  thought_id = tama_thought.test_thought.id
+  thought_id = tama_modular_thought.test_thought.id
   model_id = tama_model.test_model.id
 
   embedding_config {
@@ -408,7 +408,7 @@ resource "tama_chain" "test_chain" {
   name     = "Test Processing Chain"
 }
 
-resource "tama_thought" "test_thought" {
+resource "tama_modular_thought" "test_thought" {
   chain_id = tama_chain.test_chain.id
   relation = "description"
 
@@ -421,7 +421,7 @@ resource "tama_thought" "test_thought" {
 }
 
 resource "tama_thought_processor" "test" {
-  thought_id = tama_thought.test_thought.id
+  thought_id = tama_modular_thought.test_thought.id
   model_id = tama_model.test_model.id
 
   completion_config {
@@ -479,7 +479,7 @@ resource "tama_chain" "test_chain_%[1]s" {
   name     = "Test Processing Chain %[1]s"
 }
 
-resource "tama_thought" "test_thought_%[1]s" {
+resource "tama_modular_thought" "test_thought_%[1]s" {
   chain_id = tama_chain.test_chain_%[1]s.id
   relation = "description"
 
@@ -492,7 +492,7 @@ resource "tama_thought" "test_thought_%[1]s" {
 }
 
 resource "tama_thought_processor" "test_%[1]s" {
-  thought_id = tama_thought.test_thought_%[1]s.id
+  thought_id = tama_modular_thought.test_thought_%[1]s.id
   model_id = tama_model.test_model_%[1]s.id
 
   dynamic "completion_config" {
