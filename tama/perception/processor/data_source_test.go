@@ -13,79 +13,79 @@ import (
 )
 
 func TestAccThoughtProcessorDataSource(t *testing.T) {
-    resource.Test(t, resource.TestCase{
-        PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
-        ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
-        Steps: []resource.TestStep{
-            {
-                Config: testAccThoughtProcessorDataSourceConfig("completion"),
-                Check: resource.ComposeAggregateTestCheckFunc(
-                    resource.TestCheckResourceAttrSet("data.tama_thought_processor.test", "id"),
-                    resource.TestCheckResourceAttrSet("data.tama_thought_processor.test", "thought_id"),
-                    resource.TestCheckResourceAttrSet("data.tama_thought_processor.test", "model_id"),
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "type", "completion"),
-                    resource.TestCheckResourceAttrSet("data.tama_thought_processor.test", "provision_state"),
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "completion_config.0.temperature", "0.8"),
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "embedding_config.#", "0"),
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "reranking_config.#", "0"),
-                ),
-            },
-        },
-    })
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccThoughtProcessorDataSourceConfig("completion"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.tama_thought_processor.test", "id"),
+					resource.TestCheckResourceAttrSet("data.tama_thought_processor.test", "thought_id"),
+					resource.TestCheckResourceAttrSet("data.tama_thought_processor.test", "model_id"),
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "type", "completion"),
+					resource.TestCheckResourceAttrSet("data.tama_thought_processor.test", "provision_state"),
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "completion_config.0.temperature", "0.8"),
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "embedding_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "reranking_config.#", "0"),
+				),
+			},
+		},
+	})
 }
 
 func TestAccThoughtProcessorDataSource_CompletionType(t *testing.T) {
-    resource.Test(t, resource.TestCase{
-        PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
-        ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
-        Steps: []resource.TestStep{
-            {
-                Config: testAccThoughtProcessorDataSourceConfig("completion"),
-                Check: resource.ComposeAggregateTestCheckFunc(
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "type", "completion"),
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "completion_config.0.temperature", "0.8"),
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "embedding_config.#", "0"),
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "reranking_config.#", "0"),
-                ),
-            },
-        },
-    })
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccThoughtProcessorDataSourceConfig("completion"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "type", "completion"),
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "completion_config.0.temperature", "0.8"),
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "embedding_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "reranking_config.#", "0"),
+				),
+			},
+		},
+	})
 }
 
 func TestAccThoughtProcessorDataSource_EmbeddingType(t *testing.T) {
-    resource.Test(t, resource.TestCase{
-        PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
-        ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
-        Steps: []resource.TestStep{
-            {
-                Config: testAccThoughtProcessorDataSourceConfig("embedding"),
-                Check: resource.ComposeAggregateTestCheckFunc(
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "type", "embedding"),
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "embedding_config.0.max_tokens", "512"),
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "completion_config.#", "0"),
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "reranking_config.#", "0"),
-                ),
-            },
-        },
-    })
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccThoughtProcessorDataSourceConfig("embedding"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "type", "embedding"),
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "embedding_config.0.max_tokens", "512"),
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "completion_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "reranking_config.#", "0"),
+				),
+			},
+		},
+	})
 }
 
 func TestAccThoughtProcessorDataSource_RerankingType(t *testing.T) {
-    resource.Test(t, resource.TestCase{
-        PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
-        ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
-        Steps: []resource.TestStep{
-            {
-                Config: testAccThoughtProcessorDataSourceConfig("reranking"),
-                Check: resource.ComposeAggregateTestCheckFunc(
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "type", "reranking"),
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "reranking_config.0.top_n", "3"),
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "completion_config.#", "0"),
-                    resource.TestCheckResourceAttr("data.tama_thought_processor.test", "embedding_config.#", "0"),
-                ),
-            },
-        },
-    })
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccThoughtProcessorDataSourceConfig("reranking"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "type", "reranking"),
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "reranking_config.0.top_n", "3"),
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "completion_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_thought_processor.test", "embedding_config.#", "0"),
+				),
+			},
+		},
+	})
 }
 
 func TestAccThoughtProcessorDataSource_CompletionWithRoleMappings(t *testing.T) {
@@ -437,7 +437,7 @@ data "tama_thought_processor" "test" {
 `, timestamp)
 }
 
-// Helper functions for multiple configuration processor tests
+// Helper functions for multiple configuration processor tests.
 func testAccThoughtProcessorDataSourceConfigMultiple(processorType string) string {
 	timestamp := time.Now().UnixNano()
 
