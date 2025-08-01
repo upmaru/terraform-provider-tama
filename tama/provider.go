@@ -28,6 +28,7 @@ import (
 	"github.com/upmaru/terraform-provider-tama/tama/perception/chain"
 	perception_context "github.com/upmaru/terraform-provider-tama/tama/perception/context"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/modular_thought"
+	"github.com/upmaru/terraform-provider-tama/tama/perception/delegated_thought"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/path"
 	thought_processor "github.com/upmaru/terraform-provider-tama/tama/perception/processor"
 	source_identity "github.com/upmaru/terraform-provider-tama/tama/sensory/identity"
@@ -179,6 +180,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		prompt.NewResource,
 		chain.NewResource,
 		modular_thought.NewResource,
+		delegated_thought.NewResource,
 		thought_processor.NewResource,
 		perception_context.NewResource,
 		path.NewResource,

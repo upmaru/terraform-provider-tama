@@ -147,8 +147,10 @@ github.com/stretchr/testify v1.8.3 h1:RP3t2pwF7cMEbC1dqtB6poj3niw/9gnV4Cjg5oW5gt
 github.com/stretchr/testify v1.8.3/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/thedevsaddam/gojsonq/v2 v2.5.2 h1:CoMVaYyKFsVj6TjU6APqAhAvC07hTI6IQen8PHzHYY0=
 github.com/thedevsaddam/gojsonq/v2 v2.5.2/go.mod h1:bv6Xa7kWy82uT0LnXPE2SzGqTj33TAEeR560MdJkiXs=
-github.com/upmaru/tama-go v0.2.4 h1:f6TY6eyi8ZuTEbE0ABhHBkPqCga9eh03yJOxdl+jmyk=
-github.com/upmaru/tama-go v0.2.4/go.mod h1:owF7kM4j5cNe4GsrVMX8nbi+xUCDyREPVd+Ywwx4l5k=
+github.com/upmaru/tama-go v0.2.5 h1:En2Jk+NZ/XrOe5xZWXdjro/T+NWo/aW5VYxvjbnGSVA=
+github.com/upmaru/tama-go v0.2.5/go.mod h1:owF7kM4j5cNe4GsrVMX8nbi+xUCDyREPVd+Ywwx4l5k=
+github.com/upmaru/tama-go v0.2.6 h1:moijshY82JjZVRBKOo0diUf43kkqT/QZO5b1AG8Ak44=
+github.com/upmaru/tama-go v0.2.6/go.mod h1:owF7kM4j5cNe4GsrVMX8nbi+xUCDyREPVd+Ywwx4l5k=
 github.com/vmihailenco/msgpack v3.3.3+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
 github.com/vmihailenco/msgpack v4.0.4+incompatible h1:dSLoQfGFAo3F6OoNhwUmLwVgaUXK79GlxNBwueZn0xI=
 github.com/vmihailenco/msgpack v4.0.4+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
