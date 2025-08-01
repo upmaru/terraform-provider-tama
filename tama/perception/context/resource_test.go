@@ -85,7 +85,7 @@ resource "tama_chain" "test" {
   name     = "test-chain"
 }
 
-resource "tama_thought" "test" {
+resource "tama_modular_thought" "test" {
   chain_id = tama_chain.test.id
   relation = "description"
 
@@ -98,7 +98,7 @@ resource "tama_thought" "test" {
 }
 
 resource "tama_thought_context" "test" {
-  thought_id = tama_thought.test.id
+  thought_id = tama_modular_thought.test.id
   prompt_id  = tama_prompt.test.id
   layer      = 0
 }
@@ -133,7 +133,7 @@ resource "tama_chain" "test" {
   name     = "test-chain"
 }
 
-resource "tama_thought" "test" {
+resource "tama_modular_thought" "test" {
   chain_id = tama_chain.test.id
   relation = "analysis"
 
@@ -146,7 +146,7 @@ resource "tama_thought" "test" {
 }
 
 resource "tama_thought_context" "test" {
-  thought_id = tama_thought.test.id
+  thought_id = tama_modular_thought.test.id
   prompt_id  = tama_prompt.test_update.id
   layer      = 1
 }
@@ -181,7 +181,7 @@ resource "tama_chain" "test" {
   name     = "test-chain"
 }
 
-resource "tama_thought" "test" {
+resource "tama_modular_thought" "test" {
   chain_id = tama_chain.test.id
   relation = "description"
 
@@ -194,13 +194,13 @@ resource "tama_thought" "test" {
 }
 
 resource "tama_thought_context" "test_first" {
-  thought_id = tama_thought.test.id
+  thought_id = tama_modular_thought.test.id
   prompt_id  = tama_prompt.test.id
   layer      = 0
 }
 
 resource "tama_thought_context" "test_second" {
-  thought_id = tama_thought.test.id
+  thought_id = tama_modular_thought.test.id
   prompt_id  = tama_prompt.test_second.id
   layer      = 0
 }

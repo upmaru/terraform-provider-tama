@@ -258,7 +258,7 @@ resource "tama_chain" "test" {
   name     = "Test Processing Chain"
 }
 
-resource "tama_thought" "test" {
+resource "tama_modular_thought" "test" {
   chain_id = tama_chain.test.id
   relation = "description"
 
@@ -271,7 +271,7 @@ resource "tama_thought" "test" {
 }
 
 resource "tama_thought_processor" "test" {
-  thought_id = tama_thought.test.id
+  thought_id = tama_modular_thought.test.id
   model_id   = tama_model.test.id
 
   completion_config {
@@ -308,20 +308,20 @@ resource "tama_chain" "test" {
   name     = "Test Processing Chain"
 }
 
-resource "tama_thought" "test" {
+resource "tama_modular_thought" "test" {
   chain_id = tama_chain.test.id
-  relation = "description"
+  relation = "analysis"
 
   module {
     reference = "tama/agentic/generate"
     parameters = jsonencode({
-      relation = "description"
+      relation = "analysis"
     })
   }
 }
 
 resource "tama_thought_processor" "test" {
-  thought_id = tama_thought.test.id
+  thought_id = tama_modular_thought.test.id
   model_id   = tama_model.test.id
 
   completion_config {
@@ -358,7 +358,7 @@ resource "tama_chain" "test" {
   name     = "Test Processing Chain"
 }
 
-resource "tama_thought" "test" {
+resource "tama_modular_thought" "test" {
   chain_id = tama_chain.test.id
   relation = "description"
 
@@ -371,7 +371,7 @@ resource "tama_thought" "test" {
 }
 
 resource "tama_thought_processor" "test" {
-  thought_id = tama_thought.test.id
+  thought_id = tama_modular_thought.test.id
   model_id   = tama_model.test.id
 }
 `, timestamp, timestamp)
@@ -404,7 +404,7 @@ resource "tama_chain" "test" {
   name     = "Test Processing Chain"
 }
 
-resource "tama_thought" "test" {
+resource "tama_modular_thought" "test" {
   chain_id = tama_chain.test.id
   relation = "description"
 
@@ -417,7 +417,7 @@ resource "tama_thought" "test" {
 }
 
 resource "tama_thought_processor" "test" {
-  thought_id = tama_thought.test.id
+  thought_id = tama_modular_thought.test.id
   model_id   = tama_model.test.id
 
   completion_config {

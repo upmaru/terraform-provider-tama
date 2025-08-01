@@ -199,8 +199,8 @@ resource "tama_chain" "test_chain" {
   name     = "test-chain-for-path-ds"
 }
 
-resource "tama_thought" "test_thought" {
-  chain_id = tama_chain.test_chain.id
+resource "tama_modular_thought" "test" {
+  chain_id = tama_chain.test.id
   relation = "description"
 
   module {
@@ -212,9 +212,9 @@ resource "tama_thought" "test_thought" {
 }
 
 resource "tama_thought_path" "test" {
-  thought_id      = tama_thought.test_thought.id
+  thought_id      = tama_modular_thought.test.id
   target_class_id = tama_class.test_class.id
-  
+
   parameters = jsonencode({
     relation = "similarity"
   })
@@ -255,7 +255,7 @@ resource "tama_chain" "test_chain" {
   name     = "test-chain-for-path-ds"
 }
 
-resource "tama_thought" "test_thought" {
+resource "tama_modular_thought" "test_thought" {
   chain_id = tama_chain.test_chain.id
   relation = "description"
 
@@ -268,7 +268,7 @@ resource "tama_thought" "test_thought" {
 }
 
 resource "tama_thought_path" "test" {
-  thought_id      = tama_thought.test_thought.id
+  thought_id      = tama_modular_thought.test_thought.id
   target_class_id = tama_class.test_class.id`, timestamp)
 
 	if parameters != "" {

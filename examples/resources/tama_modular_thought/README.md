@@ -103,7 +103,7 @@ resource "tama_modular_thought" "content_validation" {
 ### Thought without Parameters
 
 ```hcl
-resource "tama_thought" "identity_validation" {
+resource "tama_modular_thought" "identity_validation" {
   chain_id = tama_chain.processing_pipeline.id
   relation = "validation"
 
@@ -116,7 +116,7 @@ resource "tama_thought" "identity_validation" {
 ### Multiple Thoughts in Processing Order
 
 ```hcl
-resource "tama_thought" "step_1_description" {
+resource "tama_modular_thought" "step_1_description" {
   chain_id = tama_chain.processing_pipeline.id
   relation = "description"
 
@@ -128,7 +128,7 @@ resource "tama_thought" "step_1_description" {
   }
 }
 
-resource "tama_thought" "step_2_analysis" {
+resource "tama_modular_thought" "step_2_analysis" {
   chain_id = tama_chain.processing_pipeline.id
   relation = "analysis"
 
@@ -140,7 +140,7 @@ resource "tama_thought" "step_2_analysis" {
   }
 }
 
-resource "tama_thought" "step_3_validation" {
+resource "tama_modular_thought" "step_3_validation" {
   chain_id        = tama_chain.processing_pipeline.id
   output_class_id = tama_class.validation_schema.id
   relation        = "validation"

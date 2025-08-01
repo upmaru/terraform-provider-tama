@@ -1,10 +1,10 @@
 # Tama Thought Path Data Source Example
 
-This example demonstrates how to use the `tama_thought_path` data source to fetch information about existing perception paths in the Tama provider.
+This example demonstrates how to use the `tama_modular_thought_path` data source to fetch information about existing perception paths in the Tama provider.
 
 ## Overview
 
-The `tama_thought_path` data source allows you to retrieve information about existing paths that link thoughts to target classes. This is useful for:
+The `tama_modular_thought_path` data source allows you to retrieve information about existing paths that link thoughts to target classes. This is useful for:
 
 - Referencing existing paths in other resources
 - Extracting path parameters for analysis or duplication
@@ -15,15 +15,15 @@ The `tama_thought_path` data source allows you to retrieve information about exi
 
 ```hcl
 # Fetch information about an existing thought path by ID
-data "tama_thought_path" "existing_path" {
+data "tama_modular_thought_path" "existing_path" {
   id = "path-12345"
 }
 
 # Use the path information to create related resources
-resource "tama_thought_path" "similar_path" {
-  thought_id      = data.tama_thought_path.existing_path.thought_id
+resource "tama_modular_thought_path" "similar_path" {
+  thought_id      = data.tama_modular_thought_path.existing_path.thought_id
   target_class_id = tama_class.new_target.id
-  parameters      = data.tama_thought_path.existing_path.parameters
+  parameters      = data.tama_modular_thought_path.existing_path.parameters
 }
 ```
 
@@ -44,16 +44,16 @@ resource "tama_thought_path" "similar_path" {
 ### Basic Path Lookup
 
 ```hcl
-data "tama_thought_path" "content_classification_path" {
+data "tama_modular_thought_path" "content_classification_path" {
   id = "path-abc123"
 }
 
 output "path_thought_id" {
-  value = data.tama_thought_path.content_classification_path.thought_id
+  value = data.tama_modular_thought_path.content_classification_path.thought_id
 }
 
 output "path_target_class" {
-  value = data.tama_thought_path.content_classification_path.target_class_id
+  value = data.tama_modular_thought_path.content_classification_path.target_class_id
 }
 ```
 
@@ -61,21 +61,21 @@ output "path_target_class" {
 
 ```hcl
 # Fetch an existing path
-data "tama_thought_path" "existing_similarity_path" {
+data "tama_modular_thought_path" "existing_similarity_path" {
   id = var.similarity_path_id
 }
 
 # Parse the parameters to make decisions
 locals {
-  path_params = jsondecode(data.tama_thought_path.existing_similarity_path.parameters)
+  path_params = jsondecode(data.tama_modular_thought_path.existing_similarity_path.parameters)
   is_high_threshold = try(local.path_params.similarity.threshold, 0) > 0.8
   has_filters = can(local.path_params.filters)
 }
 
 # Create a new path based on the existing one's configuration
-resource "tama_thought_path" "optimized_path" {
-  thought_id      = data.tama_thought_path.existing_similarity_path.thought_id
-  target_class_id = data.tama_thought_path.existing_similarity_path.target_class_id
+resource "tama_modular_thought_path" "optimized_path" {
+  thought_id      = data.tama_modular_thought_path.existing_similarity_path.thought_id
+  target_class_id = data.tama_modular_thought_path.existing_similarity_path.target_class_id
   
   parameters = jsonencode({
     relation = "similarity"
@@ -111,35 +111,35 @@ variable "extraction_path_id" {
 }
 
 # Fetch multiple paths
-data "tama_thought_path" "classification_path" {
+data "tama_modular_thought_path" "classification_path" {
   id = var.classification_path_id
 }
 
-data "tama_thought_path" "similarity_path" {
+data "tama_modular_thought_path" "similarity_path" {
   id = var.similarity_path_id
 }
 
-data "tama_thought_path" "extraction_path" {
+data "tama_modular_thought_path" "extraction_path" {
   id = var.extraction_path_id
 }
 
 # Analyze the paths
 locals {
-  classification_params = jsondecode(data.tama_thought_path.classification_path.parameters)
-  similarity_params     = jsondecode(data.tama_thought_path.similarity_path.parameters)
-  extraction_params     = jsondecode(data.tama_thought_path.extraction_path.parameters)
+  classification_params = jsondecode(data.tama_modular_thought_path.classification_path.parameters)
+  similarity_params     = jsondecode(data.tama_modular_thought_path.similarity_path.parameters)
+  extraction_params     = jsondecode(data.tama_modular_thought_path.extraction_path.parameters)
   
   # Check if paths share the same thought
   same_thought = (
-    data.tama_thought_path.classification_path.thought_id == 
-    data.tama_thought_path.similarity_path.thought_id
+    data.tama_modular_thought_path.classification_path.thought_id == 
+    data.tama_modular_thought_path.similarity_path.thought_id
   )
   
   # Get unique target classes
   target_classes = toset([
-    data.tama_thought_path.classification_path.target_class_id,
-    data.tama_thought_path.similarity_path.target_class_id,
-    data.tama_thought_path.extraction_path.target_class_id
+    data.tama_modular_thought_path.classification_path.target_class_id,
+    data.tama_modular_thought_path.similarity_path.target_class_id,
+    data.tama_modular_thought_path.extraction_path.target_class_id
   ])
   
   # Extract thresholds for comparison
@@ -153,17 +153,17 @@ locals {
 
 ```hcl
 # Fetch a base path to use as a template
-data "tama_thought_path" "base_similarity_path" {
+data "tama_modular_thought_path" "base_similarity_path" {
   id = "path-template-123"
 }
 
 # Create paths with variations of the base configuration
-resource "tama_thought_path" "strict_similarity" {
-  thought_id      = data.tama_thought_path.base_similarity_path.thought_id
-  target_class_id = data.tama_thought_path.base_similarity_path.target_class_id
+resource "tama_modular_thought_path" "strict_similarity" {
+  thought_id      = data.tama_modular_thought_path.base_similarity_path.thought_id
+  target_class_id = data.tama_modular_thought_path.base_similarity_path.target_class_id
   
   parameters = jsonencode(merge(
-    jsondecode(data.tama_thought_path.base_similarity_path.parameters),
+    jsondecode(data.tama_modular_thought_path.base_similarity_path.parameters),
     {
       similarity = {
         threshold = 0.95
@@ -174,12 +174,12 @@ resource "tama_thought_path" "strict_similarity" {
   ))
 }
 
-resource "tama_thought_path" "relaxed_similarity" {
-  thought_id      = data.tama_thought_path.base_similarity_path.thought_id
-  target_class_id = data.tama_thought_path.base_similarity_path.target_class_id
+resource "tama_modular_thought_path" "relaxed_similarity" {
+  thought_id      = data.tama_modular_thought_path.base_similarity_path.thought_id
+  target_class_id = data.tama_modular_thought_path.base_similarity_path.target_class_id
   
   parameters = jsonencode(merge(
-    jsondecode(data.tama_thought_path.base_similarity_path.parameters),
+    jsondecode(data.tama_modular_thought_path.base_similarity_path.parameters),
     {
       similarity = {
         threshold = 0.6
@@ -201,7 +201,7 @@ variable "path_ids" {
   default     = ["path-1", "path-2", "path-3"]
 }
 
-data "tama_thought_path" "paths" {
+data "tama_modular_thought_path" "paths" {
   for_each = toset(var.path_ids)
   id       = each.value
 }
@@ -210,7 +210,7 @@ data "tama_thought_path" "paths" {
 locals {
   # Find paths with similarity relations
   similarity_paths = {
-    for k, path in data.tama_thought_path.paths :
+    for k, path in data.tama_modular_thought_path.paths :
     k => path
     if can(jsondecode(path.parameters).relation) && 
        jsondecode(path.parameters).relation == "similarity"
@@ -218,7 +218,7 @@ locals {
   
   # Find paths with high thresholds
   high_threshold_paths = {
-    for k, path in data.tama_thought_path.paths :
+    for k, path in data.tama_modular_thought_path.paths :
     k => path
     if can(jsondecode(path.parameters).similarity.threshold) && 
        jsondecode(path.parameters).similarity.threshold > 0.8
@@ -226,7 +226,7 @@ locals {
   
   # Group paths by thought
   paths_by_thought = {
-    for k, path in data.tama_thought_path.paths :
+    for k, path in data.tama_modular_thought_path.paths :
     path.thought_id => k...
   }
 }
@@ -251,22 +251,22 @@ variable "existing_path_id" {
 }
 
 # Fetch existing path information
-data "tama_thought_path" "reference_path" {
+data "tama_modular_thought_path" "reference_path" {
   id = var.existing_path_id
 }
 
 # Get the thought and target class information
-data "tama_thought" "source_thought" {
-  id = data.tama_thought_path.reference_path.thought_id
+data "tama_modular_thought" "source_thought" {
+  id = data.tama_modular_thought_path.reference_path.thought_id
 }
 
 data "tama_class" "target_class" {
-  id = data.tama_thought_path.reference_path.target_class_id
+  id = data.tama_modular_thought_path.reference_path.target_class_id
 }
 
 # Parse existing parameters
 locals {
-  existing_params = jsondecode(data.tama_thought_path.reference_path.parameters)
+  existing_params = jsondecode(data.tama_modular_thought_path.reference_path.parameters)
   
   # Extract useful information
   relation_type = try(local.existing_params.relation, "unknown")
@@ -289,7 +289,7 @@ locals {
 
 # Create a new class for enhanced results
 resource "tama_class" "enhanced_results" {
-  space_id = data.tama_thought.source_thought.chain_id # Assuming chain_id relates to space
+  space_id = data.tama_modular_thought.source_thought.chain_id # Assuming chain_id relates to space
   schema_json = jsonencode({
     title = "Enhanced ${data.tama_class.target_class.schema_json.title}"
     type  = "object"
@@ -311,8 +311,8 @@ resource "tama_class" "enhanced_results" {
 }
 
 # Create an enhanced path
-resource "tama_thought_path" "enhanced_path" {
-  thought_id      = data.tama_thought_path.reference_path.thought_id
+resource "tama_modular_thought_path" "enhanced_path" {
+  thought_id      = data.tama_modular_thought_path.reference_path.thought_id
   target_class_id = tama_class.enhanced_results.id
   
   parameters = jsonencode(local.enhanced_params)
@@ -325,22 +325,22 @@ resource "tama_thought_path" "enhanced_path" {
 # Output original path information
 output "original_path_id" {
   description = "ID of the original path"
-  value       = data.tama_thought_path.reference_path.id
+  value       = data.tama_modular_thought_path.reference_path.id
 }
 
 output "original_thought_id" {
   description = "ID of the source thought"
-  value       = data.tama_thought_path.reference_path.thought_id
+  value       = data.tama_modular_thought_path.reference_path.thought_id
 }
 
 output "original_target_class" {
   description = "ID of the original target class"
-  value       = data.tama_thought_path.reference_path.target_class_id
+  value       = data.tama_modular_thought_path.reference_path.target_class_id
 }
 
 output "original_parameters" {
   description = "Original path parameters"
-  value       = data.tama_thought_path.reference_path.parameters
+  value       = data.tama_modular_thought_path.reference_path.parameters
 }
 
 # Output parsed information
@@ -362,7 +362,7 @@ output "max_results_limit" {
 # Output enhanced path information
 output "enhanced_path_id" {
   description = "ID of the enhanced path"
-  value       = tama_thought_path.enhanced_path.id
+  value       = tama_modular_thought_path.enhanced_path.id
 }
 
 output "enhanced_target_class" {
@@ -425,8 +425,8 @@ output "results_multiplier" {
 
 ## Related Resources
 
-- `tama_thought_path` (resource) - Create new thought paths
-- `tama_thought` (data source) - Get information about the source thought
+- `tama_modular_thought_path` (resource) - Create new thought paths
+- `tama_modular_thought` (data source) - Get information about the source thought
 - `tama_class` (data source) - Get information about the target class
 - `tama_chain` (data source) - Get information about the parent chain
 - `tama_space` (data source) - Get information about the parent space
