@@ -27,8 +27,9 @@ import (
 	"github.com/upmaru/terraform-provider-tama/tama/neural/space"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/chain"
 	perception_context "github.com/upmaru/terraform-provider-tama/tama/perception/context"
-	"github.com/upmaru/terraform-provider-tama/tama/perception/modular_thought"
+
 	"github.com/upmaru/terraform-provider-tama/tama/perception/delegated_thought"
+	"github.com/upmaru/terraform-provider-tama/tama/perception/modular_thought"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/path"
 	thought_processor "github.com/upmaru/terraform-provider-tama/tama/perception/processor"
 	source_identity "github.com/upmaru/terraform-provider-tama/tama/sensory/identity"
