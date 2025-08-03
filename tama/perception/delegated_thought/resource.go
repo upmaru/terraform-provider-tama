@@ -160,7 +160,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		createReq.Thought.Index = int(data.Index.ValueInt64())
 	}
 
-	tflog.Debug(ctx, "Creating delegated thought", map[string]interface{}{
+	tflog.Debug(ctx, "Creating delegated thought", map[string]any{
 		"chain_id":      data.ChainId.ValueString(),
 		"relation":      createReq.Thought.Relation,
 		"delegation_id": delegation.TargetThoughtID,
