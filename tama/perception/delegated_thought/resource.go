@@ -157,10 +157,11 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	}
 
 	if !data.Index.IsNull() && !data.Index.IsUnknown() {
-		createReq.Thought.Index = int(data.Index.ValueInt64())
+		index := int(data.Index.ValueInt64())
+		createReq.Thought.Index = &index
 	}
 
-	tflog.Debug(ctx, "Creating delegated thought", map[string]interface{}{
+	tflog.Debug(ctx, "Creating delegated thought", map[string]any{
 		"chain_id":      data.ChainId.ValueString(),
 		"relation":      createReq.Thought.Relation,
 		"delegation_id": delegation.TargetThoughtID,
@@ -240,7 +241,8 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	}
 
 	if !data.Index.IsNull() && !data.Index.IsUnknown() {
-		updateReq.Thought.Index = int(data.Index.ValueInt64())
+		index := int(data.Index.ValueInt64())
+		updateReq.Thought.Index = &index
 	}
 
 	thoughtResponse, err := r.client.Perception.UpdateThought(data.Id.ValueString(), updateReq)

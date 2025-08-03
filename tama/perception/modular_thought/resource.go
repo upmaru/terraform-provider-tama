@@ -173,7 +173,8 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 
 	// Add index if provided and not empty
 	if !data.Index.IsNull() && !data.Index.IsUnknown() {
-		createReq.Thought.Index = int(data.Index.ValueInt64())
+		index := int(data.Index.ValueInt64())
+		createReq.Thought.Index = &index
 	}
 
 	tflog.Debug(ctx, "Creating modular thought", map[string]any{
@@ -290,7 +291,8 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 
 	// Add index if provided and not empty
 	if !data.Index.IsNull() && !data.Index.IsUnknown() {
-		updateReq.Thought.Index = int(data.Index.ValueInt64())
+		index := int(data.Index.ValueInt64())
+		updateReq.Thought.Index = &index
 	}
 
 	tflog.Debug(ctx, "Updating modular thought", map[string]any{
