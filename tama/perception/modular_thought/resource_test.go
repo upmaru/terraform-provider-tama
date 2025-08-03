@@ -106,17 +106,28 @@ func TestAccModularThoughtResource_WithIndexZero(t *testing.T) {
 		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			// Create and Read testing with index = 0 (testing pointer handling)
+			// Create and Read testing with index = 0 and index = 1 (testing pointer handling)
 			{
 				Config: testAccModularThoughtResourceConfigWithIndexZero(fmt.Sprintf("test-space-%d", time.Now().UnixNano())),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("tama_modular_thought.test", "id"),
-					resource.TestCheckResourceAttrSet("tama_modular_thought.test", "chain_id"),
-					resource.TestCheckResourceAttr("tama_modular_thought.test", "relation", "description"),
-					resource.TestCheckResourceAttr("tama_modular_thought.test", "index", "0"),
-					resource.TestCheckResourceAttr("tama_modular_thought.test", "module.reference", "tama/agentic/generate"),
-					resource.TestCheckResourceAttrSet("tama_modular_thought.test", "module.parameters"),
-					resource.TestCheckResourceAttrSet("tama_modular_thought.test", "provision_state"),
+					// Check thought with index = 0
+					resource.TestCheckResourceAttrSet("tama_modular_thought.test_zero", "id"),
+					resource.TestCheckResourceAttrSet("tama_modular_thought.test_zero", "chain_id"),
+					resource.TestCheckResourceAttr("tama_modular_thought.test_zero", "relation", "description"),
+					resource.TestCheckResourceAttr("tama_modular_thought.test_zero", "index", "0"),
+					resource.TestCheckResourceAttr("tama_modular_thought.test_zero", "module.reference", "tama/agentic/generate"),
+					resource.TestCheckResourceAttrSet("tama_modular_thought.test_zero", "module.parameters"),
+					resource.TestCheckResourceAttrSet("tama_modular_thought.test_zero", "provision_state"),
+					// Check thought with index = 1
+					resource.TestCheckResourceAttrSet("tama_modular_thought.test_one", "id"),
+					resource.TestCheckResourceAttrSet("tama_modular_thought.test_one", "chain_id"),
+					resource.TestCheckResourceAttr("tama_modular_thought.test_one", "relation", "analysis"),
+					resource.TestCheckResourceAttr("tama_modular_thought.test_one", "index", "1"),
+					resource.TestCheckResourceAttr("tama_modular_thought.test_one", "module.reference", "tama/agentic/generate"),
+					resource.TestCheckResourceAttrSet("tama_modular_thought.test_one", "module.parameters"),
+					resource.TestCheckResourceAttrSet("tama_modular_thought.test_one", "provision_state"),
+					// Verify both thoughts are in the same chain
+					resource.TestCheckResourceAttrPair("tama_modular_thought.test_zero", "chain_id", "tama_modular_thought.test_one", "chain_id"),
 				),
 			},
 		},
@@ -344,7 +355,7 @@ resource "tama_chain" "test" {
   name     = "Test Processing Chain"
 }
 
-resource "tama_modular_thought" "test" {
+resource "tama_modular_thought" "test_zero" {
   chain_id = tama_chain.test.id
   relation = "description"
   index    = 0
@@ -353,6 +364,19 @@ resource "tama_modular_thought" "test" {
     reference = "tama/agentic/generate"
     parameters = jsonencode({
       relation = "description"
+    })
+  }
+}
+
+resource "tama_modular_thought" "test_one" {
+  chain_id = tama_chain.test.id
+  relation = "analysis"
+  index    = 1
+
+  module {
+    reference = "tama/agentic/generate"
+    parameters = jsonencode({
+      relation = "analysis"
     })
   }
 }
