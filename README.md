@@ -170,7 +170,7 @@ resource "tama_space_processor" "completion" {
   space_id = tama_space.example.id
   model_id = tama_model.gpt4.id
   type     = "completion"
-  
+
   completion_config {
     temperature = 0.7
     tool_choice = "auto"
@@ -192,7 +192,7 @@ resource "tama_space_processor" "embedding" {
   space_id = tama_space.example.id
   model_id = tama_model.embedding.id
   type     = "embedding"
-  
+
   embedding_config {
     max_tokens = 512
     templates = jsonencode([
@@ -213,7 +213,7 @@ resource "tama_space_processor" "reranking" {
   space_id = tama_space.example.id
   model_id = tama_model.reranker.id
   type     = "reranking"
-  
+
   reranking_config {
     top_n = 5
   }
@@ -310,6 +310,27 @@ resource "tama_limit" "example" {
 
 **Attributes:**
 - `id` - Unique identifier for the limit
+
+### tama_thought_module_input
+
+Manages thought module inputs for connecting thought processes with class corpus data.
+
+```hcl
+resource "tama_thought_module_input" "example" {
+  thought_id = tama_delegated_thought.example.id
+  type              = "concept"
+  class_corpus_id   = tama_class_corpus.example.id
+}
+```
+
+**Arguments:**
+- `thought_id` (Required, Forces new resource) - ID of the thought module this input belongs to
+- `type` (Required) - Type of input: "concept" or "entity"
+- `class_corpus_id` (Required) - Class corpus ID related to thought
+
+**Attributes:**
+- `id` - Unique identifier for the input
+- `provision_state` - Current state of the input
 
 ### tama_specification
 
