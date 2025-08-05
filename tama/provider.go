@@ -33,6 +33,7 @@ import (
 	"github.com/upmaru/terraform-provider-tama/tama/perception/modular_thought"
 	module_input "github.com/upmaru/terraform-provider-tama/tama/perception/module/input"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/path"
+	"github.com/upmaru/terraform-provider-tama/tama/perception/tool"
 	thought_processor "github.com/upmaru/terraform-provider-tama/tama/perception/processor"
 	source_identity "github.com/upmaru/terraform-provider-tama/tama/sensory/identity"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/limit"
@@ -188,6 +189,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		perception_context.NewResource,
 		path.NewResource,
 		module_input.NewResource,
+		tool.NewResource,
 	}
 }
 
