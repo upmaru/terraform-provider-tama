@@ -19,6 +19,7 @@ import (
 	tama "github.com/upmaru/tama-go"
 
 	"github.com/upmaru/terraform-provider-tama/tama/memory/prompt"
+	"github.com/upmaru/terraform-provider-tama/tama/motor/action"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/bridge"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/class"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/corpus"
@@ -213,6 +214,7 @@ func (p *TamaProvider) DataSources(ctx context.Context) []func() datasource.Data
 		thought_processor.NewDataSource,
 		perception_context.NewDataSource,
 		path.NewDataSource,
+		action.NewDataSource,
 	}
 }
 

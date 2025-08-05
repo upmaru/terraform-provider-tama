@@ -1,0 +1,225 @@
+{
+  "components": {
+    "security": [{ "ApiKey": {} }, { "ApiKey2": {} }],
+    "securitySchemes": {
+      "ApiKey": {
+        "in": "header",
+        "name": "Authorization",
+        "scheme": "ApiKey",
+        "type": "apiKey"
+      },
+      "ApiKey2": {
+        "in": "header",
+        "name": "X-API-Key",
+        "scheme": "ApiKey",
+        "type": "apiKey"
+      }
+    }
+  },
+  "info": {
+    "description": "API for creating indexes and managing aliases in Elasticsearch. Connects to https://elasticsearch.arrakis.upmaru.network",
+    "title": "Elasticsearch Index Creation and Alias API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/{index}": {
+      "put": {
+        "description": "Creates a new index in Elasticsearch. The index name is determined by the path parameter. Supports specifying settings and mappings.",
+        "operationId": "create-index",
+        "parameters": [
+          {
+            "description": "The name of the index to create. This becomes part of the URL path (e.g., /my_index).",
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "title": "index-creation",
+                "description": "Used for creating elasticsearch index",
+                "properties": {
+                  "aliases": {
+                    "description": "Index aliases. Optional.",
+                    "type": "object"
+                  },
+                  "mappings": {
+                    "description": "Index mappings. Optional.",
+                    "type": "object"
+                  },
+                  "settings": {
+                    "description": "Index settings. Optional.",
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": false
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "acknowledged": {
+                      "description": "True if the index creation was acknowledged.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["acknowledged"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Index created successfully. Returns acknowledgements."
+          }
+        },
+        "summary": "Create an index"
+      }
+    },
+    "/{index}/_doc/{id}": {
+      "put": {
+        "description": "Creates or updates a document in the specified Elasticsearch index with a custom document ID.",
+        "operationId": "create-or-update-document-with-id",
+        "parameters": [
+          {
+            "description": "The name of the index where the document will be created or updated.",
+            "in": "path",
+            "name": "index",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "description": "The document ID to be used. If the document already exists, it will be updated.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "title": "document-body",
+              "description": "The document to be passed in",
+              "schema": {
+                "type": "object",
+                "description": "The document body to be created or updated."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "create-or-update-index-response",
+                  "description": "The expected response when the document is created or updated.",
+                  "properties": {
+                    "_index": { "type": "string" },
+                    "_id": { "type": "string" },
+                    "_version": { "type": "integer" },
+                    "result": { "type": "string" },
+                    "_seq_no": { "type": "integer" },
+                    "_primary_term": { "type": "integer" }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Document created or updated successfully."
+          }
+        },
+        "summary": "Create or update a document with a custom ID"
+      }
+    },
+    "/_aliases": {
+      "post": {
+        "description": "Updates or adds aliases for Elasticsearch indices.",
+        "operationId": "update-aliases",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "title": "alias-update-body",
+              "description": "The alias update body to be sent.",
+              "schema": {
+                "type": "object",
+                "description": "An object specifying the aliases to add or remove.",
+                "properties": {
+                  "actions": {
+                    "description": "List of alias actions to perform (e.g., add, remove).",
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "add": {
+                          "description": "Adds an alias to the index.",
+                          "type": "object",
+                          "properties": {
+                            "alias": { "type": "string" },
+                            "index": { "type": "string" }
+                          },
+                          "required": ["alias", "index"]
+                        },
+                        "remove": {
+                          "description": "Removes an alias from the index.",
+                          "type": "object",
+                          "properties": {
+                            "alias": { "type": "string" },
+                            "index": { "type": "string" }
+                          },
+                          "required": ["alias", "index"]
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": ["actions"]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "acknowledged": { "type": "boolean" },
+                    "success": { "type": "boolean" },
+                    "shards_acknowledged": { "type": "boolean" }
+                  },
+                  "required": [
+                    "acknowledged",
+                    "success",
+                    "shards_acknowledged"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Alias update acknowledged successfully."
+          }
+        },
+        "summary": "Update or add aliases for indices"
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "Elasticsearch Server",
+      "url": "https://elasticsearch.arrakis.upmaru.network"
+    }
+  ]
+}
