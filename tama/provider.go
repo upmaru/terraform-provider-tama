@@ -19,6 +19,7 @@ import (
 	tama "github.com/upmaru/tama-go"
 
 	"github.com/upmaru/terraform-provider-tama/tama/memory/prompt"
+	"github.com/upmaru/terraform-provider-tama/tama/motor/action"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/bridge"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/class"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/corpus"
@@ -33,6 +34,7 @@ import (
 	module_input "github.com/upmaru/terraform-provider-tama/tama/perception/module/input"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/path"
 	thought_processor "github.com/upmaru/terraform-provider-tama/tama/perception/processor"
+	"github.com/upmaru/terraform-provider-tama/tama/perception/tool"
 	source_identity "github.com/upmaru/terraform-provider-tama/tama/sensory/identity"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/limit"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/model"
@@ -187,6 +189,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		perception_context.NewResource,
 		path.NewResource,
 		module_input.NewResource,
+		tool.NewResource,
 	}
 }
 
@@ -213,6 +216,7 @@ func (p *TamaProvider) DataSources(ctx context.Context) []func() datasource.Data
 		thought_processor.NewDataSource,
 		perception_context.NewDataSource,
 		path.NewDataSource,
+		action.NewDataSource,
 	}
 }
 
