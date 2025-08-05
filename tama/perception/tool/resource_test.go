@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tool_test
 
 import (
@@ -143,4 +146,3 @@ resource "tama_thought_tool" "test" {
 }
 `, spaceName)
 }
-

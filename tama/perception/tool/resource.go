@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tool
 
 import (
@@ -104,7 +107,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 
 	tflog.Debug(ctx, "Creating thought tool", map[string]interface{}{
 		"thought_id": data.ThoughtID.ValueString(),
-		"action_id": data.ActionID.ValueString(),
+		"action_id":  data.ActionID.ValueString(),
 	})
 
 	toolResponse, err := r.client.Perception.CreateTool(data.ThoughtID.ValueString(), createReq)
@@ -164,7 +167,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	}
 
 	tflog.Debug(ctx, "Updating thought tool", map[string]interface{}{
-		"id": data.Id.ValueString(),
+		"id":        data.Id.ValueString(),
 		"action_id": data.ActionID.ValueString(),
 	})
 
