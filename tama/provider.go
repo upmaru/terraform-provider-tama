@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	tama "github.com/upmaru/tama-go"
 
+	"github.com/upmaru/terraform-provider-tama/tama/contexts/input"
 	"github.com/upmaru/terraform-provider-tama/tama/memory/prompt"
 	"github.com/upmaru/terraform-provider-tama/tama/motor/action"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/bridge"
@@ -190,6 +191,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		path.NewResource,
 		module_input.NewResource,
 		tool.NewResource,
+		input.NewResource,
 	}
 }
 
