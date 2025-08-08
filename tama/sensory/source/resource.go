@@ -35,6 +35,7 @@ type ResourceModel struct {
 	Id             types.String `tfsdk:"id"`
 	SpaceId        types.String `tfsdk:"space_id"`
 	Name           types.String `tfsdk:"name"`
+	Slug           types.String `tfsdk:"slug"`
 	Type           types.String `tfsdk:"type"`
 	Endpoint       types.String `tfsdk:"endpoint"`
 	ApiKey         types.String `tfsdk:"api_key"`
@@ -67,6 +68,10 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Name of the source",
 				Required:            true,
+			},
+			"slug": schema.StringAttribute{
+				MarkdownDescription: "Source slug (generated from name)",
+				Computed:            true,
 			},
 			"type": schema.StringAttribute{
 				MarkdownDescription: "Type of the source (e.g., 'model')",
@@ -147,6 +152,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	// Map response body to schema and populate Computed attribute values
 	data.Id = types.StringValue(sourceResponse.ID)
 	data.Name = types.StringValue(sourceResponse.Name)
+	data.Slug = types.StringValue(sourceResponse.Slug)
 	data.Type = types.StringValue(sourceResponse.Type)
 	data.SpaceId = types.StringValue(sourceResponse.SpaceID)
 	data.ProvisionState = types.StringValue(sourceResponse.ProvisionState)
@@ -179,6 +185,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 
 	// Update the model with the latest data
 	data.Name = types.StringValue(sourceResponse.Name)
+	data.Slug = types.StringValue(sourceResponse.Slug)
 	data.Type = types.StringValue(sourceResponse.Type)
 	data.SpaceId = types.StringValue(sourceResponse.SpaceID)
 	data.ProvisionState = types.StringValue(sourceResponse.ProvisionState)
@@ -226,6 +233,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 
 	// Update the model with the response data
 	data.Name = types.StringValue(sourceResponse.Name)
+	data.Slug = types.StringValue(sourceResponse.Slug)
 	data.Type = types.StringValue(sourceResponse.Type)
 	data.SpaceId = types.StringValue(sourceResponse.SpaceID)
 	data.ProvisionState = types.StringValue(sourceResponse.ProvisionState)
@@ -270,6 +278,7 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 	data := ResourceModel{
 		Id:             types.StringValue(sourceResponse.ID),
 		Name:           types.StringValue(sourceResponse.Name),
+		Slug:           types.StringValue(sourceResponse.Slug),
 		Type:           types.StringValue(sourceResponse.Type),
 		SpaceId:        types.StringValue(sourceResponse.SpaceID),
 		ProvisionState: types.StringValue(sourceResponse.ProvisionState),

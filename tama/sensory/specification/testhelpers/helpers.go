@@ -25,10 +25,16 @@ func TestSchema() map[string]any {
 			"version":     "1.0.0",
 			"description": "Test specification",
 		},
+		"servers": []map[string]any{
+			{
+				"url": "https://api.example.com",
+			},
+		},
 		"paths": map[string]any{
 			"/messages": map[string]any{
 				"post": map[string]any{
-					"summary": "Create message",
+					"operationId": "createMessage",
+					"summary":     "Create message",
 					"requestBody": map[string]any{
 						"required": true,
 						"content": map[string]any{
@@ -69,10 +75,16 @@ func TestSchemaUpdated() map[string]any {
 			"version":     "1.1.0",
 			"description": "Updated test specification",
 		},
+		"servers": []map[string]any{
+			{
+				"url": "https://api.example.com",
+			},
+		},
 		"paths": map[string]any{
 			"/messages": map[string]any{
 				"post": map[string]any{
-					"summary": "Create message",
+					"operationId": "createMessage",
+					"summary":     "Create message",
 					"requestBody": map[string]any{
 						"required": true,
 						"content": map[string]any{
@@ -117,10 +129,16 @@ func TestComplexSchema() map[string]any {
 			"version":     "1.0.0",
 			"description": "Complex test specification with nested objects",
 		},
+		"servers": []map[string]any{
+			{
+				"url": "https://api.example.com",
+			},
+		},
 		"paths": map[string]any{
 			"/resources": map[string]any{
 				"post": map[string]any{
-					"summary": "Create resource",
+					"operationId": "createResource",
+					"summary":     "Create resource",
 					"requestBody": map[string]any{
 						"required": true,
 						"content": map[string]any{
@@ -171,9 +189,15 @@ func TestSchemaWithWhitespace() map[string]any {
 			"title":   "Whitespace Test API",
 			"version": "1.0.0",
 		},
+		"servers": []map[string]any{
+			{
+				"url": "https://api.example.com",
+			},
+		},
 		"paths": map[string]any{
 			"/test": map[string]any{
 				"post": map[string]any{
+					"operationId": "testOperation",
 					"requestBody": map[string]any{
 						"content": map[string]any{
 							"application/json": map[string]any{
@@ -206,9 +230,15 @@ func TestSchemaCompact() map[string]any {
 			"title":   "Whitespace Test API",
 			"version": "1.0.0",
 		},
+		"servers": []map[string]any{
+			{
+				"url": "https://api.example.com",
+			},
+		},
 		"paths": map[string]any{
 			"/test": map[string]any{
 				"post": map[string]any{
+					"operationId": "testOperation",
 					"requestBody": map[string]any{
 						"content": map[string]any{
 							"application/json": map[string]any{
