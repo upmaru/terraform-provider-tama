@@ -210,7 +210,6 @@ func (p *TamaProvider) DataSources(ctx context.Context) []func() datasource.Data
 		source.NewDataSource,
 		source_identity.NewDataSource,
 		model.NewDataSource,
-		limit.NewDataSource,
 		specification.NewDataSource,
 		prompt.NewDataSource,
 		chain.NewDataSource,

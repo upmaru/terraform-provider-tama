@@ -40,7 +40,7 @@ type ResourceModel struct {
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_limit"
+	resp.TypeName = req.ProviderTypeName + "_source_limit"
 }
 
 func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {

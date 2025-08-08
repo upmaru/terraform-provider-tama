@@ -22,16 +22,16 @@ func TestAccLimitResource(t *testing.T) {
 			{
 				Config: testAccLimitResourceConfig("minutes", 1, 100),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_unit", "minutes"),
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_count", "1"),
-					resource.TestCheckResourceAttr("tama_limit.test", "value", "100"),
-					resource.TestCheckResourceAttrSet("tama_limit.test", "id"),
-					resource.TestCheckResourceAttrSet("tama_limit.test", "source_id"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_unit", "minutes"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_count", "1"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "value", "100"),
+					resource.TestCheckResourceAttrSet("tama_source_limit.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_source_limit.test", "source_id"),
 				),
 			},
 			// ImportState testing
 			{
-				ResourceName:            "tama_limit.test",
+				ResourceName:            "tama_source_limit.test",
 				ImportState:             true,
 				ImportStateVerify:       true, // SourceId is now available from API
 				ImportStateVerifyIgnore: []string{},
@@ -40,10 +40,10 @@ func TestAccLimitResource(t *testing.T) {
 			{
 				Config: testAccLimitResourceConfig("hours", 24, 1000),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_unit", "hours"),
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_count", "24"),
-					resource.TestCheckResourceAttr("tama_limit.test", "value", "1000"),
-					resource.TestCheckResourceAttrSet("tama_limit.test", "id"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_unit", "hours"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_count", "24"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "value", "1000"),
+					resource.TestCheckResourceAttrSet("tama_source_limit.test", "id"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -75,10 +75,10 @@ func TestAccLimitResource_TimeUnits(t *testing.T) {
 					{
 						Config: testAccLimitResourceConfig(tc.scaleUnit, tc.count, tc.limit),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("tama_limit.test", "scale_unit", tc.scaleUnit),
-							resource.TestCheckResourceAttr("tama_limit.test", "scale_count", fmt.Sprintf("%d", tc.count)),
-							resource.TestCheckResourceAttr("tama_limit.test", "value", fmt.Sprintf("%d", tc.limit)),
-							resource.TestCheckResourceAttrSet("tama_limit.test", "id"),
+							resource.TestCheckResourceAttr("tama_source_limit.test", "scale_unit", tc.scaleUnit),
+							resource.TestCheckResourceAttr("tama_source_limit.test", "scale_count", fmt.Sprintf("%d", tc.count)),
+							resource.TestCheckResourceAttr("tama_source_limit.test", "value", fmt.Sprintf("%d", tc.limit)),
+							resource.TestCheckResourceAttrSet("tama_source_limit.test", "id"),
 						),
 					},
 				},
@@ -112,10 +112,10 @@ func TestAccLimitResource_RateLimitScenarios(t *testing.T) {
 					{
 						Config: testAccLimitResourceConfig(tc.scaleUnit, tc.scaleCount, tc.limit),
 						Check: resource.ComposeAggregateTestCheckFunc(
-							resource.TestCheckResourceAttr("tama_limit.test", "scale_unit", tc.scaleUnit),
-							resource.TestCheckResourceAttr("tama_limit.test", "scale_count", fmt.Sprintf("%d", tc.scaleCount)),
-							resource.TestCheckResourceAttr("tama_limit.test", "value", fmt.Sprintf("%d", tc.limit)),
-							resource.TestCheckResourceAttrSet("tama_limit.test", "id"),
+							resource.TestCheckResourceAttr("tama_source_limit.test", "scale_unit", tc.scaleUnit),
+							resource.TestCheckResourceAttr("tama_source_limit.test", "scale_count", fmt.Sprintf("%d", tc.scaleCount)),
+							resource.TestCheckResourceAttr("tama_source_limit.test", "value", fmt.Sprintf("%d", tc.limit)),
+							resource.TestCheckResourceAttrSet("tama_source_limit.test", "id"),
 						),
 					},
 				},
@@ -204,10 +204,10 @@ func TestAccLimitResource_HighLimits(t *testing.T) {
 			{
 				Config: testAccLimitResourceConfig("hours", 8760, 999999999),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_unit", "hours"),
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_count", "8760"),
-					resource.TestCheckResourceAttr("tama_limit.test", "value", "999999999"),
-					resource.TestCheckResourceAttrSet("tama_limit.test", "id"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_unit", "hours"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_count", "8760"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "value", "999999999"),
+					resource.TestCheckResourceAttrSet("tama_source_limit.test", "id"),
 				),
 			},
 		},
@@ -223,15 +223,15 @@ func TestAccLimitResource_Multiple(t *testing.T) {
 				Config: testAccLimitResourceConfigMultiple(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// First limit - burst protection
-					resource.TestCheckResourceAttr("tama_limit.burst", "scale_unit", "seconds"),
-					resource.TestCheckResourceAttr("tama_limit.burst", "scale_count", "1"),
-					resource.TestCheckResourceAttr("tama_limit.burst", "value", "10"),
-					resource.TestCheckResourceAttrSet("tama_limit.burst", "id"),
+					resource.TestCheckResourceAttr("tama_source_limit.burst", "scale_unit", "seconds"),
+					resource.TestCheckResourceAttr("tama_source_limit.burst", "scale_count", "1"),
+					resource.TestCheckResourceAttr("tama_source_limit.burst", "value", "10"),
+					resource.TestCheckResourceAttrSet("tama_source_limit.burst", "id"),
 					// Second limit - hourly quota
-					resource.TestCheckResourceAttr("tama_limit.hourly", "scale_unit", "hours"),
-					resource.TestCheckResourceAttr("tama_limit.hourly", "scale_count", "1"),
-					resource.TestCheckResourceAttr("tama_limit.hourly", "value", "1000"),
-					resource.TestCheckResourceAttrSet("tama_limit.hourly", "id"),
+					resource.TestCheckResourceAttr("tama_source_limit.hourly", "scale_unit", "hours"),
+					resource.TestCheckResourceAttr("tama_source_limit.hourly", "scale_count", "1"),
+					resource.TestCheckResourceAttr("tama_source_limit.hourly", "value", "1000"),
+					resource.TestCheckResourceAttrSet("tama_source_limit.hourly", "id"),
 				),
 			},
 		},
@@ -247,15 +247,15 @@ func TestAccLimitResource_DifferentSources(t *testing.T) {
 				Config: testAccLimitResourceConfigDifferentSources(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Limit for first source
-					resource.TestCheckResourceAttr("tama_limit.source1_limit", "scale_unit", "minutes"),
-					resource.TestCheckResourceAttr("tama_limit.source1_limit", "scale_count", "1"),
-					resource.TestCheckResourceAttr("tama_limit.source1_limit", "value", "100"),
-					resource.TestCheckResourceAttrSet("tama_limit.source1_limit", "id"),
+					resource.TestCheckResourceAttr("tama_source_limit.source1_limit", "scale_unit", "minutes"),
+					resource.TestCheckResourceAttr("tama_source_limit.source1_limit", "scale_count", "1"),
+					resource.TestCheckResourceAttr("tama_source_limit.source1_limit", "value", "100"),
+					resource.TestCheckResourceAttrSet("tama_source_limit.source1_limit", "id"),
 					// Limit for second source
-					resource.TestCheckResourceAttr("tama_limit.source2_limit", "scale_unit", "hours"),
-					resource.TestCheckResourceAttr("tama_limit.source2_limit", "scale_count", "1"),
-					resource.TestCheckResourceAttr("tama_limit.source2_limit", "value", "500"),
-					resource.TestCheckResourceAttrSet("tama_limit.source2_limit", "id"),
+					resource.TestCheckResourceAttr("tama_source_limit.source2_limit", "scale_unit", "hours"),
+					resource.TestCheckResourceAttr("tama_source_limit.source2_limit", "scale_count", "1"),
+					resource.TestCheckResourceAttr("tama_source_limit.source2_limit", "value", "500"),
+					resource.TestCheckResourceAttrSet("tama_source_limit.source2_limit", "id"),
 				),
 			},
 		},
@@ -271,27 +271,27 @@ func TestAccLimitResource_UpdateLimits(t *testing.T) {
 			{
 				Config: testAccLimitResourceConfig("minutes", 1, 10),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_unit", "minutes"),
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_count", "1"),
-					resource.TestCheckResourceAttr("tama_limit.test", "value", "10"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_unit", "minutes"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_count", "1"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "value", "10"),
 				),
 			},
 			// Increase to moderate limits
 			{
 				Config: testAccLimitResourceConfig("minutes", 5, 100),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_unit", "minutes"),
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_count", "5"),
-					resource.TestCheckResourceAttr("tama_limit.test", "value", "100"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_unit", "minutes"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_count", "5"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "value", "100"),
 				),
 			},
 			// Change to hourly limits
 			{
 				Config: testAccLimitResourceConfig("hours", 1, 1000),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_unit", "hours"),
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_count", "1"),
-					resource.TestCheckResourceAttr("tama_limit.test", "value", "1000"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_unit", "hours"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_count", "1"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "value", "1000"),
 				),
 			},
 		},
@@ -306,10 +306,10 @@ func TestAccLimitResource_DisappearResource(t *testing.T) {
 			{
 				Config: testAccLimitResourceConfig("minutes", 1, 100),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_unit", "minutes"),
-					resource.TestCheckResourceAttr("tama_limit.test", "scale_count", "1"),
-					resource.TestCheckResourceAttr("tama_limit.test", "value", "100"),
-					resource.TestCheckResourceAttrSet("tama_limit.test", "id"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_unit", "minutes"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "scale_count", "1"),
+					resource.TestCheckResourceAttr("tama_source_limit.test", "value", "100"),
+					resource.TestCheckResourceAttrSet("tama_source_limit.test", "id"),
 				),
 			},
 		},
@@ -332,7 +332,7 @@ resource "tama_source" "test_source" {
   api_key  = "test-api-key"
 }
 
-resource "tama_limit" "test" {
+resource "tama_source_limit" "test" {
   source_id   = tama_source.test_source.id
   scale_unit  = %[1]q
   scale_count = %[2]d
@@ -357,7 +357,7 @@ resource "tama_source" "test_source" {
   api_key  = "test-api-key"
 }
 
-resource "tama_limit" "test" {
+resource "tama_source_limit" "test" {
   source_id   = tama_source.test_source.id
   scale_unit  = %[1]q
   scale_count = %[2]d
@@ -390,14 +390,14 @@ resource "tama_source" "test_source_2" {
   api_key  = "test-api-key-2"
 }
 
-resource "tama_limit" "burst" {
+resource "tama_source_limit" "burst" {
   source_id   = tama_source.test_source_1.id
   scale_unit  = "seconds"
   scale_count = 1
   value       = 10
 }
 
-resource "tama_limit" "hourly" {
+resource "tama_source_limit" "hourly" {
   source_id   = tama_source.test_source_2.id
   scale_unit  = "hours"
   scale_count = 1
@@ -430,14 +430,14 @@ resource "tama_source" "source2" {
   api_key  = "test-api-key-2"
 }
 
-resource "tama_limit" "source1_limit" {
+resource "tama_source_limit" "source1_limit" {
   source_id   = tama_source.source1.id
   scale_unit  = "minutes"
   scale_count = 1
   value       = 100
 }
 
-resource "tama_limit" "source2_limit" {
+resource "tama_source_limit" "source2_limit" {
   source_id   = tama_source.source2.id
   scale_unit  = "hours"
   scale_count = 1
