@@ -87,3 +87,4 @@ output "openai_source_id" {
 
 - `id` (String) Source identifier
 - `provision_state` (String) Current state of the source ('active' or 'inactive')
+- `slug` (String) Source slug (generated from name)

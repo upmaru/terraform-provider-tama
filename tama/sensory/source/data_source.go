@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	tama "github.com/upmaru/tama-go"
+	"github.com/upmaru/tama-go/sensory"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -28,10 +29,14 @@ type DataSource struct {
 
 // DataSourceModel describes the data source data model.
 type DataSourceModel struct {
-	Id       types.String `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	Type     types.String `tfsdk:"type"`
-	Endpoint types.String `tfsdk:"endpoint"`
+	Id              types.String `tfsdk:"id"`
+	SpecificationId types.String `tfsdk:"specification_id"`
+	Slug            types.String `tfsdk:"slug"`
+	Name            types.String `tfsdk:"name"`
+	Type            types.String `tfsdk:"type"`
+	Endpoint        types.String `tfsdk:"endpoint"`
+	SpaceId         types.String `tfsdk:"space_id"`
+	ProvisionState  types.String `tfsdk:"provision_state"`
 }
 
 func (d *DataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -40,12 +45,22 @@ func (d *DataSource) Metadata(ctx context.Context, req datasource.MetadataReques
 
 func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Fetches information about a Tama Sensory Source",
+		MarkdownDescription: "Fetches information about a Tama Sensory Source. Can be fetched by ID directly or by specification_id and slug.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Source identifier",
-				Required:            true,
+				MarkdownDescription: "Source identifier. Optional if specification_id and slug are provided.",
+				Optional:            true,
+				Computed:            true,
+			},
+			"specification_id": schema.StringAttribute{
+				MarkdownDescription: "Specification identifier. Required if using slug to find the source.",
+				Optional:            true,
+			},
+			"slug": schema.StringAttribute{
+				MarkdownDescription: "Source slug. Required if using specification_id to find the source.",
+				Optional:            true,
+				Computed:            true,
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Name of the source",
@@ -57,6 +72,14 @@ func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, r
 			},
 			"endpoint": schema.StringAttribute{
 				MarkdownDescription: "API endpoint URL for the source",
+				Computed:            true,
+			},
+			"space_id": schema.StringAttribute{
+				MarkdownDescription: "Space identifier",
+				Computed:            true,
+			},
+			"provision_state": schema.StringAttribute{
+				MarkdownDescription: "Provision state of the source",
 				Computed:            true,
 			},
 		},
@@ -93,12 +116,50 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 		return
 	}
 
-	// Get source from API
-	tflog.Debug(ctx, "Reading source", map[string]any{
-		"id": data.Id.ValueString(),
-	})
+	// Validate input parameters
+	hasId := !data.Id.IsNull() && !data.Id.IsUnknown() && data.Id.ValueString() != ""
+	hasSpecificationIdAndSlug := (!data.SpecificationId.IsNull() && !data.SpecificationId.IsUnknown() && data.SpecificationId.ValueString() != "") &&
+		(!data.Slug.IsNull() && !data.Slug.IsUnknown() && data.Slug.ValueString() != "")
 
-	sourceResponse, err := d.client.Sensory.GetSource(data.Id.ValueString())
+	if !hasId && !hasSpecificationIdAndSlug {
+		resp.Diagnostics.AddError(
+			"Invalid Configuration",
+			"Either 'id' or both 'specification_id' and 'slug' must be provided",
+		)
+		return
+	}
+
+	if hasId && hasSpecificationIdAndSlug {
+		resp.Diagnostics.AddError(
+			"Invalid Configuration",
+			"Cannot provide both 'id' and 'specification_id'/'slug' simultaneously. Use one method or the other.",
+		)
+		return
+	}
+
+	var sourceResponse *sensory.Source
+	var err error
+
+	if hasId {
+		// Get source by ID
+		tflog.Debug(ctx, "Reading source by ID", map[string]any{
+			"id": data.Id.ValueString(),
+		})
+
+		sourceResponse, err = d.client.Sensory.GetSource(data.Id.ValueString())
+	} else {
+		// Get source by specification ID and slug
+		tflog.Debug(ctx, "Reading source by specification and slug", map[string]any{
+			"specification_id": data.SpecificationId.ValueString(),
+			"slug":             data.Slug.ValueString(),
+		})
+
+		sourceResponse, err = d.client.Sensory.GetSourceBySpecificationAndSlug(
+			data.SpecificationId.ValueString(),
+			data.Slug.ValueString(),
+		)
+	}
+
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read source, got error: %s", err))
 		return
@@ -107,7 +168,11 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	// Map response to data source schema
 	data.Id = types.StringValue(sourceResponse.ID)
 	data.Name = types.StringValue(sourceResponse.Name)
-	// Note: Type and Endpoint are not available in API response
+	data.Slug = types.StringValue(sourceResponse.Slug)
+	data.Type = types.StringValue(sourceResponse.Type)
+	data.Endpoint = types.StringValue(sourceResponse.Endpoint)
+	data.SpaceId = types.StringValue(sourceResponse.SpaceID)
+	data.ProvisionState = types.StringValue(sourceResponse.ProvisionState)
 
 	// Write logs using the tflog package
 	tflog.Trace(ctx, "read a source data source")

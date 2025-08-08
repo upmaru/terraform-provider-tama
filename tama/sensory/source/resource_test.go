@@ -27,6 +27,7 @@ func TestAccSourceResource(t *testing.T) {
 					resource.TestCheckResourceAttr("tama_source.test", "endpoint", "https://api.example.com"),
 					resource.TestCheckResourceAttr("tama_source.test", "api_key", "test-api-key"),
 					resource.TestCheckResourceAttrSet("tama_source.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "slug"),
 					resource.TestCheckResourceAttrSet("tama_source.test", "space_id"),
 					resource.TestCheckResourceAttrSet("tama_source.test", "provision_state"),
 				),
@@ -130,6 +131,7 @@ func TestAccSourceResource_LongName(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("tama_source.test", "name", longName),
 					resource.TestCheckResourceAttr("tama_source.test", "type", "model"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "slug"),
 					resource.TestCheckResourceAttrSet("tama_source.test", "provision_state"),
 				),
 			},
