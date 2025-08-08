@@ -224,10 +224,45 @@ resource "tama_space" "test_space" {
 resource "tama_specification" "test" {
   space_id = tama_space.test_space.id
   schema = jsonencode({
-    type = "object"
-    properties = {
-      message = {
-        type = "string"
+    openapi = "3.0.3"
+    info = {
+      title = "Test API"
+      version = "1.0.0"
+      description = "Test specification"
+    }
+    servers = [
+      {
+        url = "https://api.example.com/v1"
+      }
+    ]
+    paths = {
+      "/messages" = {
+        post = {
+          operationId = "createMessage"
+          summary = "Create message"
+          requestBody = {
+            required = true
+            content = {
+              "application/json" = {
+                schema = {
+                  type = "object"
+                  properties = {
+                    message = {
+                      type = "string"
+                      description = "A message property"
+                    }
+                  }
+                  required = ["message"]
+                }
+              }
+            }
+          }
+          responses = {
+            "200" = {
+              description = "Success"
+            }
+          }
+        }
       }
     }
   })
@@ -262,10 +297,45 @@ resource "tama_space" "test_space" {
 resource "tama_specification" "test" {
   space_id = tama_space.test_space.id
   schema = jsonencode({
-    type = "object"
-    properties = {
-      message = {
-        type = "string"
+    openapi = "3.0.3"
+    info = {
+      title = "Test API"
+      version = "1.0.0"
+      description = "Test specification"
+    }
+    servers = [
+      {
+        url = "https://api.example.com/v1"
+      }
+    ]
+    paths = {
+      "/messages" = {
+        post = {
+          operationId = "createMessage"
+          summary = "Create message"
+          requestBody = {
+            required = true
+            content = {
+              "application/json" = {
+                schema = {
+                  type = "object"
+                  properties = {
+                    message = {
+                      type = "string"
+                      description = "A message property"
+                    }
+                  }
+                  required = ["message"]
+                }
+              }
+            }
+          }
+          responses = {
+            "200" = {
+              description = "Success"
+            }
+          }
+        }
       }
     }
   })
@@ -330,10 +400,45 @@ resource "tama_space" "test_space" {
 resource "tama_specification" "test" {
   space_id = tama_space.test_space.id
   schema = jsonencode({
-    type = "object"
-    properties = {
-      message = {
-        type = "string"
+    openapi = "3.0.3"
+    info = {
+      title = "Test API"
+      version = "1.0.0"
+      description = "Test specification"
+    }
+    servers = [
+      {
+        url = %[1]q
+      }
+    ]
+    paths = {
+      "/messages" = {
+        post = {
+          operationId = "createMessage"
+          summary = "Create message"
+          requestBody = {
+            required = true
+            content = {
+              "application/json" = {
+                schema = {
+                  type = "object"
+                  properties = {
+                    message = {
+                      type = "string"
+                      description = "A message property"
+                    }
+                  }
+                  required = ["message"]
+                }
+              }
+            }
+          }
+          responses = {
+            "200" = {
+              description = "Success"
+            }
+          }
+        }
       }
     }
   })
