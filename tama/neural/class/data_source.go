@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	tama "github.com/upmaru/tama-go"
+	"github.com/upmaru/tama-go/neural"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -29,13 +30,14 @@ type DataSource struct {
 
 // DataSourceModel describes the data source data model.
 type DataSourceModel struct {
-	Id             types.String  `tfsdk:"id"`
-	Name           types.String  `tfsdk:"name"`
-	Description    types.String  `tfsdk:"description"`
-	Schema         []SchemaModel `tfsdk:"schema"`
-	SchemaJSON     types.String  `tfsdk:"schema_json"`
-	ProvisionState types.String  `tfsdk:"provision_state"`
-	SpaceId        types.String  `tfsdk:"space_id"`
+	Id              types.String  `tfsdk:"id"`
+	Name            types.String  `tfsdk:"name"`
+	Description     types.String  `tfsdk:"description"`
+	Schema          []SchemaModel `tfsdk:"schema"`
+	SchemaJSON      types.String  `tfsdk:"schema_json"`
+	ProvisionState  types.String  `tfsdk:"provision_state"`
+	SpaceId         types.String  `tfsdk:"space_id"`
+	SpecificationID types.String  `tfsdk:"specification_id"`
 }
 
 func (d *DataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -44,15 +46,21 @@ func (d *DataSource) Metadata(ctx context.Context, req datasource.MetadataReques
 
 func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Fetches information about a Tama Neural Class",
+		MarkdownDescription: "Fetches information about a Tama Neural Class. You can retrieve a class either by ID or by specification_id and name.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Class identifier",
-				Required:            true,
+				MarkdownDescription: "Class identifier. Required when not using specification_id and name.",
+				Optional:            true,
+				Computed:            true,
+			},
+			"specification_id": schema.StringAttribute{
+				MarkdownDescription: "ID of the specification this class belongs to. Required when not using id.",
+				Optional:            true,
 			},
 			"name": schema.StringAttribute{
-				MarkdownDescription: "Name of the class",
+				MarkdownDescription: "Name of the class. Required when using specification_id.",
+				Optional:            true,
 				Computed:            true,
 			},
 			"description": schema.StringAttribute{
@@ -139,15 +147,53 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 		return
 	}
 
-	// Get class from API
-	tflog.Debug(ctx, "Reading class", map[string]any{
-		"id": data.Id.ValueString(),
-	})
+	// Validate that either id is provided OR both specification_id and name are provided
+	hasId := !data.Id.IsNull() && !data.Id.IsUnknown() && data.Id.ValueString() != ""
+	hasSpecificationAndName := !data.SpecificationID.IsNull() && !data.SpecificationID.IsUnknown() && data.SpecificationID.ValueString() != "" &&
+		!data.Name.IsNull() && !data.Name.IsUnknown() && data.Name.ValueString() != ""
 
-	classResponse, err := d.client.Neural.GetClass(data.Id.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read class, got error: %s", err))
+	if !hasId && !hasSpecificationAndName {
+		resp.Diagnostics.AddError(
+			"Missing Required Arguments",
+			"Either 'id' must be provided, or both 'specification_id' and 'name' must be provided.",
+		)
 		return
+	}
+
+	if hasId && hasSpecificationAndName {
+		resp.Diagnostics.AddError(
+			"Conflicting Arguments",
+			"Cannot specify both 'id' and 'specification_id'+'name'. Use either 'id' alone or 'specification_id'+'name' together.",
+		)
+		return
+	}
+
+	var classResponse *neural.Class
+	var err error
+
+	if hasId {
+		// Get class by ID
+		tflog.Debug(ctx, "Reading class by ID", map[string]any{
+			"id": data.Id.ValueString(),
+		})
+
+		classResponse, err = d.client.Neural.GetClass(data.Id.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read class by ID, got error: %s", err))
+			return
+		}
+	} else {
+		// Get class by specification ID and name
+		tflog.Debug(ctx, "Reading class by specification and name", map[string]any{
+			"specification_id": data.SpecificationID.ValueString(),
+			"name":             data.Name.ValueString(),
+		})
+
+		classResponse, err = d.client.Neural.GetClassBySpecificationAndName(data.SpecificationID.ValueString(), data.Name.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read class by specification and name, got error: %s", err))
+			return
+		}
 	}
 
 	// Map response to data source schema
@@ -156,6 +202,11 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 	data.Description = types.StringValue(classResponse.Description)
 	data.ProvisionState = types.StringValue(classResponse.ProvisionState)
 	data.SpaceId = types.StringValue(classResponse.SpaceID)
+
+	// Set specification_id if it was used in the request
+	if hasSpecificationAndName {
+		data.SpecificationID = types.StringValue(data.SpecificationID.ValueString())
+	}
 
 	// Update both schema block and schema_json with response data
 	err = d.updateSchemaFromResponse(ctx, classResponse.Schema, &data)

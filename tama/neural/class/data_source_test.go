@@ -5,6 +5,7 @@ package class_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 	"time"
 
@@ -490,6 +491,186 @@ data "tama_class" "test" {
   id = tama_class.test.id
 }
 `, name, timestamp)
+}
+
+func testAccClassDataSourceConfigBySpecificationAndName() string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "spec-test-%d"
+  type = "root"
+}
+
+resource "tama_specification" "test" {
+  space_id = tama_space.test.id
+  version  = "1.0.0"
+  endpoint = "https://elasticsearch.arrakis.upmaru.network"
+  schema   = jsonencode(jsondecode(file("${path.module}/testdata/elasticsearch_schema.json")))
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["completed"]
+    }
+  }
+}
+
+data "tama_class" "test" {
+  specification_id = tama_specification.test.id
+  name = "create-index"
+}
+`, timestamp)
+}
+
+func testAccClassDataSourceConfigConflictingArgs() string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "conflict-test-%d"
+  type = "root"
+}
+
+resource "tama_specification" "test" {
+  space_id = tama_space.test.id
+  version  = "1.0.0"
+  endpoint = "https://elasticsearch.arrakis.upmaru.network"
+  schema   = jsonencode(jsondecode(file("${path.module}/testdata/elasticsearch_schema.json")))
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["completed"]
+    }
+  }
+}
+
+resource "tama_class" "test" {
+  space_id = tama_space.test.id
+  schema_json = jsonencode({
+    title = "conflict-test"
+    description = "A class for testing conflicts"
+    type = "object"
+    properties = {
+      name = {
+        type = "string"
+      }
+    }
+  })
+}
+
+data "tama_class" "test" {
+  id = tama_class.test.id
+  specification_id = tama_specification.test.id
+  name = "create-index"
+}
+`, timestamp)
+}
+
+func testAccClassDataSourceConfigMissingArgs() string {
+	return acceptance.ProviderConfig + `
+data "tama_class" "test" {
+  # Missing both id and specification_id+name
+}
+`
+}
+
+func testAccClassDataSourceConfigSpecificationNameOnly() string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "spec-name-test-%d"
+  type = "root"
+}
+
+resource "tama_specification" "test" {
+  space_id = tama_space.test.id
+  version  = "1.0.0"
+  endpoint = "https://elasticsearch.arrakis.upmaru.network"
+  schema   = jsonencode(jsondecode(file("${path.module}/testdata/elasticsearch_schema.json")))
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["completed"]
+    }
+  }
+}
+
+data "tama_class" "test" {
+  specification_id = tama_specification.test.id
+  name = "create-index"
+}
+`, timestamp)
+}
+
+func TestAccClassDataSource_BySpecificationAndName(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccClassDataSourceConfigBySpecificationAndName(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "id"),
+					resource.TestCheckResourceAttr("data.tama_class.test", "name", "create-index"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "description"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "schema_json"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "schema.0.title"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "schema.0.description"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "schema.0.type"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "provision_state"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "space_id"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "specification_id"),
+					// Verify that specification_id matches the created specification
+					resource.TestCheckResourceAttrPair("data.tama_class.test", "specification_id", "tama_specification.test", "id"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccClassDataSource_ConflictingArguments(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccClassDataSourceConfigConflictingArgs(),
+				ExpectError: regexp.MustCompile("Conflicting Arguments"),
+			},
+		},
+	})
+}
+
+func TestAccClassDataSource_MissingRequiredArguments(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccClassDataSourceConfigMissingArgs(),
+				ExpectError: regexp.MustCompile("Missing Required Arguments"),
+			},
+		},
+	})
+}
+
+func TestAccClassDataSource_SpecificationAndNameOnly(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccClassDataSourceConfigSpecificationNameOnly(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "id"),
+					resource.TestCheckResourceAttr("data.tama_class.test", "name", "create-index"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "specification_id"),
+					resource.TestCheckResourceAttrPair("data.tama_class.test", "specification_id", "tama_specification.test", "id"),
+				),
+			},
+		},
+	})
 }
 
 func testAccClassDataSourceConfigMinimal(name string) string {
