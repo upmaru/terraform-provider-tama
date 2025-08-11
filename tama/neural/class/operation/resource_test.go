@@ -287,7 +287,7 @@ resource "tama_class_operation" "test" {
   chain_ids = [tama_chain.test.id]
   node_type = "reactive"
 
-  depends_on = [tama_node.handle-extraction]
+  depends_on = [tama_node.handle-extraction, tama_thought_path.test]
 }
 `, spaceName)
 }
