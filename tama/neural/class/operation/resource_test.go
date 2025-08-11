@@ -138,6 +138,27 @@ func TestAccClassOperationResource_BaseInfrastructure(t *testing.T) {
 	})
 }
 
+func TestAccClassOperationResource_WaitFor(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccClassOperationResourceConfigWaitFor(fmt.Sprintf("test-operation-wait-%d", time.Now().UnixNano())),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("tama_class_operation.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_class_operation.test", "class_id"),
+					resource.TestCheckResourceAttr("tama_class_operation.test", "node_type", "explicit"),
+					resource.TestCheckResourceAttrSet("tama_class_operation.test", "current_state"),
+					resource.TestCheckResourceAttr("tama_class_operation.test", "chain_ids.#", "1"),
+					resource.TestCheckResourceAttrSet("tama_class_operation.test", "chain_ids.0"),
+					resource.TestCheckResourceAttrSet("tama_class_operation.test", "node_ids.#"),
+				),
+			},
+		},
+	})
+}
+
 func testAccClassOperationResourceConfig(spaceName string) string {
 	return acceptance.ProviderConfig + fmt.Sprintf(`
 data "tama_space" "global" {
@@ -601,6 +622,90 @@ resource "tama_node" "handle-extraction" {
   chain_id = tama_chain.test.id
 
   type = "explicit"
+}
+`, spaceName)
+}
+
+func testAccClassOperationResourceConfigWaitFor(spaceName string) string {
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+data "tama_space" "global" {
+  id = "global"
+}
+
+data "tama_class" "class-proxy" {
+  space_id = data.tama_space.global.id
+  name = "class-proxy"
+}
+
+resource "tama_space" "test" {
+  name = "%s"
+  type = "root"
+}
+
+resource "tama_specification" "test" {
+  space_id = tama_space.test.id
+  version  = "1.0.0"
+  endpoint = "https://elasticsearch.arrakis.upmaru.network"
+  schema   = jsonencode(jsondecode(file("${path.module}/testdata/elasticsearch_schema.json")))
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["completed"]
+    }
+  }
+}
+
+data "tama_class" "test" {
+  specification_id = tama_specification.test.id
+  name             = "create-index"
+}
+
+resource "tama_chain" "test" {
+  space_id = tama_space.test.id
+  name     = "Test Processing Chain"
+}
+
+resource "tama_modular_thought" "test" {
+  chain_id = tama_chain.test.id
+  index    = 0
+  relation = "extraction"
+
+  module {
+    reference = "tama/classes/extraction"
+    parameters = jsonencode({
+      types = ["array"]
+      depth = 1
+    })
+  }
+}
+
+resource "tama_thought_path" "test" {
+  thought_id      = tama_modular_thought.test.id
+  target_class_id = data.tama_class.test.id
+}
+
+resource "tama_node" "handle-extraction" {
+  space_id = tama_space.test.id
+  class_id = data.tama_class.class-proxy.id
+  chain_id = tama_chain.test.id
+
+  type = "explicit"
+}
+
+resource "tama_class_operation" "test" {
+  class_id  = data.tama_class.test.id
+  chain_ids = [tama_chain.test.id]
+  node_type = "explicit"
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["processed"]
+    }
+  }
+
+  depends_on = [tama_node.handle-extraction, tama_thought_path.test]
 }
 `, spaceName)
 }

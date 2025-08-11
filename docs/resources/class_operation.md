@@ -23,9 +23,25 @@ Manages a Tama Neural Class Operation resource
 ### Optional
 
 - `node_type` (String) Type of node (explicit or reactive). Defaults to 'reactive'
+- `wait_for` (Block List) If set, will wait until either all of conditions are satisfied, or until timeout is reached (see [below for nested schema](#nestedblock--wait_for))
 
 ### Read-Only
 
 - `current_state` (String) Current state of the operation
 - `id` (String) Operation identifier
 - `node_ids` (List of String) List of node IDs created by this operation
+
+<a id="nestedblock--wait_for"></a>
+### Nested Schema for `wait_for`
+
+Optional:
+
+- `field` (Block List) Condition criteria for a field (see [below for nested schema](#nestedblock--wait_for--field))
+
+<a id="nestedblock--wait_for--field"></a>
+### Nested Schema for `wait_for.field`
+
+Required:
+
+- `in` (List of String) List of acceptable values for the field
+- `name` (String) Name of the field to check (JSON path)
