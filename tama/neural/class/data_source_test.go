@@ -741,7 +741,7 @@ data "tama_class" "test" {
 `, name, timestamp)
 }
 
-// testAccClassDataSourceConfigBySpaceAndName creates a test configuration using space_id and name with existing global space
+// testAccClassDataSourceConfigBySpaceAndName creates a test configuration using space_id and name with existing global space.
 func testAccClassDataSourceConfigBySpaceAndName() string {
 	return acceptance.ProviderConfig + `
 data "tama_space" "global" {
@@ -755,7 +755,7 @@ data "tama_class" "test" {
 `
 }
 
-// testAccClassDataSourceConfigConflictingSpaceAndSpec creates a configuration with conflicting arguments
+// testAccClassDataSourceConfigConflictingSpaceAndSpec creates a configuration with conflicting arguments.
 func testAccClassDataSourceConfigConflictingSpaceAndSpec() string {
 	return acceptance.ProviderConfig + `
 data "tama_space" "global" {
