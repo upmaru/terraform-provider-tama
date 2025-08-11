@@ -13,6 +13,18 @@ data "tama_class" "example" {
   id = "class-12345"
 }
 
+# Alternative: Fetch class using space_id and name (new in v0.2.16)
+data "tama_class" "class_by_space_and_name" {
+  space_id = tama_space.some_space.id
+  name     = "class-proxy"
+}
+
+# Alternative: Fetch class using specification_id and name
+data "tama_class" "class_by_spec_and_name" {
+  specification_id = "spec-67890"
+  name             = "user-profile"
+}
+
 # Use the data source output in other resources
 resource "tama_source" "example" {
   space_id = data.tama_class.example.space_id

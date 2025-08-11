@@ -23,6 +23,7 @@ import (
 	"github.com/upmaru/terraform-provider-tama/tama/motor/action"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/bridge"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/class"
+	class_operation "github.com/upmaru/terraform-provider-tama/tama/neural/class/operation"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/corpus"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/node"
 	space_processor "github.com/upmaru/terraform-provider-tama/tama/neural/processor"
@@ -174,6 +175,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		space.NewResource,
 		bridge.NewResource,
 		class.NewResource,
+		class_operation.NewResource,
 		corpus.NewResource,
 		node.NewResource,
 		space_processor.NewResource,

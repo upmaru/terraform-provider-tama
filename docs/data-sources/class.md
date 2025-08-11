@@ -3,12 +3,12 @@
 page_title: "tama_class Data Source - tama"
 subcategory: ""
 description: |-
-  Fetches information about a Tama Neural Class. You can retrieve a class either by ID or by specification_id and name.
+  Fetches information about a Tama Neural Class. You can retrieve a class by ID, by specification_id and name, or by space_id and name.
 ---
 
 # tama_class (Data Source)
 
-Fetches information about a Tama Neural Class. You can retrieve a class either by ID or by specification_id and name.
+Fetches information about a Tama Neural Class. You can retrieve a class by ID, by specification_id and name, or by space_id and name.
 
 ## Example Usage
 
@@ -26,6 +26,18 @@ terraform {
 # Fetch information about an existing class by ID
 data "tama_class" "example" {
   id = "class-12345"
+}
+
+# Alternative: Fetch class using space_id and name (new in v0.2.16)
+data "tama_class" "class_by_space_and_name" {
+  space_id = tama_space.some_space.id
+  name     = "class-proxy"
+}
+
+# Alternative: Fetch class using specification_id and name
+data "tama_class" "class_by_spec_and_name" {
+  specification_id = "spec-67890"
+  name             = "user-profile"
 }
 
 # Use the data source output in other resources
@@ -215,9 +227,10 @@ output "conditional_creation" {
 
 ### Optional
 
-- `id` (String) Class identifier. Required when not using specification_id and name.
-- `name` (String) Name of the class. Required when using specification_id.
-- `specification_id` (String) ID of the specification this class belongs to. Required when not using id.
+- `id` (String) Class identifier. Required when not using specification_id+name or space_id+name.
+- `name` (String) Name of the class. Required when using specification_id+name or space_id+name approach.
+- `space_id` (String) ID of the space this class belongs to. Required when using space_id+name approach.
+- `specification_id` (String) ID of the specification this class belongs to. Required when using specification_id+name approach.
 
 ### Read-Only
 
@@ -225,7 +238,6 @@ output "conditional_creation" {
 - `provision_state` (String) Current state of the class
 - `schema` (Block List) JSON schema definition for the class (see [below for nested schema](#nestedblock--schema))
 - `schema_json` (String) JSON schema as a string
-- `space_id` (String) ID of the space this class belongs to
 
 <a id="nestedblock--schema"></a>
 ### Nested Schema for `schema`
