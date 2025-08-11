@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -20,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	tama "github.com/upmaru/tama-go"
 	"github.com/upmaru/tama-go/neural/class"
+	"github.com/upmaru/terraform-provider-tama/internal/wait"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -37,12 +39,13 @@ type Resource struct {
 
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id           types.String `tfsdk:"id"`
-	ClassId      types.String `tfsdk:"class_id"`
-	ChainIds     types.List   `tfsdk:"chain_ids"`
-	NodeType     types.String `tfsdk:"node_type"`
-	CurrentState types.String `tfsdk:"current_state"`
-	NodeIds      types.List   `tfsdk:"node_ids"`
+	Id           types.String   `tfsdk:"id"`
+	ClassId      types.String   `tfsdk:"class_id"`
+	ChainIds     types.List     `tfsdk:"chain_ids"`
+	NodeType     types.String   `tfsdk:"node_type"`
+	CurrentState types.String   `tfsdk:"current_state"`
+	NodeIds      types.List     `tfsdk:"node_ids"`
+	WaitFor      []wait.WaitFor `tfsdk:"wait_for"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -98,6 +101,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 				Computed:            true,
 			},
 		},
+		Blocks: wait.WaitForBlockSchema(),
 	}
 }
 
@@ -207,6 +211,20 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	// Set default node_type if it wasn't provided
 	if data.NodeType.IsNull() || data.NodeType.IsUnknown() {
 		data.NodeType = types.StringValue("reactive")
+	}
+
+	// Handle wait_for conditions if specified
+	if len(data.WaitFor) > 0 {
+		getOperationFunc := func(id string) (interface{}, error) {
+			return classOperationService.GetOperation(data.ClassId.ValueString(), id)
+		}
+		for _, waitFor := range data.WaitFor {
+			err := wait.ForConditions(ctx, getOperationFunc, data.Id.ValueString(), waitFor.Field, 10*time.Minute)
+			if err != nil {
+				resp.Diagnostics.AddError("Wait Condition Failed", fmt.Sprintf("Unable to satisfy wait conditions: %s", err))
+				return
+			}
+		}
 	}
 
 	tflog.Trace(ctx, "created class operation resource")
