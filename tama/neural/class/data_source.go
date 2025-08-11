@@ -46,20 +46,20 @@ func (d *DataSource) Metadata(ctx context.Context, req datasource.MetadataReques
 
 func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Fetches information about a Tama Neural Class. You can retrieve a class either by ID or by specification_id and name.",
+		MarkdownDescription: "Fetches information about a Tama Neural Class. You can retrieve a class by ID, by specification_id and name, or by space_id and name.",
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "Class identifier. Required when not using specification_id and name.",
+				MarkdownDescription: "Class identifier. Required when not using specification_id+name or space_id+name.",
 				Optional:            true,
 				Computed:            true,
 			},
 			"specification_id": schema.StringAttribute{
-				MarkdownDescription: "ID of the specification this class belongs to. Required when not using id.",
+				MarkdownDescription: "ID of the specification this class belongs to. Required when using specification_id+name approach.",
 				Optional:            true,
 			},
 			"name": schema.StringAttribute{
-				MarkdownDescription: "Name of the class. Required when using specification_id.",
+				MarkdownDescription: "Name of the class. Required when using specification_id+name or space_id+name approach.",
 				Optional:            true,
 				Computed:            true,
 			},
@@ -76,7 +76,8 @@ func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, r
 				Computed:            true,
 			},
 			"space_id": schema.StringAttribute{
-				MarkdownDescription: "ID of the space this class belongs to",
+				MarkdownDescription: "ID of the space this class belongs to. Required when using space_id+name approach.",
+				Optional:            true,
 				Computed:            true,
 			},
 		},
@@ -147,23 +148,37 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 		return
 	}
 
-	// Validate that either id is provided OR both specification_id and name are provided
+	// Validate the different ways to query for a class
 	hasId := !data.Id.IsNull() && !data.Id.IsUnknown() && data.Id.ValueString() != ""
 	hasSpecificationAndName := !data.SpecificationID.IsNull() && !data.SpecificationID.IsUnknown() && data.SpecificationID.ValueString() != "" &&
 		!data.Name.IsNull() && !data.Name.IsUnknown() && data.Name.ValueString() != ""
+	hasSpaceAndName := !data.SpaceId.IsNull() && !data.SpaceId.IsUnknown() && data.SpaceId.ValueString() != "" &&
+		!data.Name.IsNull() && !data.Name.IsUnknown() && data.Name.ValueString() != ""
 
-	if !hasId && !hasSpecificationAndName {
+	// Count how many valid approaches are provided
+	approachCount := 0
+	if hasId {
+		approachCount++
+	}
+	if hasSpecificationAndName {
+		approachCount++
+	}
+	if hasSpaceAndName {
+		approachCount++
+	}
+
+	if approachCount == 0 {
 		resp.Diagnostics.AddError(
 			"Missing Required Arguments",
-			"Either 'id' must be provided, or both 'specification_id' and 'name' must be provided.",
+			"You must provide one of the following: 'id' alone, 'specification_id' + 'name', or 'space_id' + 'name'.",
 		)
 		return
 	}
 
-	if hasId && hasSpecificationAndName {
+	if approachCount > 1 {
 		resp.Diagnostics.AddError(
 			"Conflicting Arguments",
-			"Cannot specify both 'id' and 'specification_id'+'name'. Use either 'id' alone or 'specification_id'+'name' together.",
+			"You can only use one approach at a time: 'id' alone, 'specification_id' + 'name', or 'space_id' + 'name'.",
 		)
 		return
 	}
@@ -182,7 +197,7 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read class by ID, got error: %s", err))
 			return
 		}
-	} else {
+	} else if hasSpecificationAndName {
 		// Get class by specification ID and name
 		tflog.Debug(ctx, "Reading class by specification and name", map[string]any{
 			"specification_id": data.SpecificationID.ValueString(),
@@ -192,6 +207,18 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 		classResponse, err = d.client.Neural.GetClassBySpecificationAndName(data.SpecificationID.ValueString(), data.Name.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read class by specification and name, got error: %s", err))
+			return
+		}
+	} else if hasSpaceAndName {
+		// Get class by space ID and name
+		tflog.Debug(ctx, "Reading class by space and name", map[string]any{
+			"space_id": data.SpaceId.ValueString(),
+			"name":     data.Name.ValueString(),
+		})
+
+		classResponse, err = d.client.Neural.GetClassBySpaceAndName(data.SpaceId.ValueString(), data.Name.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read class by space and name, got error: %s", err))
 			return
 		}
 	}

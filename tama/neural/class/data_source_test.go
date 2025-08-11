@@ -673,6 +673,44 @@ func TestAccClassDataSource_SpecificationAndNameOnly(t *testing.T) {
 	})
 }
 
+func TestAccClassDataSource_BySpaceAndName(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccClassDataSourceConfigBySpaceAndName(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "id"),
+					resource.TestCheckResourceAttr("data.tama_class.test", "name", "class-proxy"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "description"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "schema_json"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "schema.0.title"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "schema.0.description"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "schema.0.type"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "provision_state"),
+					resource.TestCheckResourceAttrSet("data.tama_class.test", "space_id"),
+					// Verify that space_id matches the global space data source
+					resource.TestCheckResourceAttrPair("data.tama_class.test", "space_id", "data.tama_space.global", "id"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccClassDataSource_ConflictingSpaceAndSpecArgs(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccClassDataSourceConfigConflictingSpaceAndSpec(),
+				ExpectError: regexp.MustCompile("You can only use one approach at a time"),
+			},
+		},
+	})
+}
+
 func testAccClassDataSourceConfigMinimal(name string) string {
 	timestamp := time.Now().UnixNano()
 	return acceptance.ProviderConfig + fmt.Sprintf(`
@@ -701,4 +739,33 @@ data "tama_class" "test" {
   id = tama_class.test.id
 }
 `, name, timestamp)
+}
+
+// testAccClassDataSourceConfigBySpaceAndName creates a test configuration using space_id and name with existing global space
+func testAccClassDataSourceConfigBySpaceAndName() string {
+	return acceptance.ProviderConfig + `
+data "tama_space" "global" {
+  id = "global"
+}
+
+data "tama_class" "test" {
+  space_id = data.tama_space.global.id
+  name     = "class-proxy"
+}
+`
+}
+
+// testAccClassDataSourceConfigConflictingSpaceAndSpec creates a configuration with conflicting arguments
+func testAccClassDataSourceConfigConflictingSpaceAndSpec() string {
+	return acceptance.ProviderConfig + `
+data "tama_space" "global" {
+  id = "global"
+}
+
+data "tama_class" "test" {
+  id = "some-class-id"
+  space_id = data.tama_space.global.id
+  name = "class-proxy"
+}
+`
 }
