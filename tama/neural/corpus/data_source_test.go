@@ -141,6 +141,27 @@ func TestAccCorpusDataSource_StateVerification(t *testing.T) {
 	})
 }
 
+func TestAccCorpusDataSource_ByClassAndSlug(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCorpusDataSourceByClassAndSlugConfig("action-call-json"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("data.tama_class_corpus.test", "id"),
+					resource.TestCheckResourceAttr("data.tama_class_corpus.test", "name", "Action Call JSON"),
+					resource.TestCheckResourceAttr("data.tama_class_corpus.test", "slug", "action-call-json"),
+					resource.TestCheckResourceAttrSet("data.tama_class_corpus.test", "class_id"),
+					resource.TestCheckResourceAttrSet("data.tama_class_corpus.test", "main"),
+					resource.TestCheckResourceAttrSet("data.tama_class_corpus.test", "template"),
+					resource.TestCheckResourceAttrSet("data.tama_class_corpus.test", "provision_state"),
+				),
+			},
+		},
+	})
+}
+
 func testAccCorpusDataSourceConfig(name string) string {
 	timestamp := time.Now().UnixNano()
 	return acceptance.ProviderConfig + fmt.Sprintf(`
@@ -306,4 +327,48 @@ data "tama_class_corpus" "test" {
   id = tama_class_corpus.test.id
 }
 `, name, timestamp)
+}
+
+func testAccCorpusDataSourceByClassAndSlugConfig(slug string) string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "class-slug-test-%d"
+  type = "root"
+}
+
+resource "tama_class" "action-call" {
+  space_id = tama_space.test.id
+  schema_json = jsonencode({
+    title = "action-call"
+    description = "An action call is a request to execute an action."
+    type = "object"
+    properties = {
+      tool_id = {
+        description = "The ID of the tool to execute"
+        type        = "string"
+      }
+      parameters = {
+        description = "The parameters to pass to the action"
+        type        = "object"
+      }
+    }
+    required = ["tool_id", "parameters"]
+  })
+}
+
+resource "tama_class_corpus" "action-call-json" {
+  class_id = tama_class.action-call.id
+  name     = "Action Call JSON"
+  main     = true
+  template = "{{ tool_calls }}"
+}
+
+data "tama_class_corpus" "test" {
+  depends_on = [tama_class_corpus.action-call-json]
+
+  class_id = tama_class.action-call.id
+  slug = "%s"
+}
+`, timestamp, slug)
 }
