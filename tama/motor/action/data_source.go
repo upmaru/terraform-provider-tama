@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	tama "github.com/upmaru/tama-go"
+	"github.com/upmaru/tama-go/motor"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -50,18 +51,20 @@ func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, r
 			},
 			"identifier": schema.StringAttribute{
 				MarkdownDescription: "Human-readable identifier for the action",
-				Required:            true,
+				Optional:            true,
 			},
 			"id": schema.StringAttribute{
 				MarkdownDescription: "Unique identifier for the action",
 				Computed:            true,
 			},
 			"path": schema.StringAttribute{
-				MarkdownDescription: "API endpoint path to execute",
+				MarkdownDescription: "API endpoint path to execute. When provided with specification_id and method, will lookup action by path and method instead of identifier",
+				Optional:            true,
 				Computed:            true,
 			},
 			"method": schema.StringAttribute{
-				MarkdownDescription: "HTTP method to use for execution (GET, POST, PUT, DELETE, etc.)",
+				MarkdownDescription: "HTTP method to use for execution (GET, POST, PUT, DELETE, etc.). When provided with specification_id and path, will lookup action by path and method instead of identifier",
+				Optional:            true,
 				Computed:            true,
 			},
 		},
@@ -98,13 +101,64 @@ func (d *DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp 
 		return
 	}
 
-	// Get action from API
-	tflog.Debug(ctx, "Reading action", map[string]any{
-		"specification_id": data.SpecificationID.ValueString(),
-		"identifier":       data.Identifier.ValueString(),
-	})
+	// Validate input parameters
+	hasIdentifier := !data.Identifier.IsNull() && !data.Identifier.IsUnknown() && data.Identifier.ValueString() != ""
+	hasPath := !data.Path.IsNull() && !data.Path.IsUnknown() && data.Path.ValueString() != ""
+	hasMethod := !data.Method.IsNull() && !data.Method.IsUnknown() && data.Method.ValueString() != ""
 
-	actionResponse, err := d.client.Motor.GetAction(data.SpecificationID.ValueString(), data.Identifier.ValueString())
+	// Check for valid combinations
+	if hasIdentifier && (hasPath || hasMethod) {
+		resp.Diagnostics.AddError(
+			"Invalid Configuration",
+			"Cannot specify 'identifier' together with 'path' or 'method' - use either identifier alone, or path and method together",
+		)
+		return
+	}
+
+	if hasPath && !hasMethod {
+		resp.Diagnostics.AddError(
+			"Invalid Configuration",
+			"When using 'path' to lookup an action, 'method' is also required",
+		)
+		return
+	}
+
+	if !hasPath && hasMethod {
+		resp.Diagnostics.AddError(
+			"Invalid Configuration",
+			"When using 'method' to lookup an action, 'path' is also required",
+		)
+		return
+	}
+
+	if !hasIdentifier && !hasPath {
+		resp.Diagnostics.AddError(
+			"Invalid Configuration",
+			"Either 'identifier' or both 'path' and 'method' must be specified to lookup an action",
+		)
+		return
+	}
+
+	var actionResponse *motor.Action
+	var err error
+
+	if hasPath && hasMethod {
+		// Get action by path and method
+		tflog.Debug(ctx, "Reading action by path and method", map[string]any{
+			"specification_id": data.SpecificationID.ValueString(),
+			"path":             data.Path.ValueString(),
+			"method":           data.Method.ValueString(),
+		})
+		actionResponse, err = d.client.Motor.GetActionByPathAndMethod(data.SpecificationID.ValueString(), data.Path.ValueString(), data.Method.ValueString())
+	} else {
+		// Get action by identifier
+		tflog.Debug(ctx, "Reading action by identifier", map[string]any{
+			"specification_id": data.SpecificationID.ValueString(),
+			"identifier":       data.Identifier.ValueString(),
+		})
+		actionResponse, err = d.client.Motor.GetAction(data.SpecificationID.ValueString(), data.Identifier.ValueString())
+	}
+
 	if err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read action, got error: %s", err))
 		return
