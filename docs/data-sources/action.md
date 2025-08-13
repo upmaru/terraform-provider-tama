@@ -17,11 +17,14 @@ Fetches information about a Tama Motor Action
 
 ### Required
 
-- `identifier` (String) Human-readable identifier for the action
 - `specification_id` (String) ID of the specification this action belongs to
+
+### Optional
+
+- `identifier` (String) Human-readable identifier for the action
+- `method` (String) HTTP method to use for execution (GET, POST, PUT, DELETE, etc.). When provided with specification_id and path, will lookup action by path and method instead of identifier
+- `path` (String) API endpoint path to execute. When provided with specification_id and method, will lookup action by path and method instead of identifier
 
 ### Read-Only
 
 - `id` (String) Unique identifier for the action
-- `method` (String) HTTP method to use for execution (GET, POST, PUT, DELETE, etc.)
-- `path` (String) API endpoint path to execute

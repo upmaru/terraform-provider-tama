@@ -194,3 +194,56 @@ data "tama_action" "test" {
 }
 `
 }
+
+func TestAccActionDataSource_ByPathAndMethod(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Test looking up action by path and method instead of identifier
+			{
+				Config: testAccActionDataSourceConfigByPathAndMethod("/_aliases", "POST"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Data source checks
+					resource.TestCheckResourceAttr("data.tama_action.test_by_path_method", "path", "/_aliases"),
+					resource.TestCheckResourceAttr("data.tama_action.test_by_path_method", "method", "post"), // Should be lowercased by the API
+					resource.TestCheckResourceAttrSet("data.tama_action.test_by_path_method", "id"),
+					resource.TestCheckResourceAttrSet("data.tama_action.test_by_path_method", "identifier"),
+					resource.TestCheckResourceAttrSet("data.tama_action.test_by_path_method", "specification_id"),
+					// Verify that the specification_id matches the created specification
+					resource.TestCheckResourceAttrPair("data.tama_action.test_by_path_method", "specification_id", "tama_specification.test", "id"),
+				),
+			},
+		},
+	})
+}
+
+func testAccActionDataSourceConfigByPathAndMethod(path, method string) string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test_space" {
+  name = "test-space-for-action-ds-path-method-%d"
+  type = "root"
+}
+
+resource "tama_specification" "test" {
+  space_id = tama_space.test_space.id
+  version  = "1.0.0"
+  endpoint = "https://elasticsearch.arrakis.upmaru.network"
+  schema   = jsonencode(jsondecode(file("${path.module}/testdata/elasticsearch_schema.json")))
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["completed"]
+    }
+  }
+}
+
+data "tama_action" "test_by_path_method" {
+  specification_id = tama_specification.test.id
+  path             = %q
+  method           = %q
+}
+`, timestamp, path, method)
+}
