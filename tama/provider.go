@@ -32,11 +32,11 @@ import (
 	perception_context "github.com/upmaru/terraform-provider-tama/tama/perception/context"
 
 	"github.com/upmaru/terraform-provider-tama/tama/perception/delegated_thought"
+	thought_initializer "github.com/upmaru/terraform-provider-tama/tama/perception/initializer"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/modular_thought"
 	module_input "github.com/upmaru/terraform-provider-tama/tama/perception/module/input"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/path"
 	thought_processor "github.com/upmaru/terraform-provider-tama/tama/perception/processor"
-	thought_initializer "github.com/upmaru/terraform-provider-tama/tama/perception/initializer"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/tool"
 	source_identity "github.com/upmaru/terraform-provider-tama/tama/sensory/identity"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/limit"
@@ -186,16 +186,16 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		limit.NewResource,
 		specification.NewResource,
 		prompt.NewResource,
-	chain.NewResource,
-	modular_thought.NewResource,
-	delegated_thought.NewResource,
-	thought_processor.NewResource,
-	perception_context.NewResource,
-	path.NewResource,
-	module_input.NewResource,
-	thought_initializer.NewResource,
-	tool.NewResource,
-	input.NewResource,
+		chain.NewResource,
+		modular_thought.NewResource,
+		delegated_thought.NewResource,
+		thought_processor.NewResource,
+		perception_context.NewResource,
+		path.NewResource,
+		module_input.NewResource,
+		thought_initializer.NewResource,
+		tool.NewResource,
+		input.NewResource,
 	}
 }
 

@@ -108,8 +108,12 @@ func TestAccThoughtInitializerResource_ComplexParameters(t *testing.T) {
 								}
 								expectedRelations := []string{"description", "overview", "setting"}
 								for i, rel := range relations {
-									if rel.(string) != expectedRelations[i] {
-										return fmt.Errorf("expected relation %s, got %s", expectedRelations[i], rel)
+									relStr, ok := rel.(string)
+									if !ok {
+										return fmt.Errorf("relation at index %d should be a string, got %T", i, rel)
+									}
+									if relStr != expectedRelations[i] {
+										return fmt.Errorf("expected relation %s, got %s", expectedRelations[i], relStr)
 									}
 								}
 							} else {
@@ -136,7 +140,10 @@ func TestAccThoughtInitializerResource_ComplexParameters(t *testing.T) {
 							if len(children) != 1 {
 								return fmt.Errorf("expected 1 child, got %d", len(children))
 							}
-							child := children[0].(map[string]any)
+							child, ok := children[0].(map[string]any)
+							if !ok {
+								return fmt.Errorf("child should be a map, got %T", children[0])
+							}
 							if child["class"] != "movie-credits" {
 								return fmt.Errorf("child class should be 'movie-credits', got %v", child["class"])
 							}
