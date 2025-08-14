@@ -100,6 +100,13 @@ func TestAccThoughtInitializerResource_ComplexParameters(t *testing.T) {
 							return fmt.Errorf("failed to parse parameters JSON: %v", err)
 						}
 
+						// Check that record parameters are preserved
+						if record, ok := params["record"].(map[string]any); ok {
+							if _, ok := record["rejections"]; !ok {
+								return fmt.Errorf("record should have rejections array")
+							}
+						}
+
 						// Check that concept parameters are preserved
 						if concept, ok := params["concept"].(map[string]any); ok {
 							if relations, ok := concept["relations"].([]any); ok {
@@ -149,6 +156,14 @@ func TestAccThoughtInitializerResource_ComplexParameters(t *testing.T) {
 							}
 							if child["as"] != "object" {
 								return fmt.Errorf("child as should be 'object', got %v", child["as"])
+							}
+
+							// Check that server-added fields are present
+							if _, ok := child["children"]; !ok {
+								return fmt.Errorf("child should have children array")
+							}
+							if _, ok := child["parents"]; !ok {
+								return fmt.Errorf("child should have parents array")
 							}
 						}
 
@@ -272,6 +287,10 @@ resource "tama_thought_initializer" "test" {
   index      = 0
   class_id   = tama_class.test.id
   parameters = jsonencode({
+    record = {
+      rejections = []
+    }
+    parents = []
     concept = {
       relations = ["description", "overview", "setting"]
       embeddings = "include"
@@ -288,6 +307,8 @@ resource "tama_thought_initializer" "test" {
         class = "movie-credits"
         as = "object"
         on = "parent_entity_id"
+        children = []
+        parents = []
       }
     ]
   })
@@ -354,6 +375,10 @@ resource "tama_thought_initializer" "test" {
   index      = 1
   class_id   = tama_class.test.id
   parameters = jsonencode({
+    record = {
+      rejections = []
+    }
+    parents = []
     concept = {
       relations = ["description", "overview", "setting", "genre"]
       embeddings = "include"
@@ -370,6 +395,8 @@ resource "tama_thought_initializer" "test" {
         class = "movie-credits"
         as = "object"
         on = "parent_entity_id"
+        children = []
+        parents = []
       }
     ]
   })
@@ -423,10 +450,15 @@ resource "tama_thought_initializer" "test" {
   reference  = "tama/initializers/preload"
   class_id   = tama_class.test.id
   parameters = jsonencode({
+    record = {
+      rejections = []
+    }
+    parents = []
     concept = {
       relations = ["description"]
       embeddings = "include"
     }
+    children = []
   })
 }
 `, spaceName)
@@ -491,6 +523,10 @@ resource "tama_thought_initializer" "test" {
   index      = 0
   class_id   = tama_class.test.id
   parameters = jsonencode({
+    record = {
+      rejections = []
+    }
+    parents = []
     concept = {
       relations = ["description", "overview", "setting"]
       embeddings = "include"
@@ -507,6 +543,8 @@ resource "tama_thought_initializer" "test" {
         class = "movie-credits"
         as = "object"
         on = "parent_entity_id"
+        children = []
+        parents = []
       }
     ]
   })
@@ -561,9 +599,14 @@ resource "tama_thought_initializer" "test1" {
   index      = 2
   class_id   = tama_class.test.id
   parameters = jsonencode({
+    record = {
+      rejections = []
+    }
+    parents = []
     concept = {
       relations = ["description"]
     }
+    children = []
   })
 }
 `, spaceName)
@@ -616,9 +659,14 @@ resource "tama_thought_initializer" "test1" {
   index      = 2
   class_id   = tama_class.test.id
   parameters = jsonencode({
+    record = {
+      rejections = []
+    }
+    parents = []
     concept = {
       relations = ["description"]
     }
+    children = []
   })
 }
 
