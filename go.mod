@@ -3,13 +3,13 @@ module github.com/upmaru/terraform-provider-tama
 go 1.23.7
 
 require (
-	github.com/hashicorp/terraform-plugin-framework v1.15.0
+	github.com/hashicorp/terraform-plugin-framework v1.15.1
 	github.com/hashicorp/terraform-plugin-framework-validators v0.18.0
 	github.com/hashicorp/terraform-plugin-go v0.28.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-testing v1.13.2
 	github.com/thedevsaddam/gojsonq/v2 v2.5.2
-	github.com/upmaru/tama-go v0.2.20
+	github.com/upmaru/tama-go v0.2.21
 )
 
 require (

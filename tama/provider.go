@@ -28,6 +28,7 @@ import (
 	"github.com/upmaru/terraform-provider-tama/tama/neural/node"
 	space_processor "github.com/upmaru/terraform-provider-tama/tama/neural/processor"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/space"
+	"github.com/upmaru/terraform-provider-tama/tama/perception/activation"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/chain"
 	perception_context "github.com/upmaru/terraform-provider-tama/tama/perception/context"
 
@@ -195,6 +196,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		module_input.NewResource,
 		thought_initializer.NewResource,
 		tool.NewResource,
+		activation.NewResource,
 		input.NewResource,
 	}
 }
