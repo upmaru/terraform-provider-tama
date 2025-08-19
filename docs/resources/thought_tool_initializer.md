@@ -15,7 +15,7 @@ Manages a Tama Thought Tool Initializer resource
 ```terraform
 # Example usage of tama_thought_tool_initializer resource
 
-# Basic usage with default index (0)
+# Import initializer with custom parameters
 resource "tama_thought_tool_initializer" "import_initializer" {
   thought_tool_id = tama_thought_tool.example.id
   reference       = "tama/initializers/import"
@@ -30,35 +30,35 @@ resource "tama_thought_tool_initializer" "import_initializer" {
   })
 }
 
-# Advanced usage with custom index and multiple resources
-resource "tama_thought_tool_initializer" "export_initializer" {
+# Preload initializer with standard structure
+resource "tama_thought_tool_initializer" "preload_initializer" {
   thought_tool_id = tama_thought_tool.example.id
-  reference       = "tama/initializers/export"
+  reference       = "tama/initializers/preload"
   index           = 1
   parameters = jsonencode({
-    resources = [
-      {
-        type     = "concept"
-        relation = "export-relation"
-        scope    = "global"
-      },
-      {
-        type     = "data"
-        relation = "backup-relation"
-        scope    = "space"
-      }
-    ],
-    options = {
-      format      = "json"
-      compression = true
+    record = {
+      rejections = []
     }
+    parents = []
+    concept = {
+      relations  = ["description", "overview"]
+      embeddings = "include"
+      content = {
+        action = "merge"
+        merge = {
+          name     = "tool-merge"
+          location = "root"
+        }
+      }
+    }
+    children = []
   })
 }
 
-# Simple initializer without parameters
-resource "tama_thought_tool_initializer" "simple_initializer" {
+# Simple preload initializer without custom parameters
+resource "tama_thought_tool_initializer" "simple_preload" {
   thought_tool_id = tama_thought_tool.example.id
-  reference       = "tama/initializers/simple"
+  reference       = "tama/initializers/preload"
 }
 
 # Example thought tool (prerequisite)
