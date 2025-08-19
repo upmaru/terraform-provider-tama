@@ -1,0 +1,146 @@
+# Example configuration for tama_thought_tool_input resource
+
+terraform {
+  required_providers {
+    tama = {
+      source = "upmaru/tama"
+    }
+  }
+}
+
+# Create a space for the example
+resource "tama_space" "example" {
+  name = "example-space"
+  type = "root"
+}
+
+# Create a specification for the tools
+resource "tama_specification" "elasticsearch" {
+  space_id = tama_space.example.id
+  version  = "1.0.0"
+  endpoint = "https://elasticsearch.example.com"
+  schema = jsonencode({
+    openapi = "3.0.0"
+    info = {
+      title   = "Elasticsearch API"
+      version = "1.0.0"
+    }
+    paths = {
+      "/indices/{index}" = {
+        post = {
+          operationId = "create-index"
+          parameters = [
+            {
+              name     = "index"
+              in       = "path"
+              required = true
+              schema = {
+                type = "string"
+              }
+            }
+          ]
+        }
+      }
+    }
+  })
+
+  wait_for {
+    field {
+      name = "current_state"
+      in   = ["completed"]
+    }
+  }
+}
+
+# Create a chain for organizing thoughts
+resource "tama_chain" "example" {
+  space_id = tama_space.example.id
+  name     = "Example Tool Chain"
+}
+
+# Create a modular thought
+resource "tama_modular_thought" "example" {
+  chain_id = tama_chain.example.id
+  relation = "description"
+
+  module {
+    reference = "tama/agentic/generate"
+    parameters = jsonencode({
+      relation = "description"
+    })
+  }
+}
+
+# Get the action from the specification
+data "tama_action" "create_index" {
+  specification_id = tama_specification.elasticsearch.id
+  identifier       = "create-index"
+}
+
+# Create a thought tool
+resource "tama_thought_tool" "example" {
+  thought_id = tama_modular_thought.example.id
+  action_id  = data.tama_action.create_index.id
+}
+
+# Create a class for organizing data
+resource "tama_class" "example" {
+  space_id = tama_space.example.id
+  name     = "ExampleClass"
+}
+
+# Create a corpus within the class
+resource "tama_class_corpus" "example" {
+  class_id = tama_class.example.id
+  name     = "ExampleCorpus"
+  template = "{{ data.content }}"
+}
+
+# Create a thought tool input with body type
+resource "tama_thought_tool_input" "body_input" {
+  thought_tool_id = tama_thought_tool.example.id
+  type            = "body"
+  class_corpus_id = tama_class_corpus.example.id
+}
+
+# Create a thought tool input with query type
+resource "tama_thought_tool_input" "query_input" {
+  thought_tool_id = tama_thought_tool.example.id
+  type            = "query"
+  class_corpus_id = tama_class_corpus.example.id
+}
+
+# Create a thought tool input with header type
+resource "tama_thought_tool_input" "header_input" {
+  thought_tool_id = tama_thought_tool.example.id
+  type            = "header"
+  class_corpus_id = tama_class_corpus.example.id
+}
+
+# Create a thought tool input with path type
+resource "tama_thought_tool_input" "path_input" {
+  thought_tool_id = tama_thought_tool.example.id
+  type            = "path"
+  class_corpus_id = tama_class_corpus.example.id
+}
+
+# Output the created resources
+output "thought_tool_input_ids" {
+  description = "IDs of all thought tool inputs"
+  value = {
+    body   = tama_thought_tool_input.body_input.id
+    query  = tama_thought_tool_input.query_input.id
+    header = tama_thought_tool_input.header_input.id
+    path   = tama_thought_tool_input.path_input.id
+  }
+}
+
+output "thought_tool_input_provision_states" {
+  description = "Provision states of the thought tool inputs"
+  value = {
+    body   = tama_thought_tool_input.body_input.provision_state
+    query  = tama_thought_tool_input.query_input.provision_state
+    header = tama_thought_tool_input.header_input.provision_state
+    path   = tama_thought_tool_input.path_input.provision_state
+  }
+}
