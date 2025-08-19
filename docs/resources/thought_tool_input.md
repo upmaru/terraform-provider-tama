@@ -111,35 +111,52 @@ resource "tama_class_corpus" "example" {
   template = "{{ data.content }}"
 }
 
-resource "tama_thought_tool_input" "example" {
+# Create a thought tool input with body type
+resource "tama_thought_tool_input" "body_input" {
+  thought_tool_id = tama_thought_tool.example.id
+  type            = "body"
+  class_corpus_id = tama_class_corpus.example.id
+}
+
+# Create a thought tool input with query type
+resource "tama_thought_tool_input" "query_input" {
   thought_tool_id = tama_thought_tool.example.id
   type            = "query"
   class_corpus_id = tama_class_corpus.example.id
 }
 
-# Create a thought tool input with metadata type
-resource "tama_thought_tool_input" "metadata_input" {
+# Create a thought tool input with header type
+resource "tama_thought_tool_input" "header_input" {
   thought_tool_id = tama_thought_tool.example.id
-  type            = "metadata"
-  class_corpus_id = tama_corpus.example.id
+  type            = "header"
+  class_corpus_id = tama_class_corpus.example.id
+}
+
+# Create a thought tool input with path type
+resource "tama_thought_tool_input" "path_input" {
+  thought_tool_id = tama_thought_tool.example.id
+  type            = "path"
+  class_corpus_id = tama_class_corpus.example.id
 }
 
 # Output the created resources
-output "thought_tool_input_body_id" {
-  description = "ID of the body type thought tool input"
-  value       = tama_thought_tool_input.body_input.id
-}
-
-output "thought_tool_input_metadata_id" {
-  description = "ID of the metadata type thought tool input"
-  value       = tama_thought_tool_input.metadata_input.id
+output "thought_tool_input_ids" {
+  description = "IDs of all thought tool inputs"
+  value = {
+    body   = tama_thought_tool_input.body_input.id
+    query  = tama_thought_tool_input.query_input.id
+    header = tama_thought_tool_input.header_input.id
+    path   = tama_thought_tool_input.path_input.id
+  }
 }
 
 output "thought_tool_input_provision_states" {
   description = "Provision states of the thought tool inputs"
   value = {
-    body     = tama_thought_tool_input.body_input.provision_state
-    metadata = tama_thought_tool_input.metadata_input.provision_state
+    body   = tama_thought_tool_input.body_input.provision_state
+    query  = tama_thought_tool_input.query_input.provision_state
+    header = tama_thought_tool_input.header_input.provision_state
+    path   = tama_thought_tool_input.path_input.provision_state
   }
 }
 ```
