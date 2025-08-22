@@ -5,6 +5,7 @@ package thought_processor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -17,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	tama "github.com/upmaru/tama-go"
 	"github.com/upmaru/tama-go/perception"
+	jsonplanmodifier "github.com/upmaru/terraform-provider-tama/internal/planmodifier"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -49,6 +51,7 @@ type CompletionConfigModel struct {
 	Temperature  types.Float64      `tfsdk:"temperature"`
 	ToolChoice   types.String       `tfsdk:"tool_choice"`
 	RoleMappings []RoleMappingModel `tfsdk:"role_mappings"`
+	Parameters   types.String       `tfsdk:"parameters"`
 }
 
 // EmbeddingConfigModel describes the embedding configuration data model.
@@ -133,6 +136,14 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 									Required:            true,
 								},
 							},
+						},
+					},
+					"parameters": schema.StringAttribute{
+						MarkdownDescription: "Additional parameters as JSON string",
+						Optional:            true,
+						Computed:            true,
+						PlanModifiers: []planmodifier.String{
+							jsonplanmodifier.JSONNormalize(),
 						},
 					},
 				},
@@ -229,10 +240,10 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	case "completion":
 		if data.Completion != nil {
 			config = map[string]any{}
-			if !data.Completion.Temperature.IsNull() {
+			if !data.Completion.Temperature.IsNull() && !data.Completion.Temperature.IsUnknown() {
 				config["temperature"] = data.Completion.Temperature.ValueFloat64()
 			}
-			if !data.Completion.ToolChoice.IsNull() {
+			if !data.Completion.ToolChoice.IsNull() && !data.Completion.ToolChoice.IsUnknown() {
 				config["tool_choice"] = data.Completion.ToolChoice.ValueString()
 			}
 			if len(data.Completion.RoleMappings) > 0 {
@@ -244,6 +255,14 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 					})
 				}
 				config["role_mappings"] = roleMappings
+			}
+			if !data.Completion.Parameters.IsNull() && !data.Completion.Parameters.IsUnknown() && data.Completion.Parameters.ValueString() != "" {
+				var parametersMap map[string]any
+				if err := json.Unmarshal([]byte(data.Completion.Parameters.ValueString()), &parametersMap); err != nil {
+					resp.Diagnostics.AddError("Invalid Parameters JSON", fmt.Sprintf("Unable to parse parameters as JSON: %s", err))
+					return
+				}
+				config["parameters"] = parametersMap
 			}
 		}
 	case "embedding":
@@ -297,6 +316,11 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	data.Id = types.StringValue(processorResponse.ID)
 	data.ModelId = types.StringValue(processorResponse.ModelID)
 	data.Type = types.StringValue(processorResponse.Type)
+
+	// Ensure all computed fields are initialized before updating from response
+	if data.Completion != nil && data.Completion.Parameters.IsNull() {
+		data.Completion.Parameters = types.StringValue("")
+	}
 
 	// Update configuration blocks based on the type and API response
 	r.updateConfigurationFromResponse(processorResponse, &data)
@@ -383,6 +407,14 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 					})
 				}
 				config["role_mappings"] = roleMappings
+			}
+			if !data.Completion.Parameters.IsNull() && data.Completion.Parameters.ValueString() != "" {
+				var parametersMap map[string]any
+				if err := json.Unmarshal([]byte(data.Completion.Parameters.ValueString()), &parametersMap); err != nil {
+					resp.Diagnostics.AddError("Invalid Parameters JSON", fmt.Sprintf("Unable to parse parameters as JSON: %s", err))
+					return
+				}
+				config["parameters"] = parametersMap
 			}
 		}
 	case "embedding":
@@ -597,6 +629,23 @@ func (r *Resource) updateConfigurationFromResponse(processor *perception.Process
 					}
 					config.RoleMappings = roleMappingModels
 				}
+			}
+
+			// Handle parameters from response
+			if parameters, ok := processor.Configuration["parameters"]; ok {
+				if paramMap, ok := parameters.(map[string]any); ok && len(paramMap) > 0 {
+					parametersJSON, err := json.Marshal(paramMap)
+					if err == nil {
+						// Only update if user didn't provide parameters or if the values are different
+						if config.Parameters.IsNull() || config.Parameters.IsUnknown() {
+							config.Parameters = types.StringValue(string(parametersJSON))
+						}
+					}
+				} else if config.Parameters.IsNull() || config.Parameters.IsUnknown() {
+					config.Parameters = types.StringValue("")
+				}
+			} else if config.Parameters.IsNull() || config.Parameters.IsUnknown() {
+				config.Parameters = types.StringValue("")
 			}
 
 			data.Completion = &config

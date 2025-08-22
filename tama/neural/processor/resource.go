@@ -5,6 +5,7 @@ package space_processor
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	tama "github.com/upmaru/tama-go"
 	"github.com/upmaru/tama-go/neural"
+	internalplanmodifier "github.com/upmaru/terraform-provider-tama/internal/planmodifier"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces.
@@ -51,6 +53,7 @@ type CompletionConfigModel struct {
 	Temperature  types.Float64      `tfsdk:"temperature"`
 	ToolChoice   types.String       `tfsdk:"tool_choice"`
 	RoleMappings []RoleMappingModel `tfsdk:"role_mappings"`
+	Parameters   types.String       `tfsdk:"parameters"`
 }
 
 // EmbeddingConfigModel describes the embedding configuration data model.
@@ -138,6 +141,14 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 									Required:            true,
 								},
 							},
+						},
+					},
+					"parameters": schema.StringAttribute{
+						MarkdownDescription: "Additional parameters as JSON string (e.g., '{\"max_tokens\": 1000, \"stop\": [\"\\n\"]}')",
+						Optional:            true,
+						Computed:            true,
+						PlanModifiers: []planmodifier.String{
+							internalplanmodifier.JSONNormalize(),
 						},
 					},
 				},
@@ -249,6 +260,16 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 					})
 				}
 				config["role_mappings"] = roleMappings
+			}
+			// Parse parameters if provided
+			if !data.Completion.Parameters.IsNull() && !data.Completion.Parameters.IsUnknown() && data.Completion.Parameters.ValueString() != "" {
+				var parameters map[string]any
+				if err := json.Unmarshal([]byte(data.Completion.Parameters.ValueString()), &parameters); err != nil {
+					resp.Diagnostics.AddError("Invalid Parameters", fmt.Sprintf("Unable to parse parameters JSON: %s", err))
+					return
+				}
+				// Set parameters as separate config key
+				config["parameters"] = parameters
 			}
 		}
 	case "embedding":
@@ -388,6 +409,16 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 					})
 				}
 				config["role_mappings"] = roleMappings
+			}
+			// Parse parameters if provided
+			if !data.Completion.Parameters.IsNull() && !data.Completion.Parameters.IsUnknown() && data.Completion.Parameters.ValueString() != "" {
+				var parameters map[string]any
+				if err := json.Unmarshal([]byte(data.Completion.Parameters.ValueString()), &parameters); err != nil {
+					resp.Diagnostics.AddError("Invalid Parameters", fmt.Sprintf("Unable to parse parameters JSON: %s", err))
+					return
+				}
+				// Set parameters as separate config key
+				config["parameters"] = parameters
 			}
 		}
 	case "embedding":
@@ -602,6 +633,23 @@ func (r *Resource) updateConfigurationFromResponse(processor *neural.Processor, 
 					}
 					config.RoleMappings = roleMappingModels
 				}
+			}
+
+			// Handle parameters from response
+			if parameters, ok := processor.Configuration["parameters"]; ok {
+				if paramMap, ok := parameters.(map[string]any); ok && len(paramMap) > 0 {
+					parametersJSON, err := json.Marshal(paramMap)
+					if err == nil {
+						// Only update if user didn't provide parameters or if the values are different
+						if config.Parameters.IsNull() || config.Parameters.IsUnknown() {
+							config.Parameters = types.StringValue(string(parametersJSON))
+						}
+					}
+				} else if config.Parameters.IsNull() || config.Parameters.IsUnknown() {
+					config.Parameters = types.StringValue("")
+				}
+			} else if config.Parameters.IsNull() || config.Parameters.IsUnknown() {
+				config.Parameters = types.StringValue("")
 			}
 
 			data.Completion = &config

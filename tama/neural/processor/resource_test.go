@@ -150,6 +150,32 @@ func TestConfigurationMapping(t *testing.T) {
 	if len(unmarshaledTemplates) != 2 {
 		t.Errorf("Expected 2 templates after round-trip, got %d", len(unmarshaledTemplates))
 	}
+
+	// Test parameters JSON handling
+	parameters := map[string]any{
+		"reasoning_effort": "low",
+		"max_tokens":      1000,
+		"temperature":     0.5,
+	}
+
+	parametersJSON, err := json.Marshal(parameters)
+	if err != nil {
+		t.Fatalf("Failed to marshal parameters: %v", err)
+	}
+
+	var unmarshaledParameters map[string]any
+	err = json.Unmarshal(parametersJSON, &unmarshaledParameters)
+	if err != nil {
+		t.Fatalf("Failed to unmarshal parameters: %v", err)
+	}
+
+	if len(unmarshaledParameters) != 3 {
+		t.Errorf("Expected 3 parameters after round-trip, got %d", len(unmarshaledParameters))
+	}
+
+	if unmarshaledParameters["reasoning_effort"] != "low" {
+		t.Errorf("Expected reasoning_effort 'low', got %v", unmarshaledParameters["reasoning_effort"])
+	}
 }
 
 func TestAccSpaceProcessorResource_Completion(t *testing.T) {
@@ -415,6 +441,70 @@ func TestAccSpaceProcessorResource_Multiple(t *testing.T) {
 					resource.TestCheckResourceAttr("tama_space_processor.reranking", "reranking.top_n", "3"),
 				),
 			},
+		},
+	})
+}
+
+func TestAccSpaceProcessorResource_CompletionWithParameters(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAccSpaceProcessorResourceConfig_CompletionWithParameters(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("tama_space_processor.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_space_processor.test", "space_id"),
+					resource.TestCheckResourceAttrSet("tama_space_processor.test", "model_id"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "completion"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.temperature", "0.7"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.tool_choice", "auto"),
+					resource.TestCheckResourceAttrSet("tama_space_processor.test", "completion.parameters"),
+					// Check that the parameters contain the expected values
+					resource.TestCheckResourceAttrWith("tama_space_processor.test", "completion.parameters", func(value string) error {
+						var params map[string]any
+						if err := json.Unmarshal([]byte(value), &params); err != nil {
+							return fmt.Errorf("parameters is not valid JSON: %v", err)
+						}
+						if params["reasoning_effort"] != "low" {
+							return fmt.Errorf("expected reasoning_effort 'low', got %v", params["reasoning_effort"])
+						}
+						return nil
+					}),
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      "tama_space_processor.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: testAccSpaceProcessorImportStateIdFunc,
+			},
+			// Update and Read testing with different parameters
+			{
+				Config: testAccSpaceProcessorResourceConfig_CompletionWithParametersUpdated(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("tama_space_processor.test", "id"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "completion"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.temperature", "0.9"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.tool_choice", "required"),
+					resource.TestCheckResourceAttrWith("tama_space_processor.test", "completion.parameters", func(value string) error {
+						var params map[string]any
+						if err := json.Unmarshal([]byte(value), &params); err != nil {
+							return fmt.Errorf("parameters is not valid JSON: %v", err)
+						}
+						if params["reasoning_effort"] != "high" {
+							return fmt.Errorf("expected reasoning_effort 'high', got %v", params["reasoning_effort"])
+						}
+						if params["max_tokens"] != 2000.0 {
+							return fmt.Errorf("expected max_tokens 2000, got %v", params["max_tokens"])
+						}
+						return nil
+					}),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
 		},
 	})
 }
@@ -896,6 +986,81 @@ resource "tama_space_processor" "test" {
   completion {
     temperature = 0.7
     tool_choice = "invalid-choice"
+  }
+}
+`, timestamp, timestamp)
+}
+
+func testAccSpaceProcessorResourceConfig_CompletionWithParameters() string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "test-space-%d"
+  type = "root"
+}
+
+resource "tama_source" "test" {
+  space_id = tama_space.test.id
+  name     = "test-source-%d"
+  type     = "model"
+  endpoint = "https://api.openai.com/v1"
+  api_key  = "test-key"
+}
+
+resource "tama_model" "test" {
+  source_id  = tama_source.test.id
+  identifier = "gpt-4"
+  path       = "/chat/completions"
+}
+
+resource "tama_space_processor" "test" {
+  space_id = tama_space.test.id
+  model_id = tama_model.test.id
+
+  completion {
+    temperature = 0.7
+    tool_choice = "auto"
+    parameters = jsonencode({
+      reasoning_effort = "low"
+    })
+  }
+}
+`, timestamp, timestamp)
+}
+
+func testAccSpaceProcessorResourceConfig_CompletionWithParametersUpdated() string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "test-space-%d"
+  type = "root"
+}
+
+resource "tama_source" "test" {
+  space_id = tama_space.test.id
+  name     = "test-source-%d"
+  type     = "model"
+  endpoint = "https://api.openai.com/v1"
+  api_key  = "test-key"
+}
+
+resource "tama_model" "test" {
+  source_id  = tama_source.test.id
+  identifier = "gpt-4"
+  path       = "/chat/completions"
+}
+
+resource "tama_space_processor" "test" {
+  space_id = tama_space.test.id
+  model_id = tama_model.test.id
+
+  completion {
+    temperature = 0.9
+    tool_choice = "required"
+    parameters = jsonencode({
+      reasoning_effort = "high"
+      max_tokens = 2000
+    })
   }
 }
 `, timestamp, timestamp)
