@@ -69,13 +69,13 @@ type RerankingConfigModel struct {
 
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id         types.String             `tfsdk:"id"`
-	SpaceId    types.String             `tfsdk:"space_id"`
-	ModelId    types.String             `tfsdk:"model_id"`
-	Type       types.String             `tfsdk:"type"`
-	Completion *CompletionConfigModel   `tfsdk:"completion"`
-	Embedding  *EmbeddingConfigModel    `tfsdk:"embedding"`
-	Reranking  *RerankingConfigModel    `tfsdk:"reranking"`
+	Id         types.String           `tfsdk:"id"`
+	SpaceId    types.String           `tfsdk:"space_id"`
+	ModelId    types.String           `tfsdk:"model_id"`
+	Type       types.String           `tfsdk:"type"`
+	Completion *CompletionConfigModel `tfsdk:"completion"`
+	Embedding  *EmbeddingConfigModel  `tfsdk:"embedding"`
+	Reranking  *RerankingConfigModel  `tfsdk:"reranking"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {

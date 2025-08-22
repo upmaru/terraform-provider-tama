@@ -154,8 +154,8 @@ func TestConfigurationMapping(t *testing.T) {
 	// Test parameters JSON handling
 	parameters := map[string]any{
 		"reasoning_effort": "low",
-		"max_tokens":      1000,
-		"temperature":     0.5,
+		"max_tokens":       1000,
+		"temperature":      0.5,
 	}
 
 	parametersJSON, err := json.Marshal(parameters)
