@@ -22,26 +22,27 @@ Manages a Tama Perception Thought Processor resource
 
 ### Optional
 
-- `completion_config` (Block List) Configuration for completion type processors (see [below for nested schema](#nestedblock--completion_config))
-- `embedding_config` (Block List) Configuration for embedding type processors (see [below for nested schema](#nestedblock--embedding_config))
-- `reranking_config` (Block List) Configuration for reranking type processors (see [below for nested schema](#nestedblock--reranking_config))
+- `completion` (Block, Optional) Configuration for completion type processors (see [below for nested schema](#nestedblock--completion))
+- `embedding` (Block, Optional) Configuration for embedding type processors (see [below for nested schema](#nestedblock--embedding))
+- `reranking` (Block, Optional) Configuration for reranking type processors (see [below for nested schema](#nestedblock--reranking))
 
 ### Read-Only
 
 - `id` (String) Processor identifier
 - `type` (String) Type of processor (e.g., 'completion', 'embedding', 'reranking')
 
-<a id="nestedblock--completion_config"></a>
-### Nested Schema for `completion_config`
+<a id="nestedblock--completion"></a>
+### Nested Schema for `completion`
 
 Optional:
 
-- `role_mappings` (Attributes List) Role mappings for conversation roles (see [below for nested schema](#nestedatt--completion_config--role_mappings))
+- `parameters` (String) Additional parameters as JSON string
+- `role_mappings` (Attributes List) Role mappings for conversation roles (see [below for nested schema](#nestedatt--completion--role_mappings))
 - `temperature` (Number) Sampling temperature
 - `tool_choice` (String) Tool choice strategy
 
-<a id="nestedatt--completion_config--role_mappings"></a>
-### Nested Schema for `completion_config.role_mappings`
+<a id="nestedatt--completion--role_mappings"></a>
+### Nested Schema for `completion.role_mappings`
 
 Required:
 
@@ -50,16 +51,16 @@ Required:
 
 
 
-<a id="nestedblock--embedding_config"></a>
-### Nested Schema for `embedding_config`
+<a id="nestedblock--embedding"></a>
+### Nested Schema for `embedding`
 
 Optional:
 
 - `max_tokens` (Number) Maximum number of tokens
-- `templates` (Attributes List) Templates for embedding processing (see [below for nested schema](#nestedatt--embedding_config--templates))
+- `templates` (Attributes List) Templates for embedding processing (see [below for nested schema](#nestedatt--embedding--templates))
 
-<a id="nestedatt--embedding_config--templates"></a>
-### Nested Schema for `embedding_config.templates`
+<a id="nestedatt--embedding--templates"></a>
+### Nested Schema for `embedding.templates`
 
 Required:
 
@@ -68,8 +69,8 @@ Required:
 
 
 
-<a id="nestedblock--reranking_config"></a>
-### Nested Schema for `reranking_config`
+<a id="nestedblock--reranking"></a>
+### Nested Schema for `reranking`
 
 Optional:
 
