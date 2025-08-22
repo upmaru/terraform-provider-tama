@@ -143,7 +143,7 @@ output "reranking_processor_id" {
 ### Read-Only
 
 - `id` (String) Processor identifier
-- `type` (String) Type of processor: automatically determined from the configuration block provided (completion, embedding, or reranking)
+- `type` (String) Type of processor (e.g., 'completion', 'embedding', 'reranking')
 
 <a id="nestedblock--completion"></a>
 ### Nested Schema for `completion`
@@ -170,7 +170,7 @@ Required:
 
 Optional:
 
-- `max_tokens` (Number) Maximum number of tokens (default: 512)
+- `max_tokens` (Number) Maximum number of tokens
 - `templates` (Attributes List) Templates for embedding processing (see [below for nested schema](#nestedatt--embedding--templates))
 
 <a id="nestedatt--embedding--templates"></a>
@@ -178,8 +178,8 @@ Optional:
 
 Required:
 
-- `content` (String) Template content with placeholders
-- `type` (String) Template type (e.g., 'query', 'document')
+- `content` (String) Template content
+- `type` (String) Template type
 
 
 
@@ -188,4 +188,4 @@ Required:
 
 Optional:
 
-- `top_n` (Number) Number of top results to return (default: 3)
+- `top_n` (Number) Number of top results to return

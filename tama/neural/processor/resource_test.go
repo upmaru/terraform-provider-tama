@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/upmaru/terraform-provider-tama/internal/acceptance"
-	space_processor "github.com/upmaru/terraform-provider-tama/tama/neural/processor"
+	"github.com/upmaru/terraform-provider-tama/internal/processor"
 )
 
 func TestCompletionConfigStructure(t *testing.T) {
@@ -58,53 +58,48 @@ func TestEmbeddingConfigStructure(t *testing.T) {
 }
 
 func TestValidateConfiguration(t *testing.T) {
-	r := &space_processor.Resource{}
-
 	// Test valid completion configuration
-	data := space_processor.ResourceModel{
-		Completion: &space_processor.CompletionConfigModel{
+	data := processor.NeuralProcessorModel{
+		Completion: &processor.CompletionConfigModel{
 			Temperature: types.Float64Value(0.8),
 		},
 	}
 
-	err := r.ValidateConfiguration(data)
-	if err != nil {
-		t.Errorf("Valid completion config should not error: %v", err)
-	}
-
-	// Test invalid - multiple configs
-	data = space_processor.ResourceModel{
-		Completion: &space_processor.CompletionConfigModel{
-			Temperature: types.Float64Value(0.8),
-		},
-		Embedding: &space_processor.EmbeddingConfigModel{
-			MaxTokens: types.Int64Value(512),
-		},
-	}
-
-	err = r.ValidateConfiguration(data)
-	if err == nil {
-		t.Error("Multiple configs should error")
+	processorType := processor.DetermineProcessorType(&data)
+	if processorType != "completion" {
+		t.Errorf("Expected completion type, got %s", processorType)
 	}
 
 	// Test invalid - no config
-	data = space_processor.ResourceModel{}
+	data = processor.NeuralProcessorModel{}
 
-	err = r.ValidateConfiguration(data)
-	if err == nil {
-		t.Error("No config should error")
+	processorType = processor.DetermineProcessorType(&data)
+	if processorType != "" {
+		t.Error("No config should return empty string")
 	}
 
 	// Test valid embedding config (type is auto-determined)
-	data = space_processor.ResourceModel{
-		Embedding: &space_processor.EmbeddingConfigModel{
+	data = processor.NeuralProcessorModel{
+		Embedding: &processor.EmbeddingConfigModel{
 			MaxTokens: types.Int64Value(512),
 		},
 	}
 
-	err = r.ValidateConfiguration(data)
-	if err != nil {
-		t.Errorf("Valid embedding config should not error: %v", err)
+	processorType = processor.DetermineProcessorType(&data)
+	if processorType != "embedding" {
+		t.Errorf("Expected embedding type, got %s", processorType)
+	}
+
+	// Test valid reranking config
+	data = processor.NeuralProcessorModel{
+		Reranking: &processor.RerankingConfigModel{
+			TopN: types.Int64Value(5),
+		},
+	}
+
+	processorType = processor.DetermineProcessorType(&data)
+	if processorType != "reranking" {
+		t.Errorf("Expected reranking type, got %s", processorType)
 	}
 }
 
@@ -358,7 +353,7 @@ func TestAccSpaceProcessorResource_NoConfig(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccSpaceProcessorResourceConfig_NoConfig(),
-				ExpectError: regexp.MustCompile("exactly one configuration block must be provided"),
+				ExpectError: regexp.MustCompile("Exactly one of these attributes must be configured"),
 			},
 		},
 	})
@@ -371,7 +366,7 @@ func TestAccSpaceProcessorResource_MissingConfig(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccSpaceProcessorResourceConfig_MissingConfig(),
-				ExpectError: regexp.MustCompile("exactly one configuration block must be provided"),
+				ExpectError: regexp.MustCompile("Exactly one of these attributes must be configured"),
 			},
 		},
 	})
@@ -384,7 +379,46 @@ func TestAccSpaceProcessorResource_MultipleConfigs(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccSpaceProcessorResourceConfig_MultipleConfigs(),
-				ExpectError: regexp.MustCompile("only one configuration block can be provided"),
+				ExpectError: regexp.MustCompile("Exactly one of these attributes must be configured"),
+			},
+		},
+	})
+}
+
+func TestAccSpaceProcessorResource_CompletionEmbeddingConflict(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccSpaceProcessorResourceConfig_CompletionEmbeddingConflict(),
+				ExpectError: regexp.MustCompile("Exactly one of these attributes must be configured"),
+			},
+		},
+	})
+}
+
+func TestAccSpaceProcessorResource_CompletionRerankingConflict(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccSpaceProcessorResourceConfig_CompletionRerankingConflict(),
+				ExpectError: regexp.MustCompile("Exactly one of these attributes must be configured"),
+			},
+		},
+	})
+}
+
+func TestAccSpaceProcessorResource_EmbeddingRerankingConflict(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccSpaceProcessorResourceConfig_EmbeddingRerankingConflict(),
+				ExpectError: regexp.MustCompile("Exactly one of these attributes must be configured"),
 			},
 		},
 	})
@@ -1122,6 +1156,124 @@ resource "tama_space_processor" "embedding" {
 resource "tama_space_processor" "reranking" {
   space_id = tama_space.test.id
   model_id = tama_model.reranking_model.id
+
+  reranking {
+    top_n = 3
+  }
+}
+`, timestamp, timestamp)
+}
+
+func testAccSpaceProcessorResourceConfig_CompletionEmbeddingConflict() string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "test-space-%d"
+  type = "root"
+}
+
+resource "tama_source" "test" {
+  space_id = tama_space.test.id
+  name     = "test-source-%d"
+  type     = "model"
+  endpoint = "https://api.openai.com/v1"
+  api_key  = "test-key"
+}
+
+resource "tama_model" "test" {
+  source_id  = tama_source.test.id
+  identifier = "gpt-4"
+  path       = "/chat/completions"
+}
+
+resource "tama_space_processor" "test" {
+  space_id = tama_space.test.id
+  model_id = tama_model.test.id
+
+  completion {
+    temperature = 0.7
+    tool_choice = "auto"
+  }
+
+  embedding {
+    max_tokens = 512
+    templates = [
+      {
+        type    = "query"
+        content = "Query: {text}"
+      }
+    ]
+  }
+}
+`, timestamp, timestamp)
+}
+
+func testAccSpaceProcessorResourceConfig_CompletionRerankingConflict() string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "test-space-%d"
+  type = "root"
+}
+
+resource "tama_source" "test" {
+  space_id = tama_space.test.id
+  name     = "test-source-%d"
+  type     = "model"
+  endpoint = "https://api.openai.com/v1"
+  api_key  = "test-key"
+}
+
+resource "tama_model" "test" {
+  source_id  = tama_source.test.id
+  identifier = "gpt-4"
+  path       = "/chat/completions"
+}
+
+resource "tama_space_processor" "test" {
+  space_id = tama_space.test.id
+  model_id = tama_model.test.id
+
+  completion {
+    temperature = 0.8
+  }
+
+  reranking {
+    top_n = 5
+  }
+}
+`, timestamp, timestamp)
+}
+
+func testAccSpaceProcessorResourceConfig_EmbeddingRerankingConflict() string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "test-space-%d"
+  type = "root"
+}
+
+resource "tama_source" "test" {
+  space_id = tama_space.test.id
+  name     = "test-source-%d"
+  type     = "model"
+  endpoint = "https://api.openai.com/v1"
+  api_key  = "test-key"
+}
+
+resource "tama_model" "test" {
+  source_id  = tama_source.test.id
+  identifier = "text-embedding-ada-002"
+  path       = "/embeddings"
+}
+
+resource "tama_space_processor" "test" {
+  space_id = tama_space.test.id
+  model_id = tama_model.test.id
+
+  embedding {
+    max_tokens = 1024
+  }
 
   reranking {
     top_n = 3
