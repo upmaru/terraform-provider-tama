@@ -62,10 +62,8 @@ func TestValidateConfiguration(t *testing.T) {
 
 	// Test valid completion configuration
 	data := space_processor.ResourceModel{
-		CompletionConfig: []space_processor.CompletionConfigModel{
-			{
-				Temperature: types.Float64Value(0.8),
-			},
+		Completion: &space_processor.CompletionConfigModel{
+			Temperature: types.Float64Value(0.8),
 		},
 	}
 
@@ -76,11 +74,11 @@ func TestValidateConfiguration(t *testing.T) {
 
 	// Test invalid - multiple configs
 	data = space_processor.ResourceModel{
-		CompletionConfig: []space_processor.CompletionConfigModel{
-			{Temperature: types.Float64Value(0.8)},
+		Completion: &space_processor.CompletionConfigModel{
+			Temperature: types.Float64Value(0.8),
 		},
-		EmbeddingConfig: []space_processor.EmbeddingConfigModel{
-			{MaxTokens: types.Int64Value(512)},
+		Embedding: &space_processor.EmbeddingConfigModel{
+			MaxTokens: types.Int64Value(512),
 		},
 	}
 
@@ -99,8 +97,8 @@ func TestValidateConfiguration(t *testing.T) {
 
 	// Test valid embedding config (type is auto-determined)
 	data = space_processor.ResourceModel{
-		EmbeddingConfig: []space_processor.EmbeddingConfigModel{
-			{MaxTokens: types.Int64Value(512)},
+		Embedding: &space_processor.EmbeddingConfigModel{
+			MaxTokens: types.Int64Value(512),
 		},
 	}
 
@@ -167,13 +165,13 @@ func TestAccSpaceProcessorResource_Completion(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "space_id"),
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "model_id"),
 					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "completion"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.temperature", "0.7"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.tool_choice", "auto"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.role_mappings.#", "2"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.role_mappings.0.from", "user"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.role_mappings.0.to", "human"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.role_mappings.1.from", "assistant"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.role_mappings.1.to", "ai"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.temperature", "0.7"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.tool_choice", "auto"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.role_mappings.#", "2"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.role_mappings.0.from", "user"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.role_mappings.0.to", "human"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.role_mappings.1.from", "assistant"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.role_mappings.1.to", "ai"),
 				),
 			},
 			// ImportState testing
@@ -189,11 +187,11 @@ func TestAccSpaceProcessorResource_Completion(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "id"),
 					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "completion"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.temperature", "0.9"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.tool_choice", "required"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.role_mappings.#", "1"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.role_mappings.0.from", "user"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.role_mappings.0.to", "human"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.temperature", "0.9"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.tool_choice", "required"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.role_mappings.#", "1"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.role_mappings.0.from", "user"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.role_mappings.0.to", "human"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -215,7 +213,7 @@ func TestAccSpaceProcessorResource_CompletionWithDefaults(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "model_id"),
 					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "completion"),
 					// Verify server default for tool_choice is reflected in state
-					resource.TestCheckResourceAttr("tama_space_processor.test", "completion_config.0.tool_choice", "required"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "completion.tool_choice", "required"),
 				),
 			},
 		},
@@ -236,11 +234,11 @@ func TestAccSpaceProcessorResource_EmbeddingWithDefaults(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "model_id"),
 					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "embedding"),
 					// Verify server default for max_tokens is reflected in state
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.max_tokens", "512"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.max_tokens", "512"),
 					// Check that templates are included
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.#", "1"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.0.type", "query"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.0.content", "Query: {text}"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.templates.#", "1"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.templates.0.type", "query"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.templates.0.content", "Query: {text}"),
 				),
 			},
 		},
@@ -260,12 +258,12 @@ func TestAccSpaceProcessorResource_Embedding(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "space_id"),
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "model_id"),
 					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "embedding"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.max_tokens", "1024"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.#", "2"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.0.type", "query"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.0.content", "Query: {text}"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.1.type", "document"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.1.content", "Document: {text}"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.max_tokens", "1024"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.templates.#", "2"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.templates.0.type", "query"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.templates.0.content", "Query: {text}"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.templates.1.type", "document"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.templates.1.content", "Document: {text}"),
 				),
 			},
 			// ImportState testing
@@ -281,10 +279,10 @@ func TestAccSpaceProcessorResource_Embedding(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "id"),
 					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "embedding"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.max_tokens", "512"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.#", "1"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.0.type", "query"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding_config.0.templates.0.content", "Search: {text}"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.max_tokens", "512"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.templates.#", "1"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.templates.0.type", "query"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "embedding.templates.0.content", "Search: {text}"),
 				),
 			},
 		},
@@ -304,7 +302,7 @@ func TestAccSpaceProcessorResource_Reranking(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "space_id"),
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "model_id"),
 					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "reranking"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "reranking_config.0.top_n", "5"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "reranking.top_n", "5"),
 				),
 			},
 			// ImportState testing
@@ -320,7 +318,7 @@ func TestAccSpaceProcessorResource_Reranking(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "id"),
 					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "reranking"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "reranking_config.0.top_n", "10"),
+					resource.TestCheckResourceAttr("tama_space_processor.test", "reranking.top_n", "10"),
 				),
 			},
 		},
@@ -389,7 +387,7 @@ func TestAccSpaceProcessorResource_InvalidToolChoice(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccSpaceProcessorResourceConfig_InvalidToolChoice(),
-				ExpectError: regexp.MustCompile(`Attribute completion_config\[0\]\.tool_choice value must be one of`),
+				ExpectError: regexp.MustCompile(`Attribute completion\.tool_choice value must be one of`),
 			},
 		},
 	})
@@ -406,15 +404,15 @@ func TestAccSpaceProcessorResource_Multiple(t *testing.T) {
 					// First processor (completion)
 					resource.TestCheckResourceAttrSet("tama_space_processor.completion", "id"),
 					resource.TestCheckResourceAttr("tama_space_processor.completion", "type", "completion"),
-					resource.TestCheckResourceAttr("tama_space_processor.completion", "completion_config.0.temperature", "0.8"),
+					resource.TestCheckResourceAttr("tama_space_processor.completion", "completion.temperature", "0.8"),
 					// Second processor (embedding)
 					resource.TestCheckResourceAttrSet("tama_space_processor.embedding", "id"),
 					resource.TestCheckResourceAttr("tama_space_processor.embedding", "type", "embedding"),
-					resource.TestCheckResourceAttr("tama_space_processor.embedding", "embedding_config.0.max_tokens", "512"),
+					resource.TestCheckResourceAttr("tama_space_processor.embedding", "embedding.max_tokens", "512"),
 					// Third processor (reranking)
 					resource.TestCheckResourceAttrSet("tama_space_processor.reranking", "id"),
 					resource.TestCheckResourceAttr("tama_space_processor.reranking", "type", "reranking"),
-					resource.TestCheckResourceAttr("tama_space_processor.reranking", "reranking_config.0.top_n", "3"),
+					resource.TestCheckResourceAttr("tama_space_processor.reranking", "reranking.top_n", "3"),
 				),
 			},
 		},
@@ -461,7 +459,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test.id
   model_id = tama_model.test.id
 
-  completion_config {
+  completion {
     temperature = 0.7
     tool_choice = "auto"
     role_mappings = [
@@ -505,7 +503,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test.id
   model_id = tama_model.test.id
 
-  completion_config {
+  completion {
     temperature = 0.8
     # tool_choice intentionally omitted to test server default
   }
@@ -539,7 +537,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test.id
   model_id = tama_model.test.id
 
-  embedding_config {
+  embedding {
     # max_tokens intentionally omitted to test server default
     # Add minimal templates to ensure valid config
     templates = [
@@ -579,7 +577,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test.id
   model_id = tama_model.test.id
 
-  completion_config {
+  completion {
     temperature = 0.9
     tool_choice = "required"
     role_mappings = [
@@ -619,7 +617,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test.id
   model_id = tama_model.test.id
 
-  embedding_config {
+  embedding {
     max_tokens = 1024
     templates = [
       {
@@ -662,7 +660,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test.id
   model_id = tama_model.test.id
 
-  embedding_config {
+  embedding {
     max_tokens = 512
     templates = [
       {
@@ -701,7 +699,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test.id
   model_id = tama_model.test.id
 
-  reranking_config {
+  reranking {
     top_n = 5
   }
 }
@@ -734,7 +732,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test.id
   model_id = tama_model.test.id
 
-  reranking_config {
+  reranking {
     top_n = 10
   }
 }
@@ -825,11 +823,11 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test.id
   model_id = tama_model.test.id
 
-  completion_config {
+  completion {
     temperature = 0.7
   }
 
-  embedding_config {
+  embedding {
     max_tokens = 512
   }
 }
@@ -862,7 +860,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test.id
   model_id = tama_model.test.id
 
-  embedding_config {
+  embedding {
     max_tokens = 512
   }
 }
@@ -895,7 +893,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test.id
   model_id = tama_model.test.id
 
-  completion_config {
+  completion {
     temperature = 0.7
     tool_choice = "invalid-choice"
   }
@@ -941,7 +939,7 @@ resource "tama_space_processor" "completion" {
   space_id = tama_space.test.id
   model_id = tama_model.completion_model.id
 
-  completion_config {
+  completion {
     temperature = 0.8
     tool_choice = "auto"
   }
@@ -951,7 +949,7 @@ resource "tama_space_processor" "embedding" {
   space_id = tama_space.test.id
   model_id = tama_model.embedding_model.id
 
-  embedding_config {
+  embedding {
     max_tokens = 512
   }
 }
@@ -960,7 +958,7 @@ resource "tama_space_processor" "reranking" {
   space_id = tama_space.test.id
   model_id = tama_model.reranking_model.id
 
-  reranking_config {
+  reranking {
     top_n = 3
   }
 }

@@ -62,10 +62,8 @@ func TestValidateConfiguration(t *testing.T) {
 
 	// Test valid completion configuration
 	data := thought_processor.ResourceModel{
-		CompletionConfig: []thought_processor.CompletionConfigModel{
-			{
-				Temperature: types.Float64Value(0.8),
-			},
+		Completion: &thought_processor.CompletionConfigModel{
+			Temperature: types.Float64Value(0.8),
 		},
 	}
 
@@ -76,11 +74,11 @@ func TestValidateConfiguration(t *testing.T) {
 
 	// Test invalid - multiple configs
 	data = thought_processor.ResourceModel{
-		CompletionConfig: []thought_processor.CompletionConfigModel{
-			{Temperature: types.Float64Value(0.8)},
+		Completion: &thought_processor.CompletionConfigModel{
+			Temperature: types.Float64Value(0.8),
 		},
-		EmbeddingConfig: []thought_processor.EmbeddingConfigModel{
-			{MaxTokens: types.Int64Value(512)},
+		Embedding: &thought_processor.EmbeddingConfigModel{
+			MaxTokens: types.Int64Value(512),
 		},
 	}
 
@@ -99,8 +97,8 @@ func TestValidateConfiguration(t *testing.T) {
 
 	// Test valid embedding config (type is auto-determined)
 	data = thought_processor.ResourceModel{
-		EmbeddingConfig: []thought_processor.EmbeddingConfigModel{
-			{MaxTokens: types.Int64Value(512)},
+		Embedding: &thought_processor.EmbeddingConfigModel{
+			MaxTokens: types.Int64Value(512),
 		},
 	}
 
@@ -167,7 +165,7 @@ func TestAccThoughtProcessorResource_Completion(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_thought_processor.test", "thought_id"),
 					resource.TestCheckResourceAttrSet("tama_thought_processor.test", "model_id"),
 					resource.TestCheckResourceAttr("tama_thought_processor.test", "type", "completion"),
-					resource.TestCheckResourceAttr("tama_thought_processor.test", "completion_config.0.temperature", "0.7"),
+					resource.TestCheckResourceAttr("tama_thought_processor.test", "completion.temperature", "0.7"),
 				),
 			},
 			// ImportState testing
@@ -183,7 +181,7 @@ func TestAccThoughtProcessorResource_Completion(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("tama_thought_processor.test", "id"),
 					resource.TestCheckResourceAttr("tama_thought_processor.test", "type", "completion"),
-					resource.TestCheckResourceAttr("tama_thought_processor.test", "completion_config.0.temperature", "0.9"),
+					resource.TestCheckResourceAttr("tama_thought_processor.test", "completion.temperature", "0.9"),
 				),
 			},
 			// Delete testing automatically occurs in TestCase
@@ -274,7 +272,7 @@ resource "tama_thought_processor" "test" {
   thought_id = tama_modular_thought.test.id
   model_id   = tama_model.test.id
 
-  completion_config {
+  completion {
     temperature = 0.7
   }
 }
@@ -324,7 +322,7 @@ resource "tama_thought_processor" "test" {
   thought_id = tama_modular_thought.test.id
   model_id   = tama_model.test.id
 
-  completion_config {
+  completion {
     temperature = 0.9
   }
 }
@@ -420,11 +418,11 @@ resource "tama_thought_processor" "test" {
   thought_id = tama_modular_thought.test.id
   model_id   = tama_model.test.id
 
-  completion_config {
+  completion {
     temperature = 0.7
   }
 
-  embedding_config {
+  embedding {
     max_tokens = 512
   }
 }

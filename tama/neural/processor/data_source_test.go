@@ -25,9 +25,9 @@ func TestAccSpaceProcessorDataSource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.tama_space_processor.test", "model_id"),
 					resource.TestCheckResourceAttr("data.tama_space_processor.test", "type", "completion"),
 					resource.TestCheckResourceAttrSet("data.tama_space_processor.test", "provision_state"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion_config.#", "1"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding_config.#", "0"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "reranking_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion.#", "1"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "reranking.#", "0"),
 				),
 			},
 		},
@@ -43,9 +43,9 @@ func TestAccSpaceProcessorDataSource_CompletionType(t *testing.T) {
 				Config: testAccSpaceProcessorDataSourceConfig("completion"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.tama_space_processor.test", "type", "completion"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion_config.#", "1"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding_config.#", "0"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "reranking_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion.#", "1"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "reranking.#", "0"),
 				),
 			},
 		},
@@ -61,9 +61,9 @@ func TestAccSpaceProcessorDataSource_EmbeddingType(t *testing.T) {
 				Config: testAccSpaceProcessorDataSourceConfig("embedding"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.tama_space_processor.test", "type", "embedding"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding_config.#", "1"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion_config.#", "0"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "reranking_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding.#", "1"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "reranking.#", "0"),
 				),
 			},
 		},
@@ -79,9 +79,9 @@ func TestAccSpaceProcessorDataSource_RerankingType(t *testing.T) {
 				Config: testAccSpaceProcessorDataSourceConfig("reranking"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.tama_space_processor.test", "type", "reranking"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "reranking_config.#", "1"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion_config.#", "0"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "reranking.#", "1"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding.#", "0"),
 				),
 			},
 		},
@@ -97,7 +97,7 @@ func TestAccSpaceProcessorDataSource_CompletionWithRoleMappings(t *testing.T) {
 				Config: testAccSpaceProcessorDataSourceConfigWithRoleMappings(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.tama_space_processor.test", "type", "completion"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion_config.#", "1"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion.#", "1"),
 				),
 			},
 		},
@@ -113,7 +113,7 @@ func TestAccSpaceProcessorDataSource_EmbeddingWithTemplates(t *testing.T) {
 				Config: testAccSpaceProcessorDataSourceConfigWithTemplates(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.tama_space_processor.test", "type", "embedding"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding_config.#", "1"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "embedding.#", "1"),
 				),
 			},
 		},
@@ -130,9 +130,9 @@ func TestAccSpaceProcessorDataSource_MultipleConfigurations(t *testing.T) {
 				Config: testAccSpaceProcessorDataSourceConfigMultiple("completion"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.tama_space_processor.test_completion", "type", "completion"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test_completion", "completion_config.#", "1"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test_completion", "embedding_config.#", "0"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test_completion", "reranking_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_completion", "completion.#", "1"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_completion", "embedding.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_completion", "reranking.#", "0"),
 				),
 			},
 			// Test embedding processor
@@ -140,9 +140,9 @@ func TestAccSpaceProcessorDataSource_MultipleConfigurations(t *testing.T) {
 				Config: testAccSpaceProcessorDataSourceConfigMultiple("embedding"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.tama_space_processor.test_embedding", "type", "embedding"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test_embedding", "completion_config.#", "0"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test_embedding", "embedding_config.#", "1"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test_embedding", "reranking_config.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_embedding", "completion.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_embedding", "embedding.#", "1"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_embedding", "reranking.#", "0"),
 				),
 			},
 			// Test reranking processor
@@ -150,9 +150,9 @@ func TestAccSpaceProcessorDataSource_MultipleConfigurations(t *testing.T) {
 				Config: testAccSpaceProcessorDataSourceConfigMultiple("reranking"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.tama_space_processor.test_reranking", "type", "reranking"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test_reranking", "completion_config.#", "0"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test_reranking", "embedding_config.#", "0"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test_reranking", "reranking_config.#", "1"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_reranking", "completion.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_reranking", "embedding.#", "0"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test_reranking", "reranking.#", "1"),
 				),
 			},
 		},
@@ -168,7 +168,7 @@ func TestAccSpaceProcessorDataSource_DefaultValues(t *testing.T) {
 				Config: testAccSpaceProcessorDataSourceConfigWithDefaults(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.tama_space_processor.test", "type", "completion"),
-					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion_config.#", "1"),
+					resource.TestCheckResourceAttr("data.tama_space_processor.test", "completion.#", "1"),
 				),
 			},
 		},
@@ -201,7 +201,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test_space.id
   model_id = tama_model.test_model.id
 
-  dynamic "completion_config" {
+  dynamic "completion" {
     for_each = %[3]q == "completion" ? [1] : []
     content {
       temperature = 0.8
@@ -209,14 +209,14 @@ resource "tama_space_processor" "test" {
     }
   }
 
-  dynamic "embedding_config" {
+  dynamic "embedding" {
     for_each = %[3]q == "embedding" ? [1] : []
     content {
       max_tokens = 512
     }
   }
 
-  dynamic "reranking_config" {
+  dynamic "reranking" {
     for_each = %[3]q == "reranking" ? [1] : []
     content {
       top_n = 3
@@ -257,7 +257,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test_space.id
   model_id = tama_model.test_model.id
 
-  completion_config {
+  completion {
     temperature = 0.7
     tool_choice = "auto"
 
@@ -307,7 +307,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test_space.id
   model_id = tama_model.test_model.id
 
-  embedding_config {
+  embedding {
     max_tokens = 1024
 
     templates = [
@@ -356,7 +356,7 @@ resource "tama_space_processor" "test" {
   space_id = tama_space.test_space.id
   model_id = tama_model.test_model.id
 
-  completion_config {
+  completion {
     temperature = 0.8
     tool_choice = "required"
   }
@@ -408,7 +408,7 @@ resource "tama_space_processor" "test_%[1]s" {
   space_id = tama_space.test_space_%[1]s.id
   model_id = tama_model.test_model_%[1]s.id
 
-  dynamic "completion_config" {
+  dynamic "completion" {
     for_each = "%[1]s" == "completion" ? [1] : []
     content {
       temperature = 0.8
@@ -416,14 +416,14 @@ resource "tama_space_processor" "test_%[1]s" {
     }
   }
 
-  dynamic "embedding_config" {
+  dynamic "embedding" {
     for_each = "%[1]s" == "embedding" ? [1] : []
     content {
       max_tokens = 512
     }
   }
 
-  dynamic "reranking_config" {
+  dynamic "reranking" {
     for_each = "%[1]s" == "reranking" ? [1] : []
     content {
       top_n = 3

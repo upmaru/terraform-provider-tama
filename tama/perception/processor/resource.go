@@ -64,13 +64,13 @@ type RerankingConfigModel struct {
 
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id               types.String            `tfsdk:"id"`
-	ThoughtId        types.String            `tfsdk:"thought_id"`
-	ModelId          types.String            `tfsdk:"model_id"`
-	Type             types.String            `tfsdk:"type"`
-	CompletionConfig []CompletionConfigModel `tfsdk:"completion_config"`
-	EmbeddingConfig  []EmbeddingConfigModel  `tfsdk:"embedding_config"`
-	RerankingConfig  []RerankingConfigModel  `tfsdk:"reranking_config"`
+	Id         types.String             `tfsdk:"id"`
+	ThoughtId  types.String             `tfsdk:"thought_id"`
+	ModelId    types.String             `tfsdk:"model_id"`
+	Type       types.String             `tfsdk:"type"`
+	Completion *CompletionConfigModel   `tfsdk:"completion"`
+	Embedding  *EmbeddingConfigModel    `tfsdk:"embedding"`
+	Reranking  *RerankingConfigModel    `tfsdk:"reranking"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -106,76 +106,70 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			},
 		},
 		Blocks: map[string]schema.Block{
-			"completion_config": schema.ListNestedBlock{
+			"completion": schema.SingleNestedBlock{
 				MarkdownDescription: "Configuration for completion type processors",
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"temperature": schema.Float64Attribute{
-							MarkdownDescription: "Sampling temperature",
-							Optional:            true,
-							Computed:            true,
-						},
-						"tool_choice": schema.StringAttribute{
-							MarkdownDescription: "Tool choice strategy",
-							Optional:            true,
-							Computed:            true,
-						},
-						"role_mappings": schema.ListNestedAttribute{
-							MarkdownDescription: "Role mappings for conversation roles",
-							Optional:            true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"from": schema.StringAttribute{
-										MarkdownDescription: "Source role name",
-										Required:            true,
-									},
-									"to": schema.StringAttribute{
-										MarkdownDescription: "Target role name",
-										Required:            true,
-									},
+				Attributes: map[string]schema.Attribute{
+					"temperature": schema.Float64Attribute{
+						MarkdownDescription: "Sampling temperature",
+						Optional:            true,
+						Computed:            true,
+					},
+					"tool_choice": schema.StringAttribute{
+						MarkdownDescription: "Tool choice strategy",
+						Optional:            true,
+						Computed:            true,
+					},
+					"role_mappings": schema.ListNestedAttribute{
+						MarkdownDescription: "Role mappings for conversation roles",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"from": schema.StringAttribute{
+									MarkdownDescription: "Source role name",
+									Required:            true,
+								},
+								"to": schema.StringAttribute{
+									MarkdownDescription: "Target role name",
+									Required:            true,
 								},
 							},
 						},
 					},
 				},
 			},
-			"embedding_config": schema.ListNestedBlock{
+			"embedding": schema.SingleNestedBlock{
 				MarkdownDescription: "Configuration for embedding type processors",
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"max_tokens": schema.Int64Attribute{
-							MarkdownDescription: "Maximum number of tokens",
-							Optional:            true,
-							Computed:            true,
-						},
-						"templates": schema.ListNestedAttribute{
-							MarkdownDescription: "Templates for embedding processing",
-							Optional:            true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"type": schema.StringAttribute{
-										MarkdownDescription: "Template type",
-										Required:            true,
-									},
-									"content": schema.StringAttribute{
-										MarkdownDescription: "Template content",
-										Required:            true,
-									},
+				Attributes: map[string]schema.Attribute{
+					"max_tokens": schema.Int64Attribute{
+						MarkdownDescription: "Maximum number of tokens",
+						Optional:            true,
+						Computed:            true,
+					},
+					"templates": schema.ListNestedAttribute{
+						MarkdownDescription: "Templates for embedding processing",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"type": schema.StringAttribute{
+									MarkdownDescription: "Template type",
+									Required:            true,
+								},
+								"content": schema.StringAttribute{
+									MarkdownDescription: "Template content",
+									Required:            true,
 								},
 							},
 						},
 					},
 				},
 			},
-			"reranking_config": schema.ListNestedBlock{
+			"reranking": schema.SingleNestedBlock{
 				MarkdownDescription: "Configuration for reranking type processors",
-				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"top_n": schema.Int64Attribute{
-							MarkdownDescription: "Number of top results to return",
-							Optional:            true,
-							Computed:            true,
-						},
+				Attributes: map[string]schema.Attribute{
+					"top_n": schema.Int64Attribute{
+						MarkdownDescription: "Number of top results to return",
+						Optional:            true,
+						Computed:            true,
 					},
 				},
 			},
@@ -233,18 +227,17 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	var config map[string]any
 	switch processorType {
 	case "completion":
-		if len(data.CompletionConfig) > 0 {
-			completionConfig := data.CompletionConfig[0]
+		if data.Completion != nil {
 			config = map[string]any{}
-			if !completionConfig.Temperature.IsNull() {
-				config["temperature"] = completionConfig.Temperature.ValueFloat64()
+			if !data.Completion.Temperature.IsNull() {
+				config["temperature"] = data.Completion.Temperature.ValueFloat64()
 			}
-			if !completionConfig.ToolChoice.IsNull() {
-				config["tool_choice"] = completionConfig.ToolChoice.ValueString()
+			if !data.Completion.ToolChoice.IsNull() {
+				config["tool_choice"] = data.Completion.ToolChoice.ValueString()
 			}
-			if len(completionConfig.RoleMappings) > 0 {
+			if len(data.Completion.RoleMappings) > 0 {
 				var roleMappings []map[string]any
-				for _, mapping := range completionConfig.RoleMappings {
+				for _, mapping := range data.Completion.RoleMappings {
 					roleMappings = append(roleMappings, map[string]any{
 						"from": mapping.From.ValueString(),
 						"to":   mapping.To.ValueString(),
@@ -254,15 +247,14 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 			}
 		}
 	case "embedding":
-		if len(data.EmbeddingConfig) > 0 {
-			embeddingConfig := data.EmbeddingConfig[0]
+		if data.Embedding != nil {
 			config = map[string]any{}
-			if !embeddingConfig.MaxTokens.IsNull() {
-				config["max_tokens"] = embeddingConfig.MaxTokens.ValueInt64()
+			if !data.Embedding.MaxTokens.IsNull() {
+				config["max_tokens"] = data.Embedding.MaxTokens.ValueInt64()
 			}
-			if len(embeddingConfig.Templates) > 0 {
+			if len(data.Embedding.Templates) > 0 {
 				var templates []map[string]any
-				for _, template := range embeddingConfig.Templates {
+				for _, template := range data.Embedding.Templates {
 					templates = append(templates, map[string]any{
 						"type":    template.Type.ValueString(),
 						"content": template.Content.ValueString(),
@@ -272,11 +264,10 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 			}
 		}
 	case "reranking":
-		if len(data.RerankingConfig) > 0 {
-			rerankingConfig := data.RerankingConfig[0]
+		if data.Reranking != nil {
 			config = map[string]any{}
-			if !rerankingConfig.TopN.IsNull() {
-				config["top_n"] = rerankingConfig.TopN.ValueInt64()
+			if !data.Reranking.TopN.IsNull() {
+				config["top_n"] = data.Reranking.TopN.ValueInt64()
 			}
 		}
 	}
@@ -375,18 +366,17 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	var config map[string]any
 	switch processorType {
 	case "completion":
-		if len(data.CompletionConfig) > 0 {
-			completionConfig := data.CompletionConfig[0]
+		if data.Completion != nil {
 			config = map[string]any{}
-			if !completionConfig.Temperature.IsNull() {
-				config["temperature"] = completionConfig.Temperature.ValueFloat64()
+			if !data.Completion.Temperature.IsNull() {
+				config["temperature"] = data.Completion.Temperature.ValueFloat64()
 			}
-			if !completionConfig.ToolChoice.IsNull() {
-				config["tool_choice"] = completionConfig.ToolChoice.ValueString()
+			if !data.Completion.ToolChoice.IsNull() {
+				config["tool_choice"] = data.Completion.ToolChoice.ValueString()
 			}
-			if len(completionConfig.RoleMappings) > 0 {
+			if len(data.Completion.RoleMappings) > 0 {
 				var roleMappings []map[string]any
-				for _, mapping := range completionConfig.RoleMappings {
+				for _, mapping := range data.Completion.RoleMappings {
 					roleMappings = append(roleMappings, map[string]any{
 						"from": mapping.From.ValueString(),
 						"to":   mapping.To.ValueString(),
@@ -396,15 +386,14 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 			}
 		}
 	case "embedding":
-		if len(data.EmbeddingConfig) > 0 {
-			embeddingConfig := data.EmbeddingConfig[0]
+		if data.Embedding != nil {
 			config = map[string]any{}
-			if !embeddingConfig.MaxTokens.IsNull() {
-				config["max_tokens"] = embeddingConfig.MaxTokens.ValueInt64()
+			if !data.Embedding.MaxTokens.IsNull() {
+				config["max_tokens"] = data.Embedding.MaxTokens.ValueInt64()
 			}
-			if len(embeddingConfig.Templates) > 0 {
+			if len(data.Embedding.Templates) > 0 {
 				var templates []map[string]any
-				for _, template := range embeddingConfig.Templates {
+				for _, template := range data.Embedding.Templates {
 					templates = append(templates, map[string]any{
 						"type":    template.Type.ValueString(),
 						"content": template.Content.ValueString(),
@@ -414,11 +403,10 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 			}
 		}
 	case "reranking":
-		if len(data.RerankingConfig) > 0 {
-			rerankingConfig := data.RerankingConfig[0]
+		if data.Reranking != nil {
 			config = map[string]any{}
-			if !rerankingConfig.TopN.IsNull() {
-				config["top_n"] = rerankingConfig.TopN.ValueInt64()
+			if !data.Reranking.TopN.IsNull() {
+				config["top_n"] = data.Reranking.TopN.ValueInt64()
 			}
 		}
 	}
@@ -537,21 +525,21 @@ func (r *Resource) determineTypeFromConfig(data ResourceModel) (string, error) {
 	configCount := 0
 	var processorType string
 
-	if len(data.CompletionConfig) > 0 {
+	if data.Completion != nil {
 		configCount++
 		processorType = "completion"
 	}
-	if len(data.EmbeddingConfig) > 0 {
+	if data.Embedding != nil {
 		configCount++
 		processorType = "embedding"
 	}
-	if len(data.RerankingConfig) > 0 {
+	if data.Reranking != nil {
 		configCount++
 		processorType = "reranking"
 	}
 
 	if configCount == 0 {
-		return "", fmt.Errorf("exactly one configuration block must be provided (completion_config, embedding_config, or reranking_config)")
+		return "", fmt.Errorf("exactly one configuration block must be provided (completion, embedding, or reranking)")
 	}
 
 	if configCount > 1 {
@@ -574,8 +562,8 @@ func (r *Resource) updateConfigurationFromResponse(processor *perception.Process
 		if processor.Configuration != nil {
 			// Preserve existing config values if they exist
 			var config CompletionConfigModel
-			if len(data.CompletionConfig) > 0 {
-				config = data.CompletionConfig[0]
+			if data.Completion != nil {
+				config = *data.Completion
 			}
 
 			if temperature, ok := processor.Configuration["temperature"]; ok {
@@ -611,17 +599,17 @@ func (r *Resource) updateConfigurationFromResponse(processor *perception.Process
 				}
 			}
 
-			data.CompletionConfig = []CompletionConfigModel{config}
+			data.Completion = &config
 		}
-		data.EmbeddingConfig = []EmbeddingConfigModel{}
-		data.RerankingConfig = []RerankingConfigModel{}
+		data.Embedding = nil
+		data.Reranking = nil
 
 	case "embedding":
 		if processor.Configuration != nil {
 			// Preserve existing config values if they exist
 			var config EmbeddingConfigModel
-			if len(data.EmbeddingConfig) > 0 {
-				config = data.EmbeddingConfig[0]
+			if data.Embedding != nil {
+				config = *data.Embedding
 			}
 
 			if maxTokens, ok := processor.Configuration["max_tokens"]; ok {
@@ -648,17 +636,17 @@ func (r *Resource) updateConfigurationFromResponse(processor *perception.Process
 					config.Templates = templateModels
 				}
 			}
-			data.EmbeddingConfig = []EmbeddingConfigModel{config}
+			data.Embedding = &config
 		}
-		data.CompletionConfig = []CompletionConfigModel{}
-		data.RerankingConfig = []RerankingConfigModel{}
+		data.Completion = nil
+		data.Reranking = nil
 
 	case "reranking":
 		if processor.Configuration != nil {
 			// Preserve existing config values if they exist
 			var config RerankingConfigModel
-			if len(data.RerankingConfig) > 0 {
-				config = data.RerankingConfig[0]
+			if data.Reranking != nil {
+				config = *data.Reranking
 			}
 
 			if topN, ok := processor.Configuration["top_n"]; ok {
@@ -666,9 +654,9 @@ func (r *Resource) updateConfigurationFromResponse(processor *perception.Process
 					config.TopN = types.Int64Value(int64(val))
 				}
 			}
-			data.RerankingConfig = []RerankingConfigModel{config}
+			data.Reranking = &config
 		}
-		data.CompletionConfig = []CompletionConfigModel{}
-		data.EmbeddingConfig = []EmbeddingConfigModel{}
+		data.Completion = nil
+		data.Embedding = nil
 	}
 }

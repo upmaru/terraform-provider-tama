@@ -30,14 +30,14 @@ type DataSource struct {
 
 // DataSourceModel describes the data source data model.
 type DataSourceModel struct {
-	Id               types.String            `tfsdk:"id"`
-	SpaceId          types.String            `tfsdk:"space_id"`
-	ModelId          types.String            `tfsdk:"model_id"`
-	Type             types.String            `tfsdk:"type"`
-	ProvisionState   types.String            `tfsdk:"provision_state"`
-	CompletionConfig []CompletionConfigModel `tfsdk:"completion_config"`
-	EmbeddingConfig  []EmbeddingConfigModel  `tfsdk:"embedding_config"`
-	RerankingConfig  []RerankingConfigModel  `tfsdk:"reranking_config"`
+	Id             types.String            `tfsdk:"id"`
+	SpaceId        types.String            `tfsdk:"space_id"`
+	ModelId        types.String            `tfsdk:"model_id"`
+	Type           types.String            `tfsdk:"type"`
+	ProvisionState types.String            `tfsdk:"provision_state"`
+	Completion     []CompletionConfigModel `tfsdk:"completion"`
+	Embedding      []EmbeddingConfigModel  `tfsdk:"embedding"`
+	Reranking      []RerankingConfigModel  `tfsdk:"reranking"`
 }
 
 func (d *DataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -71,7 +71,7 @@ func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, r
 			},
 		},
 		Blocks: map[string]schema.Block{
-			"completion_config": schema.ListNestedBlock{
+			"completion": schema.ListNestedBlock{
 				MarkdownDescription: "Configuration for completion type processors",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
@@ -102,7 +102,7 @@ func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, r
 					},
 				},
 			},
-			"embedding_config": schema.ListNestedBlock{
+			"embedding": schema.ListNestedBlock{
 				MarkdownDescription: "Configuration for embedding type processors",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
@@ -129,7 +129,7 @@ func (d *DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, r
 					},
 				},
 			},
-			"reranking_config": schema.ListNestedBlock{
+			"reranking": schema.ListNestedBlock{
 				MarkdownDescription: "Configuration for reranking type processors",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
@@ -249,10 +249,10 @@ func (d *DataSource) updateConfigurationFromResponse(processor *neural.Processor
 					config.RoleMappings = roleMappingModels
 				}
 			}
-			data.CompletionConfig = []CompletionConfigModel{config}
+			data.Completion = []CompletionConfigModel{config}
 		}
-		data.EmbeddingConfig = []EmbeddingConfigModel{}
-		data.RerankingConfig = []RerankingConfigModel{}
+		data.Embedding = []EmbeddingConfigModel{}
+		data.Reranking = []RerankingConfigModel{}
 
 	case "embedding":
 		if processor.Configuration != nil {
@@ -284,10 +284,10 @@ func (d *DataSource) updateConfigurationFromResponse(processor *neural.Processor
 					config.Templates = templateModels
 				}
 			}
-			data.EmbeddingConfig = []EmbeddingConfigModel{config}
+			data.Embedding = []EmbeddingConfigModel{config}
 		}
-		data.CompletionConfig = []CompletionConfigModel{}
-		data.RerankingConfig = []RerankingConfigModel{}
+		data.Completion = []CompletionConfigModel{}
+		data.Reranking = []RerankingConfigModel{}
 
 	case "reranking":
 		if processor.Configuration != nil {
@@ -301,9 +301,9 @@ func (d *DataSource) updateConfigurationFromResponse(processor *neural.Processor
 			} else {
 				config.TopN = types.Int64Null()
 			}
-			data.RerankingConfig = []RerankingConfigModel{config}
+			data.Reranking = []RerankingConfigModel{config}
 		}
-		data.CompletionConfig = []CompletionConfigModel{}
-		data.EmbeddingConfig = []EmbeddingConfigModel{}
+		data.Completion = []CompletionConfigModel{}
+		data.Embedding = []EmbeddingConfigModel{}
 	}
 }
