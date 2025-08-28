@@ -74,4 +74,4 @@ Required:
 
 Optional:
 
-- `top_n` (Number) Number of top results to return
+- `parameters` (String) Additional parameters as JSON string
