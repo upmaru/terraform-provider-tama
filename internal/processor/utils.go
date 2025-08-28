@@ -181,8 +181,13 @@ func buildRerankingConfig(reranking *RerankingConfigModel) (map[string]any, erro
 
 	config := map[string]any{}
 
-	if !reranking.TopN.IsNull() && !reranking.TopN.IsUnknown() {
-		config["top_n"] = reranking.TopN.ValueInt64()
+	// Parse parameters if provided
+	if !reranking.Parameters.IsNull() && !reranking.Parameters.IsUnknown() && reranking.Parameters.ValueString() != "" {
+		var parametersMap map[string]any
+		if err := json.Unmarshal([]byte(reranking.Parameters.ValueString()), &parametersMap); err != nil {
+			return nil, fmt.Errorf("unable to parse parameters as JSON: %s", err)
+		}
+		config["parameters"] = parametersMap
 	}
 
 	return config, nil
@@ -297,14 +302,20 @@ func updateRerankingFromResponse(processorConfig map[string]any, config Processo
 		rerankingConfig = *existingReranking
 	}
 
-	if topN, ok := processorConfig["top_n"]; ok {
-		if val, ok := topN.(float64); ok {
-			rerankingConfig.TopN = types.Int64Value(int64(val))
-		} else if intVal, ok := topN.(int64); ok {
-			rerankingConfig.TopN = types.Int64Value(intVal)
-		} else if intVal, ok := topN.(int); ok {
-			rerankingConfig.TopN = types.Int64Value(int64(intVal))
+	// Handle parameters from response
+	if parameters, ok := processorConfig["parameters"]; ok {
+		if paramMap, ok := parameters.(map[string]any); ok && len(paramMap) > 0 {
+			parametersJSON, err := json.Marshal(paramMap)
+			if err == nil {
+				if rerankingConfig.Parameters.IsNull() || rerankingConfig.Parameters.IsUnknown() {
+					rerankingConfig.Parameters = types.StringValue(string(parametersJSON))
+				}
+			}
+		} else if rerankingConfig.Parameters.IsNull() || rerankingConfig.Parameters.IsUnknown() {
+			rerankingConfig.Parameters = types.StringValue("")
 		}
+	} else if rerankingConfig.Parameters.IsNull() || rerankingConfig.Parameters.IsUnknown() {
+		rerankingConfig.Parameters = types.StringValue("")
 	}
 
 	updateRerankingInConfig(config, &rerankingConfig)
@@ -414,9 +425,15 @@ func UpdateConfigurationFromResponse(processorConfig map[string]any, config Proc
 		// so we need to determine the type from the configuration
 		if _, hasTemp := processorConfig["temperature"]; hasTemp {
 			processorType = "completion"
+		} else if _, hasToolChoice := processorConfig["tool_choice"]; hasToolChoice {
+			processorType = "completion"
+		} else if _, hasRoleMappings := processorConfig["role_mappings"]; hasRoleMappings {
+			processorType = "completion"
 		} else if _, hasMaxTokens := processorConfig["max_tokens"]; hasMaxTokens {
 			processorType = "embedding"
-		} else if _, hasTopN := processorConfig["top_n"]; hasTopN {
+		} else if _, hasTemplates := processorConfig["templates"]; hasTemplates {
+			processorType = "embedding"
+		} else if _, hasParams := processorConfig["parameters"]; hasParams {
 			processorType = "reranking"
 		}
 	}

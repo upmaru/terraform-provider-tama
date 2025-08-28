@@ -93,7 +93,7 @@ func TestValidateConfiguration(t *testing.T) {
 	// Test valid reranking config
 	data = processor.PerceptionProcessorModel{
 		Reranking: &processor.RerankingConfigModel{
-			TopN: types.Int64Value(5),
+			Parameters: types.StringValue("{\"top_n\":5}"),
 		},
 	}
 
@@ -599,7 +599,9 @@ resource "tama_thought_processor" "test" {
   }
 
   reranking {
-    top_n = 5
+    parameters = jsonencode({
+      top_n = 5
+    })
   }
 }
 `, timestamp, timestamp)
@@ -653,7 +655,9 @@ resource "tama_thought_processor" "test" {
   }
 
   reranking {
-    top_n = 5
+    parameters = jsonencode({
+      top_n = 5
+    })
   }
 }
 `, timestamp, timestamp)
