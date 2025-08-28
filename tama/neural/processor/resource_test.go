@@ -93,7 +93,7 @@ func TestValidateConfiguration(t *testing.T) {
 	// Test valid reranking config
 	data = processor.NeuralProcessorModel{
 		Reranking: &processor.RerankingConfigModel{
-			TopN: types.Int64Value(5),
+			Parameters: types.StringValue("{\"top_n\":5}"),
 		},
 	}
 
@@ -323,7 +323,17 @@ func TestAccSpaceProcessorResource_Reranking(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "space_id"),
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "model_id"),
 					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "reranking"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "reranking.top_n", "5"),
+					resource.TestCheckResourceAttrSet("tama_space_processor.test", "reranking.parameters"),
+					resource.TestCheckResourceAttrWith("tama_space_processor.test", "reranking.parameters", func(value string) error {
+						var params map[string]any
+						if err := json.Unmarshal([]byte(value), &params); err != nil {
+							return fmt.Errorf("parameters is not valid JSON: %v", err)
+						}
+						if params["top_n"] != 5.0 {
+							return fmt.Errorf("expected top_n 5, got %v", params["top_n"])
+						}
+						return nil
+					}),
 				),
 			},
 			// ImportState testing
@@ -339,7 +349,16 @@ func TestAccSpaceProcessorResource_Reranking(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("tama_space_processor.test", "id"),
 					resource.TestCheckResourceAttr("tama_space_processor.test", "type", "reranking"),
-					resource.TestCheckResourceAttr("tama_space_processor.test", "reranking.top_n", "10"),
+					resource.TestCheckResourceAttrWith("tama_space_processor.test", "reranking.parameters", func(value string) error {
+						var params map[string]any
+						if err := json.Unmarshal([]byte(value), &params); err != nil {
+							return fmt.Errorf("parameters is not valid JSON: %v", err)
+						}
+						if params["top_n"] != 10.0 {
+							return fmt.Errorf("expected top_n 10, got %v", params["top_n"])
+						}
+						return nil
+					}),
 				),
 			},
 		},
@@ -472,7 +491,16 @@ func TestAccSpaceProcessorResource_Multiple(t *testing.T) {
 					// Third processor (reranking)
 					resource.TestCheckResourceAttrSet("tama_space_processor.reranking", "id"),
 					resource.TestCheckResourceAttr("tama_space_processor.reranking", "type", "reranking"),
-					resource.TestCheckResourceAttr("tama_space_processor.reranking", "reranking.top_n", "3"),
+					resource.TestCheckResourceAttrWith("tama_space_processor.reranking", "reranking.parameters", func(value string) error {
+						var params map[string]any
+						if err := json.Unmarshal([]byte(value), &params); err != nil {
+							return fmt.Errorf("parameters is not valid JSON: %v", err)
+						}
+						if params["top_n"] != 3.0 {
+							return fmt.Errorf("expected top_n 3, got %v", params["top_n"])
+						}
+						return nil
+					}),
 				),
 			},
 		},
@@ -824,7 +852,9 @@ resource "tama_space_processor" "test" {
   model_id = tama_model.test.id
 
   reranking {
-    top_n = 5
+    parameters = jsonencode({
+      top_n = 5
+    })
   }
 }
 `, timestamp, timestamp)
@@ -857,7 +887,9 @@ resource "tama_space_processor" "test" {
   model_id = tama_model.test.id
 
   reranking {
-    top_n = 10
+    parameters = jsonencode({
+      top_n = 10
+    })
   }
 }
 `, timestamp, timestamp)
@@ -1158,7 +1190,9 @@ resource "tama_space_processor" "reranking" {
   model_id = tama_model.reranking_model.id
 
   reranking {
-    top_n = 3
+    parameters = jsonencode({
+      top_n = 3
+    })
   }
 }
 `, timestamp, timestamp)
@@ -1239,7 +1273,9 @@ resource "tama_space_processor" "test" {
   }
 
   reranking {
-    top_n = 5
+    parameters = jsonencode({
+      top_n = 5
+    })
   }
 }
 `, timestamp, timestamp)
@@ -1276,7 +1312,9 @@ resource "tama_space_processor" "test" {
   }
 
   reranking {
-    top_n = 3
+    parameters = jsonencode({
+      top_n = 3
+    })
   }
 }
 `, timestamp, timestamp)

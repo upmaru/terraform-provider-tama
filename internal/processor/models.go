@@ -35,7 +35,7 @@ type EmbeddingConfigModel struct {
 
 // RerankingConfigModel describes the reranking configuration data model.
 type RerankingConfigModel struct {
-	TopN types.Int64 `tfsdk:"top_n"`
+	Parameters types.String `tfsdk:"parameters"`
 }
 
 // ProcessorModel describes the common processor data model.

@@ -143,10 +143,13 @@ func getEmbeddingAttributes() map[string]schema.Attribute {
 
 func getRerankingAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
-		"top_n": schema.Int64Attribute{
-			MarkdownDescription: "Number of top results to return",
+		"parameters": schema.StringAttribute{
+			MarkdownDescription: "Additional parameters as JSON string",
 			Optional:            true,
 			Computed:            true,
+			PlanModifiers: []planmodifier.String{
+				jsonplanmodifier.JSONNormalize(),
+			},
 		},
 	}
 }
