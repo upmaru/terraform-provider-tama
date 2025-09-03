@@ -20,11 +20,13 @@ import (
 
 	"github.com/upmaru/terraform-provider-tama/tama/contexts/input"
 	"github.com/upmaru/terraform-provider-tama/tama/memory/prompt"
+	"github.com/upmaru/terraform-provider-tama/tama/memory/topic"
 	"github.com/upmaru/terraform-provider-tama/tama/motor/action"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/bridge"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/class"
 	class_operation "github.com/upmaru/terraform-provider-tama/tama/neural/class/operation"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/corpus"
+	"github.com/upmaru/terraform-provider-tama/tama/neural/listener"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/node"
 	space_processor "github.com/upmaru/terraform-provider-tama/tama/neural/processor"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/space"
@@ -189,6 +191,8 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		limit.NewResource,
 		specification.NewResource,
 		prompt.NewResource,
+		topic.NewResource,
+		listener.NewResource,
 		chain.NewResource,
 		modular_thought.NewResource,
 		delegated_thought.NewResource,
