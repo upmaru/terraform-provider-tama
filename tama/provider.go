@@ -22,6 +22,7 @@ import (
 	"github.com/upmaru/terraform-provider-tama/tama/memory/prompt"
 	"github.com/upmaru/terraform-provider-tama/tama/memory/topic"
 	"github.com/upmaru/terraform-provider-tama/tama/motor/action"
+	"github.com/upmaru/terraform-provider-tama/tama/motor/modifier"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/bridge"
 	"github.com/upmaru/terraform-provider-tama/tama/neural/class"
 	class_operation "github.com/upmaru/terraform-provider-tama/tama/neural/class/operation"
@@ -206,6 +207,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		input.NewResource,
 		tool_input.NewResource,
 		tool_initializer.NewResource,
+		modifier.NewResource,
 	}
 }
 
