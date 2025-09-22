@@ -49,6 +49,7 @@ import (
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/specification"
 	tool_initializer "github.com/upmaru/terraform-provider-tama/tama/tools/initializer"
 	tool_input "github.com/upmaru/terraform-provider-tama/tama/tools/input"
+	tool_output "github.com/upmaru/terraform-provider-tama/tama/tools/output"
 )
 
 // Ensure TamaProvider satisfies various provider interfaces.
@@ -207,6 +208,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		input.NewResource,
 		tool_input.NewResource,
 		tool_initializer.NewResource,
+		tool_output.NewResource,
 		modifier.NewResource,
 	}
 }
