@@ -14,7 +14,7 @@ import (
 	"github.com/upmaru/terraform-provider-tama/internal/acceptance"
 )
 
-// testCheckSchemaJSONEqual compares the schema JSON string semantically
+// testCheckSchemaJSONEqual compares the schema JSON string semantically.
 func testCheckSchemaJSONEqual(expected string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources["tama_action_modifier.test"]

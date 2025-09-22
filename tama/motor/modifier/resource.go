@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package modifier
 
 import (
@@ -42,7 +45,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			"id": schema.StringAttribute{
 				MarkdownDescription: "Modifier identifier",
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
+				PlanModifiers:       []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 			},
 			"action_id": schema.StringAttribute{
 				MarkdownDescription: "ID of the action this modifier belongs to",
@@ -67,7 +70,9 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 }
 
 func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil { return }
+	if req.ProviderData == nil {
+		return
+	}
 	client, ok := req.ProviderData.(*tama.Client)
 	if !ok {
 		resp.Diagnostics.AddError(
@@ -82,7 +87,9 @@ func (r *Resource) Configure(ctx context.Context, req resource.ConfigureRequest,
 func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data ResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() { return }
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// Parse schema JSON
 	var schemaMap map[string]any
@@ -127,7 +134,9 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data ResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...) // Read state
-	if resp.Diagnostics.HasError() { return }
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	mod, err := r.client.Motor.GetModifier(data.Id.ValueString())
 	if err != nil {
@@ -151,7 +160,9 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data ResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...) // Read plan
-	if resp.Diagnostics.HasError() { return }
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	var update motor.UpdateModifierRequest
 	update.Modifier = motor.UpdateModifierData{}
@@ -195,14 +206,16 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data ResourceModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...) // Read state
-	if resp.Diagnostics.HasError() { return }
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	if err := r.client.Motor.DeleteModifier(data.Id.ValueString()); err != nil {
 		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to delete modifier, got error: %s", err))
 		return
 	}
 	// No state to set; Terraform will remove resource from state after successful delete
-		tflog.Debug(ctx, "Deleted action modifier", map[string]any{"id": data.Id.ValueString()})
+	tflog.Debug(ctx, "Deleted action modifier", map[string]any{"id": data.Id.ValueString()})
 }
 
 func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
