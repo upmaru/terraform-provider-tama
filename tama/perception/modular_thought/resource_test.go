@@ -504,7 +504,18 @@ resource "tama_modular_thought" "test" {
       classification = {
         class_name = "class"
         properties = ["class", "confidence"]
-        look_back_limit = 5
+        thread = {
+          limit = 5
+          classes = {
+            author = "actor"
+            thread = "thread"
+            message = "user-message"
+          }
+          relations = {
+            routing = "routing"
+            focus = ["tooling"]
+          }
+        }
       }
     })
   }
