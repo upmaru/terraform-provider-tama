@@ -8,12 +8,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	resourcevalidator "github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	tama "github.com/upmaru/tama-go"
 	"github.com/upmaru/tama-go/sensory"
@@ -23,6 +25,7 @@ import (
 // Ensure provider defined types fully satisfy framework interfaces.
 var _ resource.Resource = &Resource{}
 var _ resource.ResourceWithImportState = &Resource{}
+var _ resource.ResourceWithConfigValidators = &Resource{}
 
 func NewResource() resource.Resource {
 	return &Resource{}
@@ -46,6 +49,8 @@ type ResourceModel struct {
 	SpecificationId types.String     `tfsdk:"specification_id"`
 	Identifier      types.String     `tfsdk:"identifier"`
 	ApiKey          types.String     `tfsdk:"api_key"`
+	ClientID        types.String     `tfsdk:"client_id"`
+	ClientSecret    types.String     `tfsdk:"client_secret"`
 	Validation      *ValidationModel `tfsdk:"validation"`
 	ProvisionState  types.String     `tfsdk:"provision_state"`
 	CurrentState    types.String     `tfsdk:"current_state"`
@@ -83,8 +88,17 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 				},
 			},
 			"api_key": schema.StringAttribute{
-				MarkdownDescription: "API key for the identity",
-				Required:            true,
+				MarkdownDescription: "API key for the identity. Cannot be set when client_id and client_secret are provided.",
+				Optional:            true,
+				Sensitive:           true,
+			},
+			"client_id": schema.StringAttribute{
+				MarkdownDescription: "OAuth2 Client ID for the identity. Use together with client_secret. Cannot be set with api_key.",
+				Optional:            true,
+			},
+			"client_secret": schema.StringAttribute{
+				MarkdownDescription: "OAuth2 Client Secret for the identity. Use together with client_id. Cannot be set with api_key.",
+				Optional:            true,
 				Sensitive:           true,
 			},
 			"provision_state": schema.StringAttribute{
@@ -127,6 +141,31 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			}
 			return blocks
 		}(),
+	}
+}
+
+// ConfigValidators implements the resource.ResourceWithConfigValidators interface
+func (r *Resource) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
+	return []resource.ConfigValidator{
+		// api_key conflicts with client_id and client_secret
+		resourcevalidator.Conflicting(
+			path.MatchRoot("api_key"),
+			path.MatchRoot("client_id"),
+		),
+		resourcevalidator.Conflicting(
+			path.MatchRoot("api_key"),
+			path.MatchRoot("client_secret"),
+		),
+		// client_id requires client_secret
+		resourcevalidator.RequiredTogether(
+			path.MatchRoot("client_id"),
+			path.MatchRoot("client_secret"),
+		),
+		// At least one of api_key or client_id must be provided
+		resourcevalidator.AtLeastOneOf(
+			path.MatchRoot("api_key"),
+			path.MatchRoot("client_id"),
+		),
 	}
 }
 
@@ -176,7 +215,9 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	// Create identity using the Tama client
 	createRequest := sensory.CreateIdentityRequest{
 		Identity: sensory.IdentityRequestData{
-			APIKey: data.ApiKey.ValueString(),
+			APIKey:       data.ApiKey.ValueString(),
+			ClientID:     data.ClientID.ValueString(),
+			ClientSecret: data.ClientSecret.ValueString(),
 			Validation: sensory.Validation{
 				Path:   data.Validation.Path.ValueString(),
 				Method: data.Validation.Method.ValueString(),
@@ -319,7 +360,9 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	// Update identity using the Tama client
 	updateRequest := sensory.UpdateIdentityRequest{
 		Identity: sensory.UpdateIdentityData{
-			APIKey: data.ApiKey.ValueString(),
+			APIKey:       data.ApiKey.ValueString(),
+			ClientID:     data.ClientID.ValueString(),
+			ClientSecret: data.ClientSecret.ValueString(),
 			Validation: &sensory.Validation{
 				Path:   data.Validation.Path.ValueString(),
 				Method: data.Validation.Method.ValueString(),
@@ -436,9 +479,11 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 			Method: types.StringValue(identityResponse.Validation.Method),
 			Codes:  codesList,
 		},
-		// ApiKey cannot be retrieved from API response
-		// This will need to be manually set after import
-		ApiKey: types.StringValue(""),
+		// Secrets/credentials cannot be retrieved from API response
+		// These will need to be manually set after import
+		ApiKey:       types.StringValue(""),
+		ClientID:     types.StringValue(""),
+		ClientSecret: types.StringValue(""),
 	}
 
 	// Save imported data into Terraform state
