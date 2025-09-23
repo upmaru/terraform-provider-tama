@@ -240,12 +240,14 @@ output "specification_with_identities" {
 
 ### Required
 
-- `api_key` (String, Sensitive) API key for the identity
 - `identifier` (String) Identifier for the identity (e.g., 'ApiKey')
 - `specification_id` (String) ID of the specification this identity belongs to
 
 ### Optional
 
+- `api_key` (String, Sensitive) API key for the identity. Cannot be set when client_id and client_secret are provided.
+- `client_id` (String) OAuth2 Client ID for the identity. Use together with client_secret. Cannot be set with api_key.
+- `client_secret` (String, Sensitive) OAuth2 Client Secret for the identity. Use together with client_id. Cannot be set with api_key.
 - `validation` (Block, Optional) Validation configuration for the identity (see [below for nested schema](#nestedblock--validation))
 - `wait_for` (Block List) If set, will wait until either all of conditions are satisfied, or until timeout is reached (see [below for nested schema](#nestedblock--wait_for))
 
