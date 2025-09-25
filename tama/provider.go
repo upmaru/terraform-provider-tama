@@ -36,6 +36,7 @@ import (
 	perception_context "github.com/upmaru/terraform-provider-tama/tama/perception/context"
 
 	"github.com/upmaru/terraform-provider-tama/tama/perception/delegated_thought"
+	"github.com/upmaru/terraform-provider-tama/tama/perception/directive"
 	thought_initializer "github.com/upmaru/terraform-provider-tama/tama/perception/initializer"
 	"github.com/upmaru/terraform-provider-tama/tama/perception/modular_thought"
 	module_input "github.com/upmaru/terraform-provider-tama/tama/perception/module/input"
@@ -203,6 +204,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		perception_context.NewResource,
 		path.NewResource,
 		module_input.NewResource,
+		directive.NewResource,
 		thought_initializer.NewResource,
 		tool.NewResource,
 		activation.NewResource,
