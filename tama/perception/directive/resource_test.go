@@ -24,6 +24,7 @@ func TestAccThoughtPathDirectiveResource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test", "id"),
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test", "thought_path_id"),
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test", "prompt_id"),
+					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test", "target_thought_id"),
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test", "provision_state"),
 				),
 			},
@@ -40,6 +41,7 @@ func TestAccThoughtPathDirectiveResource(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test", "id"),
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test", "thought_path_id"),
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test", "prompt_id"),
+					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test", "target_thought_id"),
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test", "provision_state"),
 				),
 			},
@@ -59,9 +61,11 @@ func TestAccThoughtPathDirectiveResource_Multiple(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test1", "id"),
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test1", "thought_path_id"),
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test1", "prompt_id"),
+					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test1", "target_thought_id"),
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test2", "id"),
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test2", "thought_path_id"),
 					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test2", "prompt_id"),
+					resource.TestCheckResourceAttrSet("tama_thought_path_directive.test2", "target_thought_id"),
 				),
 			},
 		},
@@ -96,6 +100,11 @@ resource "tama_chain" "test_chain" {
   name     = "test-chain-for-directive"
 }
 
+resource "tama_chain" "target_chain" {
+  space_id = tama_space.test_space.id
+  name     = "target-chain-for-directive"
+}
+
 resource "tama_modular_thought" "test_thought" {
   chain_id = tama_chain.test_chain.id
   relation = "description"
@@ -104,6 +113,18 @@ resource "tama_modular_thought" "test_thought" {
     reference = "tama/agentic/generate"
     parameters = jsonencode({
       relation = "description"
+    })
+  }
+}
+
+resource "tama_modular_thought" "target_thought" {
+  chain_id = tama_chain.target_chain.id
+  relation = "analysis"
+
+  module {
+    reference = "tama/agentic/generate"
+    parameters = jsonencode({
+      relation = "analysis"
     })
   }
 }
@@ -125,8 +146,9 @@ resource "tama_prompt" "test_prompt" {
 }
 
 resource "tama_thought_path_directive" "test" {
-  thought_path_id = tama_thought_path.test_path.id
-  prompt_id       = tama_prompt.test_prompt.id
+  thought_path_id   = tama_thought_path.test_path.id
+  prompt_id         = tama_prompt.test_prompt.id
+  target_thought_id = tama_modular_thought.target_thought.id
 }
 `, spaceName)
 }
@@ -159,6 +181,11 @@ resource "tama_chain" "test_chain" {
   name     = "test-chain-for-directive"
 }
 
+resource "tama_chain" "target_chain" {
+  space_id = tama_space.test_space.id
+  name     = "target-chain-for-directive"
+}
+
 resource "tama_modular_thought" "test_thought" {
   chain_id = tama_chain.test_chain.id
   relation = "description"
@@ -167,6 +194,18 @@ resource "tama_modular_thought" "test_thought" {
     reference = "tama/agentic/generate"
     parameters = jsonencode({
       relation = "description"
+    })
+  }
+}
+
+resource "tama_modular_thought" "target_thought" {
+  chain_id = tama_chain.target_chain.id
+  relation = "analysis"
+
+  module {
+    reference = "tama/agentic/generate"
+    parameters = jsonencode({
+      relation = "analysis"
     })
   }
 }
@@ -195,8 +234,9 @@ resource "tama_prompt" "test_prompt2" {
 }
 
 resource "tama_thought_path_directive" "test" {
-  thought_path_id = tama_thought_path.test_path.id
-  prompt_id       = tama_prompt.test_prompt2.id
+  thought_path_id   = tama_thought_path.test_path.id
+  prompt_id         = tama_prompt.test_prompt2.id
+  target_thought_id = tama_modular_thought.target_thought.id
 }
 `, spaceName)
 }
@@ -229,6 +269,11 @@ resource "tama_chain" "test_chain" {
   name     = "test-chain-for-directive"
 }
 
+resource "tama_chain" "target_chain" {
+  space_id = tama_space.test_space.id
+  name     = "target-chain-for-directive"
+}
+
 resource "tama_modular_thought" "test_thought" {
   chain_id = tama_chain.test_chain.id
   relation = "description"
@@ -237,6 +282,18 @@ resource "tama_modular_thought" "test_thought" {
     reference = "tama/agentic/generate"
     parameters = jsonencode({
       relation = "description"
+    })
+  }
+}
+
+resource "tama_modular_thought" "target_thought" {
+  chain_id = tama_chain.target_chain.id
+  relation = "analysis"
+
+  module {
+    reference = "tama/agentic/generate"
+    parameters = jsonencode({
+      relation = "analysis"
     })
   }
 }
@@ -265,13 +322,15 @@ resource "tama_prompt" "test_prompt2" {
 }
 
 resource "tama_thought_path_directive" "test1" {
-  thought_path_id = tama_thought_path.test_path.id
-  prompt_id       = tama_prompt.test_prompt1.id
+  thought_path_id   = tama_thought_path.test_path.id
+  prompt_id         = tama_prompt.test_prompt1.id
+  target_thought_id = tama_modular_thought.target_thought.id
 }
 
 resource "tama_thought_path_directive" "test2" {
-  thought_path_id = tama_thought_path.test_path.id
-  prompt_id       = tama_prompt.test_prompt2.id
+  thought_path_id   = tama_thought_path.test_path.id
+  prompt_id         = tama_prompt.test_prompt2.id
+  target_thought_id = tama_modular_thought.target_thought.id
 }
 `, spaceName)
 }

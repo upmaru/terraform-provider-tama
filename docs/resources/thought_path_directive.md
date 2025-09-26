@@ -18,6 +18,7 @@ Manages a Tama Thought Path Directive resource
 ### Required
 
 - `prompt_id` (String) ID of the prompt for this directive
+- `target_thought_id` (String) ID of the target thought for this directive
 - `thought_path_id` (String) ID of the thought path this directive belongs to
 
 ### Read-Only
