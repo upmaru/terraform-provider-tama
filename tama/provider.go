@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	tama "github.com/upmaru/tama-go"
+	"github.com/upmaru/terraform-provider-tama/tama/neural/filter"
 
 	"github.com/upmaru/terraform-provider-tama/tama/contexts/input"
 	"github.com/upmaru/terraform-provider-tama/tama/memory/prompt"
@@ -197,6 +198,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		prompt.NewResource,
 		topic.NewResource,
 		listener.NewResource,
+		filter.NewResource,
 		chain.NewResource,
 		modular_thought.NewResource,
 		delegated_thought.NewResource,
