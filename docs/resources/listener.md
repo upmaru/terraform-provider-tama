@@ -18,6 +18,7 @@ Manages a Tama Neural Listener resource
 ### Required
 
 - `endpoint` (String) Destination endpoint that will receive events
+- `secret` (String, Sensitive) Shared secret used to validate incoming requests
 - `space_id` (String) ID of the space this listener belongs to
 
 ### Read-Only
