@@ -19,7 +19,11 @@ func TestAccListenerResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create and Read testing
 			{
-				Config: testAccListenerResourceConfig(fmt.Sprintf("test-listener-space-%d", time.Now().UnixNano()), "http://localhost:4000/tama/activities"),
+				Config: testAccListenerResourceConfig(
+					fmt.Sprintf("test-listener-space-%d", time.Now().UnixNano()),
+					"http://localhost:4000/tama/activities",
+					"super-secret",
+				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("tama_listener.test", "id"),
 					resource.TestCheckResourceAttrSet("tama_listener.test", "space_id"),
@@ -29,13 +33,18 @@ func TestAccListenerResource(t *testing.T) {
 			},
 			// ImportState testing
 			{
-				ResourceName:      "tama_listener.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "tama_listener.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"secret"},
 			},
 			// Update and Read testing
 			{
-				Config: testAccListenerResourceConfig(fmt.Sprintf("test-listener-space-%d", time.Now().UnixNano()), "http://localhost:5000/new-endpoint"),
+				Config: testAccListenerResourceConfig(
+					fmt.Sprintf("test-listener-space-%d", time.Now().UnixNano()),
+					"http://localhost:5000/new-endpoint",
+					"super-secret",
+				),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("tama_listener.test", "id"),
 					resource.TestCheckResourceAttr("tama_listener.test", "endpoint", "http://localhost:5000/new-endpoint"),
@@ -46,7 +55,7 @@ func TestAccListenerResource(t *testing.T) {
 	})
 }
 
-func testAccListenerResourceConfig(spaceName string, endpoint string) string {
+func testAccListenerResourceConfig(spaceName string, endpoint string, secret string) string {
 	return acceptance.ProviderConfig + fmt.Sprintf(`
 resource "tama_space" "test" {
   name = "%s"
@@ -56,6 +65,7 @@ resource "tama_space" "test" {
 resource "tama_listener" "test" {
   space_id = tama_space.test.id
   endpoint = "%s"
+  secret   = "%s"
 }
-`, spaceName, endpoint)
+`, spaceName, endpoint, secret)
 }
