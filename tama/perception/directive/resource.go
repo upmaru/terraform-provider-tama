@@ -32,10 +32,11 @@ type Resource struct {
 
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id             types.String `tfsdk:"id"`
-	ThoughtPathId  types.String `tfsdk:"thought_path_id"`
-	PromptId       types.String `tfsdk:"prompt_id"`
-	ProvisionState types.String `tfsdk:"provision_state"`
+	Id              types.String `tfsdk:"id"`
+	ThoughtPathId   types.String `tfsdk:"thought_path_id"`
+	PromptId        types.String `tfsdk:"prompt_id"`
+	TargetThoughtId types.String `tfsdk:"target_thought_id"`
+	ProvisionState  types.String `tfsdk:"provision_state"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -63,6 +64,10 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			},
 			"prompt_id": schema.StringAttribute{
 				MarkdownDescription: "ID of the prompt for this directive",
+				Required:            true,
+			},
+			"target_thought_id": schema.StringAttribute{
+				MarkdownDescription: "ID of the target thought for this directive",
 				Required:            true,
 			},
 			"provision_state": schema.StringAttribute{
@@ -106,13 +111,15 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	// Create directive request
 	createReq := perception.CreateDirectiveRequest{
 		Directive: perception.DirectiveRequestData{
-			PromptID: data.PromptId.ValueString(),
+			PromptID:        data.PromptId.ValueString(),
+			TargetThoughtID: data.TargetThoughtId.ValueString(),
 		},
 	}
 
 	tflog.Debug(ctx, "Creating directive", map[string]any{
-		"thought_path_id": data.ThoughtPathId.ValueString(),
-		"prompt_id":       createReq.Directive.PromptID,
+		"thought_path_id":   data.ThoughtPathId.ValueString(),
+		"prompt_id":         createReq.Directive.PromptID,
+		"target_thought_id": createReq.Directive.TargetThoughtID,
 	})
 
 	// Create directive
@@ -126,6 +133,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	data.Id = types.StringValue(directiveResponse.ID)
 	data.ThoughtPathId = types.StringValue(directiveResponse.ThoughtPathID)
 	data.PromptId = types.StringValue(directiveResponse.PromptID)
+	data.TargetThoughtId = types.StringValue(directiveResponse.TargetThoughtID)
 	data.ProvisionState = types.StringValue(directiveResponse.ProvisionState)
 
 	// Write logs using the tflog package
@@ -160,6 +168,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 	data.Id = types.StringValue(directiveResponse.ID)
 	data.ThoughtPathId = types.StringValue(directiveResponse.ThoughtPathID)
 	data.PromptId = types.StringValue(directiveResponse.PromptID)
+	data.TargetThoughtId = types.StringValue(directiveResponse.TargetThoughtID)
 	data.ProvisionState = types.StringValue(directiveResponse.ProvisionState)
 
 	// Save updated data into Terraform state
@@ -179,13 +188,15 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	// Update directive request
 	updateReq := perception.UpdateDirectiveRequest{
 		Directive: perception.UpdateDirectiveData{
-			PromptID: data.PromptId.ValueString(),
+			PromptID:        data.PromptId.ValueString(),
+			TargetThoughtID: data.TargetThoughtId.ValueString(),
 		},
 	}
 
 	tflog.Debug(ctx, "Updating directive", map[string]any{
-		"id":        data.Id.ValueString(),
-		"prompt_id": updateReq.Directive.PromptID,
+		"id":                data.Id.ValueString(),
+		"prompt_id":         updateReq.Directive.PromptID,
+		"target_thought_id": updateReq.Directive.TargetThoughtID,
 	})
 
 	// Update directive
@@ -199,6 +210,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	data.Id = types.StringValue(directiveResponse.ID)
 	data.ThoughtPathId = types.StringValue(directiveResponse.ThoughtPathID)
 	data.PromptId = types.StringValue(directiveResponse.PromptID)
+	data.TargetThoughtId = types.StringValue(directiveResponse.TargetThoughtID)
 	data.ProvisionState = types.StringValue(directiveResponse.ProvisionState)
 
 	// Save updated data into Terraform state
@@ -244,6 +256,7 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 	data.Id = types.StringValue(directiveResponse.ID)
 	data.ThoughtPathId = types.StringValue(directiveResponse.ThoughtPathID)
 	data.PromptId = types.StringValue(directiveResponse.PromptID)
+	data.TargetThoughtId = types.StringValue(directiveResponse.TargetThoughtID)
 	data.ProvisionState = types.StringValue(directiveResponse.ProvisionState)
 
 	// Save imported data into Terraform state

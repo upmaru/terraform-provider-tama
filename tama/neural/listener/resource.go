@@ -35,6 +35,7 @@ type ResourceModel struct {
 	Id             types.String `tfsdk:"id"`
 	SpaceId        types.String `tfsdk:"space_id"`
 	Endpoint       types.String `tfsdk:"endpoint"`
+	Secret         types.String `tfsdk:"secret"`
 	ProvisionState types.String `tfsdk:"provision_state"`
 }
 
@@ -64,6 +65,11 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 			"endpoint": schema.StringAttribute{
 				MarkdownDescription: "Destination endpoint that will receive events",
 				Required:            true,
+			},
+			"secret": schema.StringAttribute{
+				MarkdownDescription: "Shared secret used to validate incoming requests",
+				Required:            true,
+				Sensitive:           true,
 			},
 			"provision_state": schema.StringAttribute{
 				MarkdownDescription: "Current state of the listener",
@@ -106,6 +112,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	createRequest := neural.CreateListenerRequest{
 		Listener: neural.ListenerRequestData{
 			Endpoint: data.Endpoint.ValueString(),
+			Secret:   data.Secret.ValueString(),
 		},
 	}
 
@@ -167,6 +174,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	updateRequest := neural.UpdateListenerRequest{
 		Listener: neural.UpdateListenerData{
 			Endpoint: data.Endpoint.ValueString(),
+			Secret:   data.Secret.ValueString(),
 		},
 	}
 

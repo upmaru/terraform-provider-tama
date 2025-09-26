@@ -77,6 +77,7 @@ resource "tama_class" "test" {
 resource "tama_listener" "test" {
   space_id = tama_space.test.id
   endpoint = "http://localhost:4000/tama/activities"
+  secret   = "super-secret"
 }
 
 resource "tama_listener_topic" "test" {
@@ -128,6 +129,7 @@ resource "tama_class" "test_b" {
 resource "tama_listener" "test" {
   space_id = tama_space.test.id
   endpoint = "http://localhost:4000/tama/activities"
+  secret   = "super-secret"
 }
 
 resource "tama_listener_topic" "test" {
