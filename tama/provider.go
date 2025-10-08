@@ -73,6 +73,7 @@ type TamaProviderModel struct {
 	BaseURL      types.String `tfsdk:"base_url"`
 	ClientID     types.String `tfsdk:"client_id"`
 	ClientSecret types.String `tfsdk:"client_secret"`
+	Scopes       types.List   `tfsdk:"scopes"`
 	Timeout      types.Int64  `tfsdk:"timeout"`
 }
 
@@ -98,6 +99,11 @@ func (p *TamaProvider) Schema(ctx context.Context, req provider.SchemaRequest, r
 				Optional:            true,
 				Sensitive:           true,
 			},
+			"scopes": schema.ListAttribute{
+				MarkdownDescription: "OAuth2 scopes to request for the Tama API. Defaults to [\"provision.all\"].",
+				Optional:            true,
+				ElementType:         types.StringType,
+			},
 			"timeout": schema.Int64Attribute{
 				MarkdownDescription: "Timeout for API requests in seconds. Defaults to 30.",
 				Optional:            true,
@@ -119,6 +125,7 @@ func (p *TamaProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	baseURL := "https://api.tama.io"
 	clientID := ""
 	clientSecret := ""
+	scopes := []string{"provision.all"}
 	timeout := int64(30)
 
 	// Override with configuration values
@@ -136,6 +143,14 @@ func (p *TamaProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 
 	if !data.Timeout.IsNull() {
 		timeout = data.Timeout.ValueInt64()
+	}
+
+	if !data.Scopes.IsNull() && !data.Scopes.IsUnknown() {
+		var providedScopes []string
+		resp.Diagnostics.Append(data.Scopes.ElementsAs(ctx, &providedScopes, false)...)
+		if !resp.Diagnostics.HasError() {
+			scopes = providedScopes
+		}
 	}
 
 	// Override with environment variables
@@ -184,6 +199,7 @@ func (p *TamaProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 
 	ctx = tflog.SetField(ctx, "tama_base_url", baseURL)
 	ctx = tflog.SetField(ctx, "tama_timeout", timeout)
+	ctx = tflog.SetField(ctx, "tama_scopes", scopes)
 	ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "tama_client_secret")
 
 	tflog.Debug(ctx, "Creating Tama API client")
@@ -194,6 +210,7 @@ func (p *TamaProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		Timeout:      time.Duration(timeout) * time.Second,
+		Scopes:       scopes,
 	}
 
 	// Create Tama client
