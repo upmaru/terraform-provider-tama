@@ -106,6 +106,7 @@ jobs:
       - name: Bootstrap Tama
         env:
           TAMA_BASE_URL: "http://localhost:4000"
+          TAMA_API_KEY: "dummy"
           TAMA_CLIENT_ID: "0199bde3-991f-749d-a7b6-f3f44d63dbdd"
           TAMA_CLIENT_SECRET: "c29tZS1zZWNyZXQ"
         run: |
@@ -115,6 +116,7 @@ jobs:
       - env:
           TF_ACC: "1"
           TAMA_BASE_URL: "http://localhost:4000"
+          TAMA_API_KEY: "dummy"
           TAMA_CLIENT_ID: "0199bde3-991f-749d-a7b6-f3f44d63dbdd"
           TAMA_CLIENT_SECRET: "c29tZS1zZWNyZXQ"
         run: |
