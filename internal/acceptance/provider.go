@@ -32,7 +32,10 @@ func TestAccPreCheck(t *testing.T) {
 	if v := os.Getenv("TAMA_BASE_URL"); v == "" {
 		t.Fatal("TAMA_BASE_URL must be set for acceptance tests")
 	}
-	if v := os.Getenv("TAMA_API_KEY"); v == "" {
-		t.Fatal("TAMA_API_KEY must be set for acceptance tests")
+	if v := os.Getenv("TAMA_CLIENT_ID"); v == "" {
+		t.Fatal("TAMA_CLIENT_ID must be set for acceptance tests")
+	}
+	if v := os.Getenv("TAMA_CLIENT_SECRET"); v == "" {
+		t.Fatal("TAMA_CLIENT_SECRET must be set for acceptance tests")
 	}
 }

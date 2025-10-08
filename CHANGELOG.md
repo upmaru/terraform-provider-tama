@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `tama_limit` resource for managing rate limits
   - `tama_limit` data source for referencing existing limits
 - Provider configuration with authentication support
-- Support for environment variable configuration (`TAMA_BASE_URL`, `TAMA_API_KEY`)
+- Support for environment variable configuration (`TAMA_BASE_URL`, `TAMA_CLIENT_ID`, `TAMA_CLIENT_SECRET`)
 - Comprehensive examples for all resources and data sources
 - Import support for all resources
 - Integration with `github.com/upmaru/tama-go` client library

@@ -70,9 +70,10 @@ type TamaProvider struct {
 
 // TamaProviderModel describes the provider data model.
 type TamaProviderModel struct {
-	BaseURL types.String `tfsdk:"base_url"`
-	APIKey  types.String `tfsdk:"api_key"`
-	Timeout types.Int64  `tfsdk:"timeout"`
+	BaseURL      types.String `tfsdk:"base_url"`
+	ClientID     types.String `tfsdk:"client_id"`
+	ClientSecret types.String `tfsdk:"client_secret"`
+	Timeout      types.Int64  `tfsdk:"timeout"`
 }
 
 func (p *TamaProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -88,8 +89,12 @@ func (p *TamaProvider) Schema(ctx context.Context, req provider.SchemaRequest, r
 				MarkdownDescription: "The base URL for the Tama API. Can also be set via the TAMA_BASE_URL environment variable.",
 				Optional:            true,
 			},
-			"api_key": schema.StringAttribute{
-				MarkdownDescription: "The API key for authenticating with the Tama API. Can also be set via the TAMA_API_KEY environment variable.",
+			"client_id": schema.StringAttribute{
+				MarkdownDescription: "The OAuth2 Client ID for authenticating with the Tama API. Can also be set via the TAMA_CLIENT_ID environment variable.",
+				Optional:            true,
+			},
+			"client_secret": schema.StringAttribute{
+				MarkdownDescription: "The OAuth2 Client Secret for authenticating with the Tama API. Can also be set via the TAMA_CLIENT_SECRET environment variable.",
 				Optional:            true,
 				Sensitive:           true,
 			},
@@ -112,7 +117,8 @@ func (p *TamaProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 
 	// Default values
 	baseURL := "https://api.tama.io"
-	apiKey := ""
+	clientID := ""
+	clientSecret := ""
 	timeout := int64(30)
 
 	// Override with configuration values
@@ -120,8 +126,12 @@ func (p *TamaProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		baseURL = data.BaseURL.ValueString()
 	}
 
-	if !data.APIKey.IsNull() {
-		apiKey = data.APIKey.ValueString()
+	if !data.ClientID.IsNull() {
+		clientID = data.ClientID.ValueString()
+	}
+
+	if !data.ClientSecret.IsNull() {
+		clientSecret = data.ClientSecret.ValueString()
 	}
 
 	if !data.Timeout.IsNull() {
@@ -133,16 +143,30 @@ func (p *TamaProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 		baseURL = envBaseURL
 	}
 
-	if envAPIKey := os.Getenv("TAMA_API_KEY"); envAPIKey != "" {
-		apiKey = envAPIKey
+	if envClientID := os.Getenv("TAMA_CLIENT_ID"); envClientID != "" {
+		clientID = envClientID
+	}
+
+	if envClientSecret := os.Getenv("TAMA_CLIENT_SECRET"); envClientSecret != "" {
+		clientSecret = envClientSecret
 	}
 
 	// Validate required configuration
-	if apiKey == "" {
+	if clientID == "" {
 		resp.Diagnostics.AddError(
-			"Missing API Key Configuration",
-			"The provider cannot create the Tama API client as there is a missing or empty value for the API key. "+
-				"Set the api_key value in the configuration or use the TAMA_API_KEY environment variable. "+
+			"Missing Client ID Configuration",
+			"The provider cannot create the Tama API client as there is a missing or empty value for the client ID. "+
+				"Set the client_id value in the configuration or use the TAMA_CLIENT_ID environment variable. "+
+				"If either is already set, ensure the value is not empty.",
+		)
+		return
+	}
+
+	if clientSecret == "" {
+		resp.Diagnostics.AddError(
+			"Missing Client Secret Configuration",
+			"The provider cannot create the Tama API client as there is a missing or empty value for the client secret. "+
+				"Set the client_secret value in the configuration or use the TAMA_CLIENT_SECRET environment variable. "+
 				"If either is already set, ensure the value is not empty.",
 		)
 		return
@@ -160,19 +184,27 @@ func (p *TamaProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 
 	ctx = tflog.SetField(ctx, "tama_base_url", baseURL)
 	ctx = tflog.SetField(ctx, "tama_timeout", timeout)
-	ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "tama_api_key")
+	ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "tama_client_secret")
 
 	tflog.Debug(ctx, "Creating Tama API client")
 
 	// Create Tama client configuration
 	config := tama.Config{
-		BaseURL: baseURL,
-		APIKey:  apiKey,
-		Timeout: time.Duration(timeout) * time.Second,
+		BaseURL:      baseURL,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Timeout:      time.Duration(timeout) * time.Second,
 	}
 
 	// Create Tama client
-	client := tama.NewClient(config)
+	client, err := tama.NewClient(config)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Failed to create Tama API client",
+			"An error occurred while creating the Tama API client: "+err.Error(),
+		)
+		return
+	}
 
 	// Make the client available during DataSource and Resource type Configure methods.
 	resp.DataSourceData = client
