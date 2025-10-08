@@ -83,11 +83,12 @@ jobs:
           - 5432:5432
 
       tama:
-        image: ghcr.io/upmaru/tama:0.4-server
+        image: ghcr.io/upmaru/tama:0.5-ci
         env:
           DATABASE_URL: postgres://postgres:postgres@postgres:5432/tama_test
           TAMA_MAX_VECTOR_DIMENSIONS: 1024
           TAMA_VAULT_KEY: MJOdb4sy3/xXzdYPDRZE3Jcj0gHx3utVsyCpCuTrRWM=
+          TAMA_JWT_SECRET: MJOdb4sy3/xXzdYPDRZE3Jcj0gHx3utVsyCpCuTrRWM=
           SECRET_KEY_BASE: mmgb4Aoa2PphESQICdr31vVXHhvufcrXS7hDPK+mx8CWnNfWEDtthx6zD49L4Cqv
           PHX_SERVER: true
         ports:
@@ -107,6 +108,8 @@ jobs:
         env:
           TAMA_BASE_URL: "http://localhost:4000"
           TAMA_API_KEY: "dummy"
+          TAMA_CLIENT_ID: "0199bde3-991f-749d-a7b6-f3f44d63dbdd"
+          TAMA_CLIENT_SECRET: "c29tZS1zZWNyZXQ"
         run: |
           terraform -chdir=scripts/setup init -upgrade
           terraform -chdir=scripts/setup apply -auto-approve
@@ -115,6 +118,8 @@ jobs:
           TF_ACC: "1"
           TAMA_BASE_URL: "http://localhost:4000"
           TAMA_API_KEY: "dummy"
+          TAMA_CLIENT_ID: "0199bde3-991f-749d-a7b6-f3f44d63dbdd"
+          TAMA_CLIENT_SECRET: "c29tZS1zZWNyZXQ"
         run: |
           go test -v -cover ./...
         timeout-minutes: 30

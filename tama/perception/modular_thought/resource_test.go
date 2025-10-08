@@ -497,24 +497,18 @@ resource "tama_modular_thought" "test" {
   module {
     reference = "tama/agentic/router"
     parameters = jsonencode({
-      similarity = {
-        limit     = 10
-        threshold = 0.9
-      }
-      classification = {
-        class_name = "class"
-        properties = ["class", "confidence"]
-        thread = {
-          limit = 5
-          classes = {
-            author = "actor"
-            thread = "thread"
-            message = "user-message"
-          }
-          relations = {
-            routing = "routing"
-            focus = ["tooling"]
-          }
+      class_name = "class"
+      properties = ["class", "confidence"]
+      thread = {
+        limit = 5
+        classes = {
+          author = "actor"
+          thread = "thread"
+          message = "user-message"
+        }
+        relations = {
+          routing = "routing"
+          focus = ["tooling"]
         }
       }
     })

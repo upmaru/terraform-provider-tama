@@ -48,14 +48,17 @@ Configure the provider with your Tama API credentials:
 ```hcl
 provider "tama" {
   base_url = "https://api.tama.io"  # Optional: defaults to https://api.tama.io
-  api_key  = var.tama_api_key       # Required: your Tama API key
+  client_id  = var.tama_client_id
+  client_secret = var.tama_client_secret
+  # Required: your Tama API key
   timeout  = 30                     # Optional: request timeout in seconds
 }
 ```
 
 You can also use environment variables:
 - `TAMA_BASE_URL` - Base URL for the Tama API
-- `TAMA_API_KEY` - Your Tama API key
+- `TAMA_CLIENT_ID` - Your Tama Client ID
+- `TAMA_CLIENT_SECRET` - Your Tama Client Secret
 
 ### Quick Start Example
 

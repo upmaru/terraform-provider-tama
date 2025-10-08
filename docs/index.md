@@ -40,6 +40,7 @@ variable "tama_api_key" {
 
 ### Optional
 
-- `api_key` (String, Sensitive) The API key for authenticating with the Tama API. Can also be set via the TAMA_API_KEY environment variable.
 - `base_url` (String) The base URL for the Tama API. Can also be set via the TAMA_BASE_URL environment variable.
+- `client_id` (String) The OAuth2 Client ID for authenticating with the Tama API. Can also be set via the TAMA_CLIENT_ID environment variable.
+- `client_secret` (String, Sensitive) The OAuth2 Client Secret for authenticating with the Tama API. Can also be set via the TAMA_CLIENT_SECRET environment variable.
 - `timeout` (Number) Timeout for API requests in seconds. Defaults to 30.

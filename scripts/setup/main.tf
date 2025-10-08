@@ -16,5 +16,5 @@ provider "tama" {}
 
 module "global" {
   source  = "upmaru/base/tama"
-  version = "0.2.23"
+  version = "0.4.3"
 }
