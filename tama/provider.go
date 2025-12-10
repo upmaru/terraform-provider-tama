@@ -49,6 +49,7 @@ import (
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/model"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/source"
 	"github.com/upmaru/terraform-provider-tama/tama/sensory/specification"
+	system_queue "github.com/upmaru/terraform-provider-tama/tama/system/queue"
 	tool_initializer "github.com/upmaru/terraform-provider-tama/tama/tools/initializer"
 	tool_input "github.com/upmaru/terraform-provider-tama/tama/tools/input"
 	tool_option "github.com/upmaru/terraform-provider-tama/tama/tools/option"
@@ -265,6 +266,7 @@ func (p *TamaProvider) Resources(ctx context.Context) []func() resource.Resource
 		tool_output.NewResource,
 		tool_option.NewResource,
 		modifier.NewResource,
+		system_queue.NewResource,
 	}
 }
 

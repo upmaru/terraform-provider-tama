@@ -167,6 +167,7 @@ output "validation_class_id" {
 
 ### Optional
 
+- `faculty` (Block, Optional) Faculty queue configuration for dispatching the thought (see [below for nested schema](#nestedblock--faculty))
 - `index` (Number) Index position of the modular thought in the chain
 - `module` (Block, Optional) Module configuration for the modular thought (see [below for nested schema](#nestedblock--module))
 - `output_class_id` (String) ID of the output class for this modular thought
@@ -175,6 +176,15 @@ output "validation_class_id" {
 
 - `id` (String) Modular thought identifier
 - `provision_state` (String) Current state of the modular thought
+
+<a id="nestedblock--faculty"></a>
+### Nested Schema for `faculty`
+
+Optional:
+
+- `priority` (Number) Priority to assign when enqueuing the thought
+- `queue_id` (String) Queue identifier that processes the thought
+
 
 <a id="nestedblock--module"></a>
 ### Nested Schema for `module`

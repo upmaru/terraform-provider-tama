@@ -79,6 +79,35 @@ func TestAccModularThoughtResource_WithOutputClass(t *testing.T) {
 	})
 }
 
+func TestAccModularThoughtResource_WithFaculty(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccModularThoughtResourceConfigWithFaculty(
+					fmt.Sprintf("test-space-%d", time.Now().UnixNano()),
+					fmt.Sprintf("test-queue-%d", time.Now().UnixNano()),
+				),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("tama_modular_thought.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_modular_thought.test", "chain_id"),
+					resource.TestCheckResourceAttr("tama_modular_thought.test", "relation", "description"),
+					resource.TestCheckResourceAttr("tama_modular_thought.test", "module.reference", "tama/agentic/generate"),
+					resource.TestCheckResourceAttrSet("tama_modular_thought.test", "module.parameters"),
+					resource.TestCheckResourceAttr("tama_modular_thought.test", "faculty.priority", "1"),
+					resource.TestCheckResourceAttrPair(
+						"tama_modular_thought.test",
+						"faculty.queue_id",
+						"tama_queue.test",
+						"id",
+					),
+				),
+			},
+		},
+	})
+}
+
 func TestAccModularThoughtResource_WithIndex(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
@@ -287,6 +316,43 @@ resource "tama_modular_thought" "test" {
   }
 }
 `, spaceName)
+}
+
+func testAccModularThoughtResourceConfigWithFaculty(spaceName, queueName string) string {
+	return fmt.Sprintf(`
+resource "tama_space" "test" {
+  name = "%s"
+  type = "root"
+}
+
+resource "tama_queue" "test" {
+  role        = "oracle"
+  name        = "%s"
+  concurrency = 16
+}
+
+resource "tama_chain" "test" {
+  space_id = tama_space.test.id
+  name     = "Test Processing Chain"
+}
+
+resource "tama_modular_thought" "test" {
+  chain_id = tama_chain.test.id
+  relation = "description"
+
+  module {
+    reference = "tama/agentic/generate"
+    parameters = jsonencode({
+      relation = "description"
+    })
+  }
+
+  faculty {
+    queue_id = tama_queue.test.id
+    priority = 1
+  }
+}
+`, spaceName, queueName)
 }
 
 func testAccModularThoughtResourceConfigWithIndex(spaceName string) string {
