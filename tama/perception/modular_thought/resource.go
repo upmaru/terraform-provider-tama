@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"maps"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -23,6 +25,7 @@ import (
 // Ensure provider defined types fully satisfy framework interfaces.
 var _ resource.Resource = &Resource{}
 var _ resource.ResourceWithImportState = &Resource{}
+var _ resource.ResourceWithConfigValidators = &Resource{}
 
 func NewResource() resource.Resource {
 	return &Resource{}
@@ -39,15 +42,22 @@ type ModuleModel struct {
 	Parameters types.String `tfsdk:"parameters"`
 }
 
+// FacultyModel describes the faculty block data model.
+type FacultyModel struct {
+	QueueId  types.String `tfsdk:"queue_id"`
+	Priority types.Int64  `tfsdk:"priority"`
+}
+
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id             types.String `tfsdk:"id"`
-	ChainId        types.String `tfsdk:"chain_id"`
-	OutputClassId  types.String `tfsdk:"output_class_id"`
-	Module         ModuleModel  `tfsdk:"module"`
-	ProvisionState types.String `tfsdk:"provision_state"`
-	Relation       types.String `tfsdk:"relation"`
-	Index          types.Int64  `tfsdk:"index"`
+	Id             types.String  `tfsdk:"id"`
+	ChainId        types.String  `tfsdk:"chain_id"`
+	OutputClassId  types.String  `tfsdk:"output_class_id"`
+	Module         ModuleModel   `tfsdk:"module"`
+	Faculty        *FacultyModel `tfsdk:"faculty"`
+	ProvisionState types.String  `tfsdk:"provision_state"`
+	Relation       types.String  `tfsdk:"relation"`
+	Index          types.Int64   `tfsdk:"index"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -110,7 +120,30 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 					},
 				},
 			},
+			"faculty": schema.SingleNestedBlock{
+				MarkdownDescription: "Faculty queue configuration for dispatching the thought",
+				Attributes: map[string]schema.Attribute{
+					"queue_id": schema.StringAttribute{
+						MarkdownDescription: "Queue identifier that processes the thought",
+						Optional:            true,
+					},
+					"priority": schema.Int64Attribute{
+						MarkdownDescription: "Priority to assign when enqueuing the thought",
+						Optional:            true,
+					},
+				},
+			},
 		},
+	}
+}
+
+// ConfigValidators implements the resource.ResourceWithConfigValidators interface.
+func (r *Resource) ConfigValidators(ctx context.Context) []resource.ConfigValidator {
+	return []resource.ConfigValidator{
+		resourcevalidator.RequiredTogether(
+			path.MatchRoot("faculty").AtName("queue_id"),
+			path.MatchRoot("faculty").AtName("priority"),
+		),
 	}
 }
 
@@ -155,6 +188,13 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		}
 	}
 
+	// Parse faculty configuration if provided
+	faculty, facultyErr := expandFacultyModel(data.Faculty)
+	if facultyErr != nil {
+		resp.Diagnostics.AddError("Faculty Error", fmt.Sprintf("Invalid faculty configuration: %s", facultyErr))
+		return
+	}
+
 	// Create modular thought request
 	createReq := perception.CreateThoughtRequest{
 		Thought: perception.ThoughtRequestData{
@@ -163,6 +203,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 				Reference:  moduleBlock.Reference.ValueString(),
 				Parameters: parameters,
 			},
+			Faculty: faculty,
 		},
 	}
 
@@ -204,6 +245,14 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		resp.Diagnostics.AddError("Module Error", fmt.Sprintf("Unable to update module from response: %s", err))
 		return
 	}
+
+	data.Faculty = flattenFacultyToModel(thoughtResponse.Faculty)
+
+	data.Faculty = flattenFacultyToModel(thoughtResponse.Faculty)
+
+	data.Faculty = flattenFacultyToModel(thoughtResponse.Faculty)
+
+	data.Faculty = flattenFacultyToModel(thoughtResponse.Faculty)
 
 	// Write logs using the tflog package
 	tflog.Trace(ctx, "created a modular thought resource")
@@ -273,6 +322,13 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		}
 	}
 
+	// Parse faculty configuration if provided
+	faculty, facultyErr := expandFacultyModel(data.Faculty)
+	if facultyErr != nil {
+		resp.Diagnostics.AddError("Faculty Error", fmt.Sprintf("Invalid faculty configuration: %s", facultyErr))
+		return
+	}
+
 	// Update modular thought request
 	updateReq := perception.UpdateThoughtRequest{
 		Thought: perception.UpdateThoughtData{
@@ -281,6 +337,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 				Reference:  moduleBlock.Reference.ValueString(),
 				Parameters: parameters,
 			},
+			Faculty: faculty,
 		},
 	}
 
@@ -437,6 +494,38 @@ func (r *Resource) updateModuleFromResponse(responseModule perception.Module, da
 
 	data.Module = moduleModel
 	return nil
+}
+
+// expandFacultyModel converts the Terraform model into the API struct.
+func expandFacultyModel(faculty *FacultyModel) (*perception.Faculty, error) {
+	if faculty == nil {
+		return nil, nil
+	}
+
+	if faculty.QueueId.IsUnknown() || faculty.QueueId.IsNull() || faculty.QueueId.ValueString() == "" {
+		return nil, fmt.Errorf("faculty.queue_id must be provided")
+	}
+
+	if faculty.Priority.IsUnknown() || faculty.Priority.IsNull() {
+		return nil, fmt.Errorf("faculty.priority must be provided")
+	}
+
+	return &perception.Faculty{
+		QueueID:  faculty.QueueId.ValueString(),
+		Priority: int(faculty.Priority.ValueInt64()),
+	}, nil
+}
+
+// flattenFacultyToModel converts the API faculty struct into the Terraform model.
+func flattenFacultyToModel(faculty *perception.Faculty) *FacultyModel {
+	if faculty == nil {
+		return nil
+	}
+
+	return &FacultyModel{
+		QueueId:  types.StringValue(faculty.QueueID),
+		Priority: types.Int64Value(int64(faculty.Priority)),
+	}
 }
 
 // preserveUserFloatTypes merges server response parameters with user-provided parameters,
