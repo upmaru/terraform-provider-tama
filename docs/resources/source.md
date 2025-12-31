@@ -83,8 +83,38 @@ output "openai_source_id" {
 - `space_id` (String) ID of the space this source belongs to
 - `type` (String) Type of the source (e.g., 'model')
 
+### Optional
+
+- `request` (Attributes) Request configuration for the source (see [below for nested schema](#nestedatt--request))
+
 ### Read-Only
 
 - `id` (String) Source identifier
 - `provision_state` (String) Current state of the source ('active' or 'inactive')
 - `slug` (String) Source slug (generated from name)
+
+<a id="nestedatt--request"></a>
+### Nested Schema for `request`
+
+Optional:
+
+- `headers` (Attributes List) Custom headers to include in requests (see [below for nested schema](#nestedatt--request--headers))
+- `session_affinity` (Attributes) Session affinity configuration (see [below for nested schema](#nestedatt--request--session_affinity))
+
+<a id="nestedatt--request--headers"></a>
+### Nested Schema for `request.headers`
+
+Required:
+
+- `name` (String) Header name
+- `value` (String) Header value
+
+
+<a id="nestedatt--request--session_affinity"></a>
+### Nested Schema for `request.session_affinity`
+
+Required:
+
+- `key` (String) Key for the session affinity
+- `location` (String) Location of the session affinity value (header or body)
+- `value` (String) Value for the session affinity (e.g., 'actor_id')
