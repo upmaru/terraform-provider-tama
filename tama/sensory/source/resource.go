@@ -32,14 +32,34 @@ type Resource struct {
 
 // ResourceModel describes the resource data model.
 type ResourceModel struct {
-	Id             types.String `tfsdk:"id"`
-	SpaceId        types.String `tfsdk:"space_id"`
-	Name           types.String `tfsdk:"name"`
-	Slug           types.String `tfsdk:"slug"`
-	Type           types.String `tfsdk:"type"`
-	Endpoint       types.String `tfsdk:"endpoint"`
-	ApiKey         types.String `tfsdk:"api_key"`
-	ProvisionState types.String `tfsdk:"provision_state"`
+	Id             types.String  `tfsdk:"id"`
+	SpaceId        types.String  `tfsdk:"space_id"`
+	Name           types.String  `tfsdk:"name"`
+	Slug           types.String  `tfsdk:"slug"`
+	Type           types.String  `tfsdk:"type"`
+	Endpoint       types.String  `tfsdk:"endpoint"`
+	ApiKey         types.String  `tfsdk:"api_key"`
+	ProvisionState types.String  `tfsdk:"provision_state"`
+	Request        *RequestModel `tfsdk:"request"`
+}
+
+// RequestModel describes the request configuration.
+type RequestModel struct {
+	Headers         []HeaderModel         `tfsdk:"headers"`
+	SessionAffinity *SessionAffinityModel `tfsdk:"session_affinity"`
+}
+
+// HeaderModel describes a request header.
+type HeaderModel struct {
+	Name  types.String `tfsdk:"name"`
+	Value types.String `tfsdk:"value"`
+}
+
+// SessionAffinityModel describes session affinity configuration.
+type SessionAffinityModel struct {
+	Location types.String `tfsdk:"location"`
+	Key      types.String `tfsdk:"key"`
+	Value    types.String `tfsdk:"value"`
 }
 
 func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -90,6 +110,46 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 				MarkdownDescription: "Current state of the source ('active' or 'inactive')",
 				Computed:            true,
 			},
+			"request": schema.SingleNestedAttribute{
+				MarkdownDescription: "Request configuration for the source",
+				Optional:            true,
+				Attributes: map[string]schema.Attribute{
+					"headers": schema.ListNestedAttribute{
+						MarkdownDescription: "Custom headers to include in requests",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"name": schema.StringAttribute{
+									MarkdownDescription: "Header name",
+									Required:            true,
+								},
+								"value": schema.StringAttribute{
+									MarkdownDescription: "Header value",
+									Required:            true,
+								},
+							},
+						},
+					},
+					"session_affinity": schema.SingleNestedAttribute{
+						MarkdownDescription: "Session affinity configuration",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"location": schema.StringAttribute{
+								MarkdownDescription: "Location of the session affinity value (header or body)",
+								Required:            true,
+							},
+							"key": schema.StringAttribute{
+								MarkdownDescription: "Key for the session affinity",
+								Required:            true,
+							},
+							"value": schema.StringAttribute{
+								MarkdownDescription: "Value for the session affinity (e.g., 'actor_id')",
+								Required:            true,
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -136,6 +196,33 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		},
 	}
 
+	// Add request configuration if provided
+	if data.Request != nil {
+		requestData := &sensory.Request{}
+
+		// Add headers if provided
+		if len(data.Request.Headers) > 0 {
+			requestData.Headers = make([]sensory.Header, len(data.Request.Headers))
+			for i, h := range data.Request.Headers {
+				requestData.Headers[i] = sensory.Header{
+					Name:  h.Name.ValueString(),
+					Value: h.Value.ValueString(),
+				}
+			}
+		}
+
+		// Add session affinity if provided
+		if data.Request.SessionAffinity != nil {
+			requestData.SessionAffinity = &sensory.SessionAffinity{
+				Location: data.Request.SessionAffinity.Location.ValueString(),
+				Key:      data.Request.SessionAffinity.Key.ValueString(),
+				Value:    data.Request.SessionAffinity.Value.ValueString(),
+			}
+		}
+
+		createRequest.Source.Request = requestData
+	}
+
 	tflog.Debug(ctx, "Creating source", map[string]any{
 		"space_id": data.SpaceId.ValueString(),
 		"name":     data.Name.ValueString(),
@@ -158,6 +245,31 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 	data.ProvisionState = types.StringValue(sourceResponse.ProvisionState)
 	data.Endpoint = types.StringValue(sourceResponse.Endpoint)
 	// Note: API key is not returned in response, keep the original value
+
+	// Populate request data from response if available
+	if sourceResponse.Request != nil {
+		data.Request = &RequestModel{}
+
+		// Populate headers
+		if len(sourceResponse.Request.Headers) > 0 {
+			data.Request.Headers = make([]HeaderModel, len(sourceResponse.Request.Headers))
+			for i, h := range sourceResponse.Request.Headers {
+				data.Request.Headers[i] = HeaderModel{
+					Name:  types.StringValue(h.Name),
+					Value: types.StringValue(h.Value),
+				}
+			}
+		}
+
+		// Populate session affinity
+		if sourceResponse.Request.SessionAffinity != nil {
+			data.Request.SessionAffinity = &SessionAffinityModel{
+				Location: types.StringValue(sourceResponse.Request.SessionAffinity.Location),
+				Key:      types.StringValue(sourceResponse.Request.SessionAffinity.Key),
+				Value:    types.StringValue(sourceResponse.Request.SessionAffinity.Value),
+			}
+		}
+	}
 
 	// Write logs using the tflog package
 	tflog.Trace(ctx, "created a source resource")
@@ -192,6 +304,34 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 	data.Endpoint = types.StringValue(sourceResponse.Endpoint)
 	// Note: API key is not returned in response, keep the original value
 
+	// Populate request data from response if available
+	if sourceResponse.Request != nil {
+		data.Request = &RequestModel{}
+
+		// Populate headers
+		if len(sourceResponse.Request.Headers) > 0 {
+			data.Request.Headers = make([]HeaderModel, len(sourceResponse.Request.Headers))
+			for i, h := range sourceResponse.Request.Headers {
+				data.Request.Headers[i] = HeaderModel{
+					Name:  types.StringValue(h.Name),
+					Value: types.StringValue(h.Value),
+				}
+			}
+		}
+
+		// Populate session affinity
+		if sourceResponse.Request.SessionAffinity != nil {
+			data.Request.SessionAffinity = &SessionAffinityModel{
+				Location: types.StringValue(sourceResponse.Request.SessionAffinity.Location),
+				Key:      types.StringValue(sourceResponse.Request.SessionAffinity.Key),
+				Value:    types.StringValue(sourceResponse.Request.SessionAffinity.Value),
+			}
+		}
+	} else {
+		// Clear request data if not present in response
+		data.Request = nil
+	}
+
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
@@ -218,6 +358,33 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		},
 	}
 
+	// Add request configuration if provided
+	if data.Request != nil {
+		requestData := &sensory.Request{}
+
+		// Add headers if provided
+		if len(data.Request.Headers) > 0 {
+			requestData.Headers = make([]sensory.Header, len(data.Request.Headers))
+			for i, h := range data.Request.Headers {
+				requestData.Headers[i] = sensory.Header{
+					Name:  h.Name.ValueString(),
+					Value: h.Value.ValueString(),
+				}
+			}
+		}
+
+		// Add session affinity if provided
+		if data.Request.SessionAffinity != nil {
+			requestData.SessionAffinity = &sensory.SessionAffinity{
+				Location: data.Request.SessionAffinity.Location.ValueString(),
+				Key:      data.Request.SessionAffinity.Key.ValueString(),
+				Value:    data.Request.SessionAffinity.Value.ValueString(),
+			}
+		}
+
+		updateRequest.Source.Request = requestData
+	}
+
 	tflog.Debug(ctx, "Updating source", map[string]any{
 		"id":       data.Id.ValueString(),
 		"name":     data.Name.ValueString(),
@@ -239,6 +406,34 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 	data.ProvisionState = types.StringValue(sourceResponse.ProvisionState)
 	data.Endpoint = types.StringValue(sourceResponse.Endpoint)
 	// Note: API key is not returned in response, keep the original value
+
+	// Populate request data from response if available
+	if sourceResponse.Request != nil {
+		data.Request = &RequestModel{}
+
+		// Populate headers
+		if len(sourceResponse.Request.Headers) > 0 {
+			data.Request.Headers = make([]HeaderModel, len(sourceResponse.Request.Headers))
+			for i, h := range sourceResponse.Request.Headers {
+				data.Request.Headers[i] = HeaderModel{
+					Name:  types.StringValue(h.Name),
+					Value: types.StringValue(h.Value),
+				}
+			}
+		}
+
+		// Populate session affinity
+		if sourceResponse.Request.SessionAffinity != nil {
+			data.Request.SessionAffinity = &SessionAffinityModel{
+				Location: types.StringValue(sourceResponse.Request.SessionAffinity.Location),
+				Key:      types.StringValue(sourceResponse.Request.SessionAffinity.Key),
+				Value:    types.StringValue(sourceResponse.Request.SessionAffinity.Value),
+			}
+		}
+	} else {
+		// Clear request data if not present in response
+		data.Request = nil
+	}
 
 	// Save updated data into Terraform state
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

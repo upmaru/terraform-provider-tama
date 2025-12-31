@@ -237,6 +237,153 @@ resource "tama_source" "test" {
 `, name, sourceType, endpoint, apiKey)
 }
 
+func testAccSourceResourceConfigWithHeaders(name, sourceType, endpoint, apiKey string) string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test_space" {
+  name = "test-space-for-source-%d"
+  type = "root"
+}`, timestamp) + fmt.Sprintf(`
+
+resource "tama_source" "test" {
+  space_id = tama_space.test_space.id
+  name     = %[1]q
+  type     = %[2]q
+  endpoint = %[3]q
+  api_key  = %[4]q
+
+  request = {
+    headers = [
+      {
+        name  = "x-custom-header"
+        value = "custom-value"
+      },
+      {
+        name  = "x-api-version"
+        value = "v1"
+      }
+    ]
+  }
+}
+`, name, sourceType, endpoint, apiKey)
+}
+
+func testAccSourceResourceConfigWithHeadersUpdated(name, sourceType, endpoint, apiKey string) string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test_space" {
+  name = "test-space-for-source-%d"
+  type = "root"
+}`, timestamp) + fmt.Sprintf(`
+
+resource "tama_source" "test" {
+  space_id = tama_space.test_space.id
+  name     = %[1]q
+  type     = %[2]q
+  endpoint = %[3]q
+  api_key  = %[4]q
+
+  request = {
+    headers = [
+      {
+        name  = "x-updated-header"
+        value = "updated-value"
+      }
+    ]
+  }
+}
+`, name, sourceType, endpoint, apiKey)
+}
+
+func testAccSourceResourceConfigWithSessionAffinity(name, sourceType, endpoint, apiKey string) string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test_space" {
+  name = "test-space-for-source-%d"
+  type = "root"
+}`, timestamp) + fmt.Sprintf(`
+
+resource "tama_source" "test" {
+  space_id = tama_space.test_space.id
+  name     = %[1]q
+  type     = %[2]q
+  endpoint = %[3]q
+  api_key  = %[4]q
+
+  request = {
+    session_affinity = {
+      location = "header"
+      key      = "x-session-affinity"
+      value    = "actor_id"
+    }
+  }
+}
+`, name, sourceType, endpoint, apiKey)
+}
+
+func testAccSourceResourceConfigWithSessionAffinityUpdated(name, sourceType, endpoint, apiKey string) string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test_space" {
+  name = "test-space-for-source-%d"
+  type = "root"
+}`, timestamp) + fmt.Sprintf(`
+
+resource "tama_source" "test" {
+  space_id = tama_space.test_space.id
+  name     = %[1]q
+  type     = %[2]q
+  endpoint = %[3]q
+  api_key  = %[4]q
+
+  request = {
+    session_affinity = {
+      location = "body"
+      key      = "session_id"
+      value    = "actor_id"
+    }
+  }
+}
+`, name, sourceType, endpoint, apiKey)
+}
+
+func testAccSourceResourceConfigWithFullRequest(name, sourceType, endpoint, apiKey string) string {
+	timestamp := time.Now().UnixNano()
+	return acceptance.ProviderConfig + fmt.Sprintf(`
+resource "tama_space" "test_space" {
+  name = "test-space-for-source-%d"
+  type = "root"
+}`, timestamp) + fmt.Sprintf(`
+
+resource "tama_source" "test" {
+  space_id = tama_space.test_space.id
+  name     = %[1]q
+  type     = %[2]q
+  endpoint = %[3]q
+  api_key  = %[4]q
+
+  request = {
+    headers = [
+      {
+        name  = "x-http"
+        value = "something"
+      },
+      {
+        name  = "authorization"
+        value = "Bearer token"
+      }
+    ]
+
+    session_affinity = {
+      location = "header"
+      key      = "x-session-affinity"
+      value    = "actor_id"
+    }
+  }
+}
+`, name, sourceType, endpoint, apiKey)
+}
+
 func testAccSourceResourceConfigMultiple() string {
 	timestamp := time.Now().UnixNano()
 	return acceptance.ProviderConfig + fmt.Sprintf(`
@@ -278,6 +425,115 @@ func TestAccSourceResource_CurrentState(t *testing.T) {
 					resource.TestCheckResourceAttrSet("tama_source.test", "provision_state"),
 					// Verify that provision_state is not empty
 					resource.TestMatchResourceAttr("tama_source.test", "provision_state", regexp.MustCompile(".+")),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSourceResource_WithRequestHeaders(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing with headers
+			{
+				Config: testAccSourceResourceConfigWithHeaders("test-source-headers", "model", "https://api.example.com", "test-api-key"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_source.test", "name", "test-source-headers"),
+					resource.TestCheckResourceAttr("tama_source.test", "type", "model"),
+					resource.TestCheckResourceAttr("tama_source.test", "endpoint", "https://api.example.com"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "provision_state"),
+					// Check request headers
+					resource.TestCheckResourceAttr("tama_source.test", "request.headers.#", "2"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.headers.0.name", "x-custom-header"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.headers.0.value", "custom-value"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.headers.1.name", "x-api-version"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.headers.1.value", "v1"),
+				),
+			},
+			// Update headers
+			{
+				Config: testAccSourceResourceConfigWithHeadersUpdated("test-source-headers", "model", "https://api.example.com", "test-api-key"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_source.test", "name", "test-source-headers"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.headers.#", "1"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.headers.0.name", "x-updated-header"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.headers.0.value", "updated-value"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSourceResource_WithSessionAffinity(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing with session affinity
+			{
+				Config: testAccSourceResourceConfigWithSessionAffinity("test-source-affinity", "model", "https://api.example.com", "test-api-key"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_source.test", "name", "test-source-affinity"),
+					resource.TestCheckResourceAttr("tama_source.test", "type", "model"),
+					resource.TestCheckResourceAttr("tama_source.test", "endpoint", "https://api.example.com"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "provision_state"),
+					// Check session affinity
+					resource.TestCheckResourceAttr("tama_source.test", "request.session_affinity.location", "header"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.session_affinity.key", "x-session-affinity"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.session_affinity.value", "actor_id"),
+				),
+			},
+			// Update session affinity
+			{
+				Config: testAccSourceResourceConfigWithSessionAffinityUpdated("test-source-affinity", "model", "https://api.example.com", "test-api-key"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_source.test", "name", "test-source-affinity"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.session_affinity.location", "body"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.session_affinity.key", "session_id"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.session_affinity.value", "actor_id"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSourceResource_WithFullRequest(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acceptance.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acceptance.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing with both headers and session affinity
+			{
+				Config: testAccSourceResourceConfigWithFullRequest("test-source-full-request", "model", "https://api.example.com", "test-api-key"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_source.test", "name", "test-source-full-request"),
+					resource.TestCheckResourceAttr("tama_source.test", "type", "model"),
+					resource.TestCheckResourceAttr("tama_source.test", "endpoint", "https://api.example.com"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "id"),
+					resource.TestCheckResourceAttrSet("tama_source.test", "provision_state"),
+					// Check request headers
+					resource.TestCheckResourceAttr("tama_source.test", "request.headers.#", "2"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.headers.0.name", "x-http"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.headers.0.value", "something"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.headers.1.name", "authorization"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.headers.1.value", "Bearer token"),
+					// Check session affinity
+					resource.TestCheckResourceAttr("tama_source.test", "request.session_affinity.location", "header"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.session_affinity.key", "x-session-affinity"),
+					resource.TestCheckResourceAttr("tama_source.test", "request.session_affinity.value", "actor_id"),
+				),
+			},
+			// Update to remove request configuration
+			{
+				Config: testAccSourceResourceConfig("test-source-full-request", "model", "https://api.example.com", "test-api-key"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("tama_source.test", "name", "test-source-full-request"),
+					resource.TestCheckNoResourceAttr("tama_source.test", "request.headers"),
+					resource.TestCheckNoResourceAttr("tama_source.test", "request.session_affinity"),
 				),
 			},
 		},

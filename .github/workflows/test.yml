@@ -83,7 +83,7 @@ jobs:
           - 5432:5432
 
       tama:
-        image: ghcr.io/upmaru/tama:0.8-ci
+        image: ghcr.io/upmaru/tama:0.9-ci
         env:
           DATABASE_URL: postgres://postgres:postgres@postgres:5432/tama_test
           TAMA_MAX_VECTOR_DIMENSIONS: 1024
