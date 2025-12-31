@@ -43,19 +43,19 @@ type ResourceModel struct {
 	Request        *RequestModel `tfsdk:"request"`
 }
 
-// RequestModel describes the request configuration
+// RequestModel describes the request configuration.
 type RequestModel struct {
 	Headers         []HeaderModel         `tfsdk:"headers"`
 	SessionAffinity *SessionAffinityModel `tfsdk:"session_affinity"`
 }
 
-// HeaderModel describes a request header
+// HeaderModel describes a request header.
 type HeaderModel struct {
 	Name  types.String `tfsdk:"name"`
 	Value types.String `tfsdk:"value"`
 }
 
-// SessionAffinityModel describes session affinity configuration
+// SessionAffinityModel describes session affinity configuration.
 type SessionAffinityModel struct {
 	Location types.String `tfsdk:"location"`
 	Key      types.String `tfsdk:"key"`
