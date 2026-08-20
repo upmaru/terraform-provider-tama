@@ -36,10 +36,17 @@ resource "tama_specification" "search" {
       title   = "Scoped Search API"
       version = "1.0.0"
     }
+    servers = [
+      {
+        url = "https://search.example.com"
+      }
+    ]
     paths = {
       "/search" = {
         post = {
           operationId = "scoped-search"
+          summary     = "Search within a trusted actor scope"
+          description = "Searches records while allowing Tama to inject trusted scope metadata."
           requestBody = {
             required = true
             content = {

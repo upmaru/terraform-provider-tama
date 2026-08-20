@@ -170,7 +170,8 @@ func TestAccThoughtToolModifierResource_ExternalDeactivation(t *testing.T) {
 					"error",
 					"actor_identifier",
 				),
-				Check: captureAndDeactivateModifier(&modifierID),
+				Check:              captureAndDeactivateModifier(&modifierID),
+				ExpectNonEmptyPlan: true,
 			},
 			{
 				RefreshState:       true,

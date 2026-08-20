@@ -13,6 +13,8 @@
     "/search": {
       "post": {
         "operationId": "scoped-search",
+        "summary": "Search within a trusted actor scope",
+        "description": "Searches records while allowing Tama to inject trusted scope metadata.",
         "requestBody": {
           "required": true,
           "content": {
