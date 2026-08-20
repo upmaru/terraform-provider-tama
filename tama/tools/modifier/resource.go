@@ -58,7 +58,7 @@ func (r *Resource) Metadata(ctx context.Context, req resource.MetadataRequest, r
 
 func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manages a trusted Tama Thought Tool Modifier resource. The `source` selects trusted runtime metadata; it is not a secret value stored in Terraform. `on_missing_parent = \"skip\"` leaves calls unchanged when the target parent is absent, while `on_missing_source = \"error\"` fails closed when required metadata is unavailable. Changing `thought_tool_id` or `index` replaces the resource. Destroy deactivates the modifier, and exact recreation can reuse its ID.",
+		MarkdownDescription: "Manages a trusted Tama Thought Tool Modifier resource. The required `source` block selects trusted runtime metadata; it is not a secret value stored in Terraform. `on_missing_parent = \"skip\"` leaves calls unchanged when the target parent is absent, while `on_missing_source = \"error\"` fails closed when required metadata is unavailable. Changing `thought_tool_id` or `index` replaces the resource. Destroy deactivates the modifier, and exact recreation can reuse its ID.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "Modifier identifier.",
@@ -115,7 +115,7 @@ func (r *Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp 
 		},
 		Blocks: map[string]schema.Block{
 			"source": schema.SingleNestedBlock{
-				MarkdownDescription: "Trusted metadata source to inject at the target.",
+				MarkdownDescription: "Required trusted metadata source to inject at the target. Configure this block exactly once.",
 				Validators: []validator.Object{
 					objectvalidator.IsRequired(),
 				},

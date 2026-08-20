@@ -3,12 +3,12 @@
 page_title: "tama_thought_tool_modifier Resource - tama"
 subcategory: ""
 description: |-
-  Manages a trusted Tama Thought Tool Modifier resource. The source selects trusted runtime metadata; it is not a secret value stored in Terraform. on_missing_parent = "skip" leaves calls unchanged when the target parent is absent, while on_missing_source = "error" fails closed when required metadata is unavailable. Changing thought_tool_id or index replaces the resource. Destroy deactivates the modifier, and exact recreation can reuse its ID.
+  Manages a trusted Tama Thought Tool Modifier resource. The required source block selects trusted runtime metadata; it is not a secret value stored in Terraform. on_missing_parent = "skip" leaves calls unchanged when the target parent is absent, while on_missing_source = "error" fails closed when required metadata is unavailable. Changing thought_tool_id or index replaces the resource. Destroy deactivates the modifier, and exact recreation can reuse its ID.
 ---
 
 # tama_thought_tool_modifier (Resource)
 
-Manages a trusted Tama Thought Tool Modifier resource. The `source` selects trusted runtime metadata; it is not a secret value stored in Terraform. `on_missing_parent = "skip"` leaves calls unchanged when the target parent is absent, while `on_missing_source = "error"` fails closed when required metadata is unavailable. Changing `thought_tool_id` or `index` replaces the resource. Destroy deactivates the modifier, and exact recreation can reuse its ID.
+Manages a trusted Tama Thought Tool Modifier resource. The required `source` block selects trusted runtime metadata; it is not a secret value stored in Terraform. `on_missing_parent = "skip"` leaves calls unchanged when the target parent is absent, while `on_missing_source = "error"` fails closed when required metadata is unavailable. Changing `thought_tool_id` or `index` replaces the resource. Destroy deactivates the modifier, and exact recreation can reuse its ID.
 
 ## Example Usage
 
@@ -148,9 +148,9 @@ resource "tama_thought_tool_modifier" "actor_scope" {
 - `target` (String) JSON Pointer target in the thought tool's effective arguments.
 - `thought_tool_id` (String) ID of the thought tool this modifier belongs to.
 
-### Optional
+### Required Blocks
 
-- `source` (Block, Optional) Trusted metadata source to inject at the target. (see [below for nested schema](#nestedblock--source))
+- `source` (Block, Required) Required trusted metadata source to inject at the target. Configure this block exactly once. (see [below for nested schema](#nestedblock--source))
 
 ### Read-Only
 

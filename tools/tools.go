@@ -20,3 +20,6 @@ import (
 
 // Generate documentation.
 //go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-dir .. --provider-name tama
+
+// Correct required block metadata that is not represented in Terraform's exported schema.
+//go:generate go run ./cmd/fixdocs
