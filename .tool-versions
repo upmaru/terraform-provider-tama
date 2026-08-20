@@ -1,4 +1,4 @@
-golang        1.23.7
+golang        1.25.0
 terraform     1.12.2
-golangci-lint latest
+golangci-lint 2.13.0
 direnv        latest
