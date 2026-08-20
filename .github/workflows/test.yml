@@ -89,7 +89,11 @@ jobs:
           TAMA_MAX_VECTOR_DIMENSIONS: 1024
           TAMA_VAULT_KEY: MJOdb4sy3/xXzdYPDRZE3Jcj0gHx3utVsyCpCuTrRWM=
           TAMA_JWT_SECRET: MJOdb4sy3/xXzdYPDRZE3Jcj0gHx3utVsyCpCuTrRWM=
+          TAMA_OAUTH_ISSUER: http://localhost:4000
+          TAMA_OAUTH_SIGNING_KEY: development-only-oauth-signing-key-change-me
+          TAMA_OAUTH_SIGNING_KEY_ID: oauth-ci-1
           SECRET_KEY_BASE: mmgb4Aoa2PphESQICdr31vVXHhvufcrXS7hDPK+mx8CWnNfWEDtthx6zD49L4Cqv
+          PHX_HOST: localhost
           PHX_SERVER: true
         ports:
           - 4000:4000
